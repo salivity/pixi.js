@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js JSON Texture Atlas Parsing Performance - pixi.js</title>
+    <meta name="description" content="Parsing large JSON texture atlas manifests in Pixi.js introduces measurable performance bottlenecks primarily driven by main-thread blocking, native JSON deserialization, and the internal generation of individual frame textures. While downloading the JSO">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-json-texture-atlas-parsing-performance">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js JSON Texture Atlas Parsing Performance - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-json-texture-atlas-parsing-performance" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Parsing large JSON texture atlas manifests in Pixi.js introduces measurable performance bottlenecks primarily driven by main-thread blocking, native JSON deserialization, and the internal generation of individual frame textures. While downloading the JSO" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-json-texture-atlas-parsing-performance">Pixi.js JSON
+Texture Atlas Parsing Performance</h1>
+<p>Parsing large JSON texture atlas manifests in Pixi.js introduces
+measurable performance bottlenecks primarily driven by main-thread
+blocking, native JSON deserialization, and the internal generation of
+individual frame textures. While downloading the JSON file is relatively
+fast, transforming thousands of frame definitions into usable
+<code>PIXI.Texture</code> objects consumes valuable CPU cycles and
+increases garbage collection overhead. This guide details the specific
+areas where performance degrades and how to optimize atlas parsing to
+prevent frame drops and reduce load times.</p>
+<h2 id="the-stages-of-atlas-processing-overhead">The Stages of Atlas
+Processing Overhead</h2>
+<p>When Pixi.js loads a spritesheet using its asset management system
+(<code>PIXI.Assets</code>), it processes the JSON manifest in several
+distinct steps. The overhead manifests differently across these
+stages:</p>
+<h3 id="1-json-string-deserialization-jsonparse">1. JSON String
+Deserialization (<code>JSON.parse</code>)</h3>
+<p>The browser must parse the raw text payload into a JavaScript object.
+While <code>JSON.parse</code> is heavily optimized in modern JavaScript
+engines (V8, JavaScriptCore), it is strictly synchronous and executes on
+the main thread. A massive manifest—such as an animation sheet with
+thousands of frames or a multi-page atlas spanning several megabytes of
+text—can pause execution for 10ms to over 100ms on low-end mobile
+devices before Pixi.js even receives the data.</p>
+<h3 id="2-pixijs-internal-parsing-and-validation">2. Pixi.js Internal
+Parsing and Validation</h3>
+<p>Once deserialized, the <code>Spritesheet</code> parser iterates over
+every entry in the <code>frames</code> object or array. For each frame,
+Pixi.js must:</p>
+<ul>
+<li>Extract boundary dimensions (<code>frame</code>,
+<code>sourceSize</code>, <code>spriteSourceSize</code>).</li>
+<li>Handle rotation and trimming logic.</li>
+<li>Calculate normalized UV coordinates based on the base texture
+dimensions.</li>
+<li>Instantiate a new <code>PIXI.Texture</code> (or <code>Texture</code>
+in modern versions) referencing the shared
+<code>BaseTexture</code>.</li>
+</ul>
+<p>Because this involves heavy object instantiation inside a tight loop,
+it directly contributes to CPU spikes. A manifest with 2,000 frames
+results in thousands of allocations within a single execution tick.</p>
+<h3 id="3-texture-cache-registration">3. Texture Cache Registration</h3>
+<p>Pixi.js automatically registers each frame name into its global
+texture cache (<code>TextureCache</code> / <code>Assets.cache</code>).
+Key-value insertions into large Map or Object structures add modest CPU
+time, but the primary cost is memory footprint: holding thousands of
+distinct string keys and texture references in memory indefinitely.</p>
+<h2 id="memory-and-garbage-collection-impacts">Memory and Garbage
+Collection Impacts</h2>
+<p>Beyond execution time, parsing massive manifests triggers significant
+memory pressure:</p>
+<ul>
+<li><strong>Transient Memory Spikes:</strong> The browser holds the raw
+network response string, the parsed generic JSON tree, and the resulting
+Pixi.js texture objects in memory simultaneously before transient
+objects are collected.</li>
+<li><strong>Garbage Collection (GC) Stalls:</strong> Allocating
+thousands of temporary objects during the iteration loop creates memory
+churn. In performance-sensitive contexts, this triggers a garbage
+collection pause shortly after loading, resulting in visible
+micro-stutters during game transitions.</li>
+</ul>
+<h2 id="real-world-bottleneck-indicators">Real-World Bottleneck
+Indicators</h2>
+<ul>
+<li><strong>Loading Screen Freezes:</strong> The progress bar halts or
+UI animations stutter while the engine parses the manifest and generates
+sub-textures.</li>
+<li><strong>Mobile Degradation:</strong> Mobile CPUs, which often have
+lower single-core performance compared to desktop hardware, scale the
+parsing overhead non-linearly. A manifest that resolves in 15ms on a
+desktop can lock a mid-tier mobile browser for over 150ms.</li>
+</ul>
+<h2 id="strategies-to-mitigate-manifest-overhead">Strategies to Mitigate
+Manifest Overhead</h2>
+<ol type="1">
+<li><strong>Split Large Atlases:</strong> Break monolithic manifests
+into smaller, context-specific sheets (e.g., UI, background elements,
+individual characters). Load and parse them only when required by the
+active scene.</li>
+<li><strong>Use Array-Based Frame Layouts:</strong> Prefer the array
+format over the dictionary format for frames if using standard
+TexturePacker outputs, as arrays iterate slightly faster and generate
+fewer dynamic object keys.</li>
+<li><strong>Strip Redundant Metadata:</strong> Minify the JSON manifest
+by removing unnecessary fields such as authoring tool metadata, unused
+pivot points, or overly verbose frame names.</li>
+<li><strong>Time-Sliced Asynchronous Parsing:</strong> If an
+exceptionally large atlas must be loaded during gameplay, consider
+writing a custom parser that yields control back to the event loop
+(<code>await new Promise(requestAnimationFrame)</code>) every few
+hundred frames to prevent blocking the main rendering loop.</li>
+</ol></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

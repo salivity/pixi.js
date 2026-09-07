@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS Assets.load vs Assets.backgroundLoad - pixi.js</title>
+    <meta name="description" content="Managing assets efficiently is essential for building performant web applications and games using Pixi.js. Pixi's Assets manager provides two distinct functions for retrieving resources: Assets.load and Assets.backgroundLoad. While both methods fetch, pr">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-assets-load-vs-assets-backgroundload">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS Assets.load vs Assets.backgroundLoad - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-assets-load-vs-assets-backgroundload" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Managing assets efficiently is essential for building performant web applications and games using Pixi.js. Pixi's Assets manager provides two distinct functions for retrieving resources: Assets.load and Assets.backgroundLoad. While both methods fetch, pr" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-assetsload-vs-assetsbackgroundload">PixiJS Assets.load vs
+Assets.backgroundLoad</h1>
+<p>Managing assets efficiently is essential for building performant web
+applications and games using Pixi.js. Pixi's <code>Assets</code> manager
+provides two distinct functions for retrieving resources:
+<code>Assets.load</code> and <code>Assets.backgroundLoad</code>. While
+both methods fetch, process, and cache assets like textures, audio, and
+spritesheets into the central cache, they differ significantly in
+execution priority, queue behavior, and runtime purpose.</p>
+<h3 id="execution-priority-and-queue-management">Execution Priority and
+Queue Management</h3>
+<p>The fundamental difference between the two methods lies in their
+priority within the loading pipeline.</p>
+<p><code>Assets.load</code> is designed for high-priority, foreground
+operations. When invoked, it immediately queues the asset for processing
+so it can be made available as quickly as possible. This method is
+typically used when the application actively requires the resource to
+display a scene, start an animation, or present a user interface.</p>
+<p><code>Assets.backgroundLoad</code> processes assets with low
+priority. It silently fetches resources in the background during idle
+periods, ensuring that active gameplay, animations, or critical
+foreground loads are not bottlenecked by network requests or CPU-heavy
+decoding tasks. If an asset that is currently queued in
+<code>Assets.backgroundLoad</code> is suddenly requested via
+<code>Assets.load</code>, Pixi.js automatically elevates the asset's
+priority in the queue, ensuring no duplicate downloads occur.</p>
+<h3 id="return-values-and-promise-handling">Return Values and Promise
+Handling</h3>
+<p>Both functions return promises, but they are handled differently
+based on how the assets are intended to be consumed.</p>
+<p><code>Assets.load</code> returns a promise that resolves directly to
+the loaded asset or a map of assets (such as a <code>Texture</code>,
+<code>Spritesheet</code>, or custom parsed object). This allows you to
+immediately attach the resolved resource to a display object or
+sprite:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> texture <span class="op">=</span> <span class="cf">await</span> Assets<span class="op">.</span><span class="fu">load</span>(<span class="st">&#39;character.png&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> sprite <span class="op">=</span> <span class="kw">new</span> <span class="fu">Sprite</span>(texture)<span class="op">;</span></span></code></pre></div>
+<p><code>Assets.backgroundLoad</code> initiates the download and parsing
+process to pre-warm the cache. While it returns a promise that resolves
+once the background task has been scheduled or finished, it is not
+primarily intended for immediate assignment. Instead, it places the
+resolved resources into the global cache (<code>Assets.cache</code>).
+When you eventually need the preloaded item later in your application,
+calling <code>Assets.load</code> or accessing <code>Assets.get</code>
+will immediately retrieve it from memory without hitting the
+network:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Start preloading future content</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>Assets<span class="op">.</span><span class="fu">backgroundLoad</span>([<span class="st">&#39;level2-bg.png&#39;</span><span class="op">,</span> <span class="st">&#39;boss.json&#39;</span>])<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Later in the application, retrieve from cache instantly</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> level2Bg <span class="op">=</span> Assets<span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;level2-bg.png&#39;</span>)<span class="op">;</span></span></code></pre></div>
+<h3 id="when-to-use-each-method">When to Use Each Method</h3>
+<p>Use <code>Assets.load</code> for:</p>
+<ul>
+<li>Initial loading screens and splash menus.</li>
+<li>Transitioning to a new scene or level where the assets are
+immediately required.</li>
+<li>User-triggered dynamic assets, such as opening an inventory screen
+or equipping a weapon.</li>
+</ul>
+<p>Use <code>Assets.backgroundLoad</code> for:</p>
+<ul>
+<li>Pre-fetching assets for the next level while the user is actively
+playing the current one.</li>
+<li>Downloading secondary media, such as extra sound effects or
+non-essential visual variations.</li>
+<li>Smoothing out frame rates by avoiding large bursts of network and
+decoding activity mid-game.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js Geometry and Shader Attribute Mismatch - pixi.js</title>
+    <meta name="description" content="When vertex attributes configured in a Pixi.js Geometry instance do not match the input attributes declared in the active shader, WebGL encounters a binding mismatch. Depending on whether attributes are missing, surplus, or misconfigured in their data ty">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-geometry-and-shader-attribute-mismatch">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js Geometry and Shader Attribute Mismatch - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-geometry-and-shader-attribute-mismatch" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When vertex attributes configured in a Pixi.js Geometry instance do not match the input attributes declared in the active shader, WebGL encounters a binding mismatch. Depending on whether attributes are missing, surplus, or misconfigured in their data ty" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-geometry-and-shader-attribute-mismatch">Pixi.js Geometry
+and Shader Attribute Mismatch</h1>
+<p>When vertex attributes configured in a Pixi.js <code>Geometry</code>
+instance do not match the input attributes declared in the active
+shader, WebGL encounters a binding mismatch. Depending on whether
+attributes are missing, surplus, or misconfigured in their data types,
+the result ranges from harmless performance overhead to severe rendering
+artifacts, silent render failures, or WebGL draw call errors. This
+article examines the exact technical consequences of these mismatches
+and how Pixi.js responds during pipeline execution.</p>
+<h2 id="the-core-linking-mechanism-in-pixijs">The Core Linking Mechanism
+in Pixi.js</h2>
+<p>Pixi.js bridges JavaScript definitions and WebGL programs by matching
+attribute names. When you define an attribute in a <code>Geometry</code>
+object (using
+<code>geometry.addAttribute(name, buffer, size, ...)</code>), Pixi.js
+maps that specific <code>name</code> to the corresponding attribute
+declared in the vertex shader (<code>attribute &lt;type&gt; name</code>
+in GLSL 100 or <code>in &lt;type&gt; name</code> in GLSL 300 ES).</p>
+<p>Under the hood, Pixi.js queries the shader program for attribute
+locations via <code>gl.getAttribLocation()</code>. It then configures
+Vertex Array Objects (VAOs) and calls
+<code>gl.vertexAttribPointer</code> and
+<code>gl.enableVertexAttribArray</code> for each matching attribute.
+When the geometry and shader declarations fall out of sync, this
+pipeline breaks in predictable ways.</p>
+<h2
+id="scenario-1-the-shader-requires-an-attribute-missing-from-geometry">Scenario
+1: The Shader Requires an Attribute Missing from Geometry</h2>
+<p>If your vertex shader declares an active attribute that is not
+registered in the <code>Geometry</code> instance, the shader expects
+per-vertex data that the application never supplies.</p>
+<ul>
+<li><strong>Default Value Fallback:</strong> Because no buffer is bound
+to that attribute's location, WebGL uses the current global generic
+attribute value set via <code>gl.vertexAttrib[1234]f</code> (defaulting
+typically to <code>(0.0, 0.0, 0.0, 1.0)</code>).</li>
+<li><strong>Mesh Disappearance or Distortion:</strong> If the missing
+attribute affects vertex positions (such as
+<code>aVertexPosition</code>), all vertices collapse to a single
+coordinate (usually origin <code>(0, 0)</code>), causing the mesh to
+vanish or render as an invisible zero-area polygon.</li>
+<li><strong>Corrupted Color or Texture Mapping:</strong> If the missing
+attribute is a UV coordinate (<code>aTextureCoord</code>) or a color
+attribute, textures will sample from fixed coordinates
+<code>(0, 0)</code> or display solid default colors.</li>
+<li><strong>Console Warnings:</strong> Pixi.js internal systems
+(especially in non-minified development builds) may log warnings
+indicating that a program attribute has no matching geometry
+buffer.</li>
+</ul>
+<h2
+id="scenario-2-the-geometry-defines-an-attribute-not-used-in-the-shader">Scenario
+2: The Geometry Defines an Attribute Not Used in the Shader</h2>
+<p>If your <code>Geometry</code> contains attributes that do not exist
+in the vertex shader or are declared but optimized out by the GLSL
+compiler:</p>
+<ul>
+<li><strong>Location Set to -1:</strong> The WebGL call
+<code>gl.getAttribLocation(program, name)</code> returns <code>-1</code>
+for inactive or undeclared attributes.</li>
+<li><strong>Silent Ignore by Pixi.js:</strong> Pixi.js checks the
+returned attribute location. If the location is <code>-1</code>, Pixi.js
+skips enabling that vertex attribute array and skips binding the buffer
+for that specific attribute during the draw call.</li>
+<li><strong>Rendering Succeeds:</strong> The mesh renders correctly
+using the remaining matched attributes.</li>
+<li><strong>Wasted Bandwidth:</strong> Even though WebGL ignores the
+unused data during rasterization, sending unused buffers still incurs
+memory overhead on the GPU and wastes CPU-to-GPU upload bandwidth.</li>
+</ul>
+<h2
+id="scenario-3-name-matches-but-type-size-or-stride-differs">Scenario 3:
+Name Matches, but Type, Size, or Stride Differs</h2>
+<p>A more deceptive failure occurs when names match, but the
+<code>Geometry.addAttribute</code> parameters do not align with the GLSL
+type definition.</p>
+<ul>
+<li><strong>Size Mismatch:</strong> If GLSL expects a <code>vec4</code>
+but the geometry specifies <code>size: 2</code>, WebGL fills the
+remaining components with default values
+(<code>z = 0.0, w = 1.0</code>). If GLSL expects a <code>vec2</code> and
+geometry provides <code>size: 4</code>, the excess components are
+ignored. While this may render without errors, it often produces
+incorrect calculations.</li>
+<li><strong>Stride and Offset Misalignment:</strong> When using
+interleaved buffers, an incorrect <code>stride</code> or
+<code>offset</code> causes the GPU to read bytes meant for one attribute
+as another. This results in visual artifacts, such as exploded geometry,
+jagged noise, or rapidly flickering polygons as vertices read corrupted
+floating-point values.</li>
+<li><strong>Normalized Data Flags:</strong> If integer data is uploaded
+without setting the <code>normalize</code> flag correctly, the shader
+reads raw integer representations as massive floating-point numbers,
+frequently resulting in vertices projecting outside the clip space.</li>
+</ul>
+<h2 id="summary-of-results">Summary of Results</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Condition</th>
+<th style="text-align: left;">WebGL Behavior</th>
+<th style="text-align: left;">Visual Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Attribute missing in
+Geometry</strong></td>
+<td style="text-align: left;">Attribute array disabled; uses default
+constant value.</td>
+<td style="text-align: left;">Missing mesh, collapsed vertices, or
+static UV sampling.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Attribute missing in
+Shader</strong></td>
+<td style="text-align: left;"><code>getAttribLocation</code> returns
+<code>-1</code>; Pixi.js skips attribute.</td>
+<td style="text-align: left;">Normal render, but wastes memory and
+transfer bandwidth.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Component/Stride
+mismatch</strong></td>
+<td style="text-align: left;">Reads incorrect buffer offsets or defaults
+missing components.</td>
+<td style="text-align: left;">Distorted meshes, corrupted textures, or
+visual noise.</td>
+</tr>
+</tbody>
+</table></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

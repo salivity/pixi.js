@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What is a Sprite in Pixi.js? - pixi.js</title>
+    <meta name="description" content="This article provides a comprehensive overview of what defines a Sprite within the Pixi.js rendering engine. It covers the fundamental relationship between Sprites and Textures, explains key properties like anchors and positioning, and details how Sprite">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/what-is-a-sprite-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="What is a Sprite in Pixi.js? - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/what-is-a-sprite-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides a comprehensive overview of what defines a Sprite within the Pixi.js rendering engine. It covers the fundamental relationship between Sprites and Textures, explains key properties like anchors and positioning, and details how Sprite" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="what-is-a-sprite-in-pixijs">What is a Sprite in Pixi.js?</h1>
+<p>This article provides a comprehensive overview of what defines a
+Sprite within the Pixi.js rendering engine. It covers the fundamental
+relationship between Sprites and Textures, explains key properties like
+anchors and positioning, and details how Sprites function within the
+Pixi.js display list to render high-performance 2D graphics.</p>
+<p>In Pixi.js, a <strong>Sprite</strong> is the fundamental building
+block used to display and manipulate two-dimensional images on a canvas.
+Technically, a Sprite is a specialized display object that inherits from
+the <code>Container</code> class. Its primary purpose is to project a
+specific image onto the screen while allowing you to control its
+position, size, rotation, and other visual properties.</p>
+<h3 id="the-relationship-between-sprites-and-textures">The Relationship
+Between Sprites and Textures</h3>
+<p>A Sprite does not actually contain raw image data. Instead, it acts
+as a controller or a visual representation of a
+<strong>Texture</strong>.</p>
+<ul>
+<li><strong>Texture:</strong> This is the underlying image data (loaded
+from a PNG, JPEG, SVG, or spritesheet) that has been prepared for the
+GPU (WebGL or WebGPU).</li>
+<li><strong>Sprite:</strong> This is the object you place in your scene.
+It references the Texture and defines <em>where</em> and <em>how</em>
+that texture should be drawn.</li>
+</ul>
+<p>Because of this separation, multiple Sprites can share a single
+Texture. For example, if you have a game with one hundred identical
+enemy characters, you only load the enemy texture into GPU memory once,
+and then create one hundred individual Sprites that reference that
+single texture. This drastically reduces memory usage and improves
+rendering performance.</p>
+<h3 id="core-properties-of-a-pixijs-sprite">Core Properties of a Pixi.js
+Sprite</h3>
+<p>To control how an image is rendered, a Sprite provides several
+essential properties:</p>
+<ul>
+<li><strong>Position (<code>x</code>, <code>y</code>):</strong>
+Determines the coordinates of the sprite on the screen relative to its
+parent container.</li>
+<li><strong>Anchor (<code>anchor.x</code>,
+<code>anchor.y</code>):</strong> Defines the origin point of the sprite,
+represented as a percentage of the sprite's width and height (from
+<code>0.0</code> to <code>1.0</code>). By default, the anchor is set to
+<code>(0, 0)</code>, which is the top-left corner. Setting the anchor to
+<code>(0.5, 0.5)</code> moves the origin to the exact center, which is
+ideal for rotating sprites.</li>
+<li><strong>Scale (<code>scale.x</code>, <code>scale.y</code>):</strong>
+Adjusts the width and height of the sprite. A scale of <code>1</code> is
+the original texture size, while <code>2</code> doubles the size and
+<code>0.5</code> halves it.</li>
+<li><strong>Rotation / Angle:</strong> Rotates the sprite around its
+anchor point. <code>rotation</code> uses radians, while
+<code>angle</code> uses degrees.</li>
+<li><strong>Alpha:</strong> Controls the transparency of the sprite on a
+scale from <code>0</code> (completely invisible) to <code>1</code>
+(fully opaque).</li>
+<li><strong>Tint:</strong> Applies a color multiplier to the texture,
+allowing you to dynamically color-ize the sprite without needing a new
+image asset.</li>
+</ul>
+<h3 id="interaction-and-the-display-list">Interaction and the Display
+List</h3>
+<p>Because a Sprite inherits from the <code>Container</code> class, it
+can have child objects added to it (such as other sprites or text
+objects). It can also be made interactive by setting
+<code>sprite.interactive = true</code> (or
+<code>sprite.eventMode = 'static'</code> in newer Pixi.js versions).
+This allows the sprite to listen for mouse, touch, and pointer events
+like clicks, drags, and hover states.</p>
+<p>To render a Sprite, it must be added to the Pixi.js stage (the root
+container) using <code>app.stage.addChild(sprite)</code>. Once added,
+the Pixi.js auto-detect renderer batches the sprite with other visual
+elements, sending them to the GPU to be drawn at 60 frames per second or
+higher.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Pixi.js Display List and Scenegraph - pixi.js</title>
+    <meta name="description" content="This article explains the inner workings of the Pixi.js scenegraph and display list, detailing how parent-child relationships govern rendering order, coordinate transformations, and visual inheritance. By understanding how Pixi.js traverses this hierarch">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/understanding-pixi-js-display-list-and-scenegraph">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Understanding Pixi.js Display List and Scenegraph - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/understanding-pixi-js-display-list-and-scenegraph" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains the inner workings of the Pixi.js scenegraph and display list, detailing how parent-child relationships govern rendering order, coordinate transformations, and visual inheritance. By understanding how Pixi.js traverses this hierarch" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="understanding-pixijs-display-list-and-scenegraph">Understanding
+Pixi.js Display List and Scenegraph</h1>
+<p>This article explains the inner workings of the Pixi.js scenegraph
+and display list, detailing how parent-child relationships govern
+rendering order, coordinate transformations, and visual inheritance. By
+understanding how Pixi.js traverses this hierarchical tree structure,
+developers can optimize rendering performance and manage complex 2D
+visual scenes more effectively.</p>
+<h2 id="the-scenegraph-as-a-tree-structure">The Scenegraph as a Tree
+Structure</h2>
+<p>At its core, Pixi.js organizes all visual elements in a hierarchical
+tree structure known as the <strong>scenegraph</strong>. The root of
+this tree is typically the <code>Application.stage</code>, which is a
+specialized <code>Container</code> object.</p>
+<p>Every node in this tree is an instance of <code>DisplayObject</code>.
+While <code>DisplayObject</code> is the base class for anything that can
+be rendered (such as <code>Sprite</code>, <code>Graphics</code>, and
+<code>Text</code>), the <code>Container</code> class is a subclass of
+<code>DisplayObject</code> that can act as a parent to other display
+objects.</p>
+<pre><code>Stage (Container)
+ ├── Background (Sprite)
+ ├── GameUI (Container)
+ │    ├── HealthBar (Graphics)
+ │    └── ScoreText (Text)
+ └── Player (Sprite)</code></pre>
+<p>By nesting containers inside other containers, you construct a
+logical hierarchy that mirrors the organization of your game or
+application interface.</p>
+<h2
+id="parent-child-relationships-and-transform-propagation">Parent-Child
+Relationships and Transform Propagation</h2>
+<p>When you add a child to a parent container using
+<code>parent.addChild(child)</code>, the child becomes dependent on the
+parent's spatial properties. This relationship dictates how positions,
+rotations, scales, and visibilities are calculated.</p>
+<h3 id="local-vs-global-coordinates">Local vs. Global Coordinates</h3>
+<p>Each display object maintains its own <strong>local coordinate
+system</strong>. When you set <code>sprite.position.set(10, 20)</code>,
+you are positioning the sprite relative to its parent's origin, not the
+screen's origin.</p>
+<p>To draw objects on the screen, Pixi.js must convert these local
+coordinates into <strong>global coordinates</strong> (screen space). It
+does this using matrix mathematics:</p>
+<ol type="1">
+<li>Every <code>DisplayObject</code> has a local transform matrix
+(<code>localTransform</code>) calculated from its position, scale, skew,
+and rotation.</li>
+<li>Every object also has a world transform matrix
+(<code>worldTransform</code>).</li>
+<li>During the update phase, Pixi.js recursively calculates the
+<code>worldTransform</code> of each object by multiplying its parent's
+<code>worldTransform</code> with its own
+<code>localTransform</code>.</li>
+</ol>
+<p>If you move, rotate, or scale a parent container, all of its
+descendants automatically move, rotate, and scale with it because their
+world transforms are derived from the parent.</p>
+<h3 id="attribute-inheritance">Attribute Inheritance</h3>
+<p>Beyond spatial transforms, other properties cascade down the
+scenegraph:</p>
+<ul>
+<li><strong>Alpha (Opacity):</strong> The actual rendering opacity of an
+object is its local <code>alpha</code> multiplied by its parent's
+calculated world alpha.</li>
+<li><strong>Visibility:</strong> If a parent's <code>visible</code>
+property is set to <code>false</code>, the entire branch of the tree is
+ignored during the update and rendering phases, regardless of the
+individual children's <code>visible</code> states.</li>
+<li><strong>Renderable:</strong> Similar to visibility, if
+<code>renderable</code> is <code>false</code>, the object (and its
+children) will not be drawn, though its transforms are still
+calculated.</li>
+</ul>
+<h2 id="the-render-loop-and-depth-first-traversal">The Render Loop and
+Depth-First Traversal</h2>
+<p>The actual display list is not a separate flat list; rather, it is
+derived directly from the scenegraph during the rendering phase. Pixi.js
+processes the tree using a <strong>depth-first traversal</strong>
+algorithm.</p>
+<h3 id="step-1-the-transform-update-updatetransform">Step 1: The
+Transform Update (<code>updateTransform</code>)</h3>
+<p>Before rendering, Pixi.js runs an internal update pass. Starting from
+the stage, it recursively calls <code>updateTransform()</code> on every
+active node. This ensures that all matrix calculations, bounds updates,
+and world alphas are fully computed and up-to-date before any pixels are
+drawn.</p>
+<h3 id="step-2-traversal-and-painters-algorithm">Step 2: Traversal and
+Painter's Algorithm</h3>
+<p>Once transforms are updated, the renderer traverses the tree to draw
+the objects. Pixi.js uses the <strong>Painter's Algorithm</strong>,
+meaning objects are drawn from back to front.</p>
+<p>When traversing a <code>Container</code>, the rendering engine:</p>
+<ol type="1">
+<li>Renders the container itself (if it has its own visual
+representation, like a custom subclass).</li>
+<li>Iterates through the container’s <code>children</code> array from
+index <code>0</code> to <code>children.length - 1</code>.</li>
+<li>Recursively visits and renders each child.</li>
+</ol>
+<p>Because of this order, children with lower indices in the array are
+drawn first (in the background), while children with higher indices are
+drawn on top of them (in the foreground).</p>
+<h3 id="managing-z-order">Managing Z-Order</h3>
+<p>By default, the z-order of elements is determined strictly by their
+insertion order in the <code>children</code> array. If you want to
+change the rendering order, you can manipulate this array using methods
+like <code>addChildAt()</code>, <code>removeChild()</code>, or
+<code>swapChildren()</code>.</p>
+<p>Alternatively, Pixi.js supports automatic sorting via the
+<code>sortableChildren</code> and <code>zIndex</code> properties:</p>
+<ul>
+<li>If you set <code>container.sortableChildren = true</code>, Pixi.js
+will automatically sort the <code>children</code> array based on each
+child's <code>zIndex</code> value before rendering.</li>
+<li>This sorting occurs during the update phase, ensuring that objects
+with higher <code>zIndex</code> values are drawn on top of those with
+lower values within the same parent container.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

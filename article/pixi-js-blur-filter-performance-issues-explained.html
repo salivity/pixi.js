@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js Blur Filter Performance Issues Explained - pixi.js</title>
+    <meta name="description" content="Using heavy blur radii in Pixi.js filters often leads to severe frame rate drops and performance bottlenecks. This degradation primarily stems from the mathematical complexity of Gaussian blurs, excessive texture sampling in the GPU's fragment shader, me">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-blur-filter-performance-issues-explained">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js Blur Filter Performance Issues Explained - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-blur-filter-performance-issues-explained" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Using heavy blur radii in Pixi.js filters often leads to severe frame rate drops and performance bottlenecks. This degradation primarily stems from the mathematical complexity of Gaussian blurs, excessive texture sampling in the GPU's fragment shader, me" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-blur-filter-performance-issues-explained">Pixi.js Blur
+Filter Performance Issues Explained</h1>
+<p>Using heavy blur radii in Pixi.js filters often leads to severe frame
+rate drops and performance bottlenecks. This degradation primarily stems
+from the mathematical complexity of Gaussian blurs, excessive texture
+sampling in the GPU's fragment shader, memory bandwidth saturation
+caused by high fill rates, and frequent framebuffer switching during
+multi-pass rendering. Understanding how Pixi.js processes blur effects
+under the hood reveals why large blur values strain both desktop and
+mobile hardware, as well as how developers can effectively mitigate the
+overhead.</p>
+<h3 id="texture-sampling-overhead-and-kernel-size">Texture Sampling
+Overhead and Kernel Size</h3>
+<p>A standard blur filter works through convolution, where the final
+color of each pixel is determined by sampling neighboring pixels and
+calculating their weighted average. When you increase the blur radius,
+the "kernel size"—the number of surrounding pixels that must be
+read—grows significantly.</p>
+<p>Even though Pixi.js uses a separable two-pass blur (splitting the
+calculation into separate horizontal and vertical passes to reduce
+operations from <span class="math inline">\(O(N^2)\)</span> to <span
+class="math inline">\(O(2N)\)</span>), increasing the radius directly
+increases the number of texture lookups per fragment. Fetching texture
+data from memory is one of the most expensive operations a GPU performs.
+When thousands of pixels each request dozens of neighboring samples per
+frame, the GPU's texture sampling units become saturated.</p>
+<h3 id="gpu-fill-rate-and-memory-bandwidth-saturation">GPU Fill Rate and
+Memory Bandwidth Saturation</h3>
+<p>Heavy blur filters demand high fill rates. Every pixel on the target
+display must be evaluated, calculated, and rewritten. If a full-screen
+display object or a high-resolution canvas applies a large blur, the
+sheer volume of data being moved across the GPU's memory bus exceeds its
+bandwidth limits. This issue is especially pronounced on mobile devices
+and integrated GPUs, where shared memory architectures create hardware
+bottlenecks when dealing with high-density (Retina/High-DPI)
+displays.</p>
+<h3
+id="intermediate-render-targets-and-framebuffer-swapping">Intermediate
+Render Targets and Framebuffer Swapping</h3>
+<p>Pixi.js manages blur operations using intermediate render targets
+(framebuffer objects or FBOs). A standard blur requires:</p>
+<ol type="1">
+<li>Rendering the original display object into a temporary texture.</li>
+<li>Applying the horizontal blur pass and writing the output to a second
+temporary texture.</li>
+<li>Applying the vertical blur pass and writing the result either back
+to the original target or to the screen.</li>
+</ol>
+<p>When the <code>quality</code> property of the <code>BlurFilter</code>
+is set high to produce smooth results with large radii, Pixi.js repeats
+these passes multiple times. Each pass requires the GPU to halt, switch
+its active render target, and clear or bind textures. These state
+changes disrupt the GPU pipeline, prevent batching, and introduce
+CPU-GPU synchronization stalls.</p>
+<h3 id="solutions-to-prevent-degradation">Solutions to Prevent
+Degradation</h3>
+<p>To maintain smooth rendering while achieving strong blur effects,
+consider the following optimization strategies:</p>
+<ul>
+<li><strong>Lower the Filter Resolution:</strong> Reduce the
+<code>resolution</code> property on the <code>BlurFilter</code> (e.g.,
+<code>filter.resolution = 0.5</code>). Blurring inherently removes
+high-frequency details, making half-resolution processing virtually
+indistinguishable from full-resolution while cutting pixel operations by
+75%.</li>
+<li><strong>Reduce the Quality Property:</strong> Lower the
+<code>quality</code> setting on the blur filter. Lowering the number of
+passes reduces texture swaps and fragment load.</li>
+<li><strong>Cache as Bitmap:</strong> If the blurred object is static or
+updates infrequently, set <code>cacheAsBitmap = true</code> on the
+display object. This bakes the blurred result into a single texture,
+entirely removing per-frame shader computations.</li>
+<li><strong>Downscale and Upscale Manually:</strong> Render the content
+to an off-screen <code>RenderTexture</code> at a fraction of the native
+size, apply a low-radius blur, and scale the resulting sprite back up
+with bilinear filtering enabled.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

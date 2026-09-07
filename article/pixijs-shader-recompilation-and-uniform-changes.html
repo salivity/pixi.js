@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS Shader Recompilation and Uniform Changes - pixi.js</title>
+    <meta name="description" content="PixiJS manages shader recompilation and uniform synchronization by decoupling GLSL program compilation from dynamic uniform data updates. While changing runtime uniform values simply updates data buffers via cached sync functions, altering a uniform's si">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-shader-recompilation-and-uniform-changes">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS Shader Recompilation and Uniform Changes - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-shader-recompilation-and-uniform-changes" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="PixiJS manages shader recompilation and uniform synchronization by decoupling GLSL program compilation from dynamic uniform data updates. While changing runtime uniform values simply updates data buffers via cached sync functions, altering a uniform's si" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-shader-recompilation-and-uniform-changes">PixiJS Shader
+Recompilation and Uniform Changes</h1>
+<p>PixiJS manages shader recompilation and uniform synchronization by
+decoupling GLSL program compilation from dynamic uniform data updates.
+While changing runtime uniform values simply updates data buffers via
+cached sync functions, altering a uniform's signature—such as its data
+type, size, or declaration in the shader source—triggers an internal
+cache invalidation. PixiJS handles this by recompiling the WebGL
+program, regenerating optimized JavaScript upload functions, and
+updating GPU state bindings to maintain optimal rendering
+performance.</p>
+<h2
+id="distinguishing-value-updates-from-signature-changes">Distinguishing
+Value Updates from Signature Changes</h2>
+<p>In WebGL and PixiJS, a distinction is made between updating a
+uniform’s value and changing its signature:</p>
+<ul>
+<li><strong>Uniform Value Updates:</strong> PixiJS wraps uniforms within
+<code>UniformGroup</code> instances. When a value changes (e.g.,
+modifying a tint color or delta time), the uniform group increments an
+internal <code>dirtyId</code>. During the next draw pass, PixiJS checks
+this ID and runs a pre-compiled upload routine without recompiling the
+underlying WebGL program.</li>
+<li><strong>Uniform Signature Changes:</strong> A signature change
+involves modifying the uniform's data type (e.g., switching from a
+<code>float</code> to a <code>vec2</code>), renaming uniforms, or
+adding/removing uniform declarations. Because WebGL requires statically
+typed declarations within GLSL, altering these signatures demands
+recompilation of the shader program itself.</li>
+</ul>
+<h2 id="the-program-cache-and-recompilation-pipeline">The Program Cache
+and Recompilation Pipeline</h2>
+<p>PixiJS uses a global <code>Program</code> cache to minimize expensive
+WebGL compilation calls:</p>
+<ol type="1">
+<li><strong>Hash Key Generation:</strong> When a <code>Shader</code> is
+assigned to a display object, PixiJS inspects the associated vertex and
+fragment shader source strings. It constructs a unique cache key based
+on the shader code, active preprocessor directives, and vertex attribute
+layouts.</li>
+<li><strong>Cache Lookup:</strong> If a uniform signature is modified in
+the source code, the resulting shader string changes, causing a cache
+miss in the <code>ShaderSystem</code>.</li>
+<li><strong>WebGLProgram Recompilation:</strong> Upon a cache miss,
+PixiJS calls <code>gl.createProgram()</code>, compiles the individual
+vertex and fragment shaders using <code>gl.compileShader()</code>, links
+them with <code>gl.linkProgram()</code>, and registers the new
+<code>WebGLProgram</code> within its internal cache.</li>
+<li><strong>Location Extraction:</strong> PixiJS extracts uniform and
+attribute metadata directly from the WebGL context using
+<code>gl.getActiveUniform()</code> and
+<code>gl.getUniformLocation()</code>, constructing an internal map of
+uniform names, types, and byte offsets.</li>
+</ol>
+<h2 id="dynamic-uniform-sync-generation">Dynamic Uniform Sync
+Generation</h2>
+<p>PixiJS optimizes uniform transfer by avoiding runtime loops over
+JavaScript objects. Instead, it generates uniform sync code on the
+fly:</p>
+<ul>
+<li><strong>Code Generation via
+<code>generateUniformsSync</code>:</strong> When a uniform signature or
+group structure is recognized as new, PixiJS dynamically creates an
+optimized JavaScript function using runtime code generation
+(<code>new Function(...)</code> or equivalent dispatchers).</li>
+<li><strong>Direct GL Calls:</strong> This generated function contains
+hardcoded calls to the appropriate WebGL methods (such as
+<code>gl.uniform1f</code>, <code>gl.uniformMatrix4fv</code>, etc.)
+matching the exact locations and types returned by the compiled
+program.</li>
+<li><strong>Sync Function Caching:</strong> This function is paired with
+the specific combination of the <code>Program</code> and the
+<code>UniformGroup</code>. If the uniform signature changes, PixiJS
+invalidates the existing sync runner and builds a new function tailored
+to the updated layout.</li>
+</ul>
+<h2 id="uniform-groups-and-struct-handling">Uniform Groups and Struct
+Handling</h2>
+<p>When developers define custom uniform structures using
+<code>UniformGroup</code>, PixiJS computes a layout signature:</p>
+<ul>
+<li>If the signature of an existing <code>UniformGroup</code> changes at
+runtime without modifying the underlying GLSL code (e.g., adding a
+property to the JavaScript object that the GLSL does not expect), PixiJS
+flags the group as altered.</li>
+<li>PixiJS maps the JavaScript properties against the active uniform
+reflection data acquired during program linking. Properties absent in
+the compiled GLSL are ignored, preventing WebGL runtime errors.</li>
+<li>If a signature mismatch occurs between the JavaScript object
+structure and the compiled GLSL requirements, PixiJS drops the outdated
+uniform sync mapping and re-evaluates the layout for the active
+program.</li>
+</ul>
+<h2 id="architectural-best-practices">Architectural Best Practices</h2>
+<p>Because program recompilation and dynamic function generation cause
+CPU stalls and GPU pipeline flushes, managing uniform signatures
+efficiently requires specific patterns:</p>
+<ul>
+<li><strong>Avoid Dynamic GLSL Mutation:</strong> Avoid modifying GLSL
+source strings at runtime to change uniform configurations. Instead,
+declare maximal uniform sizes (e.g., array bounds) and pass dynamic
+count uniforms to limit loop iterations.</li>
+<li><strong>Preserve Uniform Types:</strong> Keep JavaScript data types
+strictly aligned with their GLSL counterparts throughout the application
+lifecycle to avoid triggering layout updates.</li>
+<li><strong>Leverage Uniform Buffer Objects (UBOs):</strong> In modern
+PixiJS versions running on WebGL 2 or WebGPU, utilize static buffer
+layouts where uniform memory offsets are pre-computed. This bypasses
+dynamic uniform sync rebuilding entirely by uploading the entire uniform
+payload as a single binary block.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

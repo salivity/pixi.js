@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS Heavy Filter Performance on Mobile - pixi.js</title>
+    <meta name="description" content="Using computationally heavy filters in Pixi.js can severely degrade performance on mobile devices due to hardware limitations. This article explores how complex WebGL shaders impact mobile GPU resources, the direct consequences on frame rates and battery">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-heavy-filter-performance-on-mobile">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS Heavy Filter Performance on Mobile - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-heavy-filter-performance-on-mobile" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Using computationally heavy filters in Pixi.js can severely degrade performance on mobile devices due to hardware limitations. This article explores how complex WebGL shaders impact mobile GPU resources, the direct consequences on frame rates and battery" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-heavy-filter-performance-on-mobile">PixiJS Heavy Filter
+Performance on Mobile</h1>
+<p>Using computationally heavy filters in Pixi.js can severely degrade
+performance on mobile devices due to hardware limitations. This article
+explores how complex WebGL shaders impact mobile GPU resources, the
+direct consequences on frame rates and battery life, and practical
+optimization strategies to maintain a smooth user experience.</p>
+<h2 id="how-pixijs-filters-impact-mobile-gpus">How Pixi.js Filters
+Impact Mobile GPUs</h2>
+<p>Pixi.js utilizes WebGL to render 2D graphics, and filters are
+essentially custom or pre-built fragment shaders. When you apply a
+filter (such as blur, displacement, or glow) to a display object,
+Pixi.js must render that object to an offscreen texture, apply the
+shader program pixel-by-pixel, and then render the result back to the
+screen.</p>
+<p>Mobile GPUs are designed for power efficiency rather than raw
+throughput. They use tiled rendering architectures that struggle
+with:</p>
+<ul>
+<li><strong>High Fill Rates:</strong> Heavy filters require calculations
+for every single pixel. On high-density Retina or OLED screens, the
+number of pixels to process scales exponentially.</li>
+<li><strong>Multi-pass Rendering:</strong> Complex filters like Gaussian
+blurs require multiple rendering passes (vertical and horizontal). Each
+pass requires writing to and reading from texture memory, which quickly
+consumes limited mobile memory bandwidth.</li>
+</ul>
+<h2 id="key-performance-consequences">Key Performance Consequences</h2>
+<p>Applying heavy filters on mobile browsers or WebViews typically
+results in three major performance bottlenecks:</p>
+<h3 id="1-severe-frame-rate-fps-drops">1. Severe Frame Rate (FPS)
+Drops</h3>
+<p>A standard mobile device targets a refresh rate of 60Hz (or up to
+120Hz on modern devices). For a smooth 60 FPS, the GPU has only 16.6
+milliseconds to render each frame. Heavy filters easily push render
+times past this threshold, causing stuttering, lag, and dropped
+frames.</p>
+<h3 id="2-thermal-throttling-and-battery-drain">2. Thermal Throttling
+and Battery Drain</h3>
+<p>Mobile devices lack active cooling (fans). Running complex shader
+math continuously forces the GPU to operate at maximum capacity. This
+generates rapid heat, triggering the operating system to thermally
+throttle both the CPU and GPU to cool down the device, which further
+degrades the application's performance.</p>
+<h3 id="3-memory-vram-overhead-and-crashes">3. Memory (VRAM) Overhead
+and Crashes</h3>
+<p>Each active filter generates temporary render textures. Mobile
+devices share system memory between the CPU and GPU. If multiple heavy
+filters are active simultaneously, the device may run out of memory,
+causing the mobile browser tab to crash or reload.</p>
+<h2 id="best-practices-for-optimizing-pixijs-filters-on-mobile">Best
+Practices for Optimizing Pixi.js Filters on Mobile</h2>
+<p>To maintain high performance on mobile devices, developers should
+implement the following optimization techniques:</p>
+<h3 id="adjust-filter-resolution">Adjust Filter Resolution</h3>
+<p>You can significantly reduce the pixel workload by lowering the
+resolution of the filter. By setting
+<code>filter.resolution = 0.5</code> (or lower), Pixi.js renders the
+filter at a lower resolution and scales it up, reducing the GPU workload
+by 75% with minimal loss in visual quality for effects like blur.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> blurFilter <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="at">filters</span><span class="op">.</span><span class="fu">BlurFilter</span>()<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>blurFilter<span class="op">.</span><span class="at">resolution</span> <span class="op">=</span> <span class="fl">0.5</span><span class="op">;</span> <span class="co">// Render at half resolution</span></span></code></pre></div>
+<h3 id="define-a-strict-filter-area">Define a Strict Filter Area</h3>
+<p>By default, Pixi.js calculates filters across the entire screen
+bounds of the object. Define a <code>filterArea</code> to restrict the
+shader calculations strictly to the region where the effect is
+visible.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>container<span class="op">.</span><span class="at">filterArea</span> <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Rectangle</span>(<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">300</span><span class="op">,</span> <span class="dv">200</span>)<span class="op">;</span></span></code></pre></div>
+<h3 id="cache-static-filtered-objects">Cache Static Filtered
+Objects</h3>
+<p>If a filtered object does not animate or change dynamically, cache it
+as a static texture. Using <code>container.cacheAsBitmap = true</code>
+allows Pixi.js to render the filter once, save it as an image, and draw
+that image in subsequent frames without recalculating the filter.</p>
+<h3 id="disable-filters-for-low-end-mobile-devices">Disable Filters for
+Low-End Mobile Devices</h3>
+<p>Implement a device-detection script or benchmark the initial frame
+rate. If the user is on a mobile device or if the FPS drops below a
+certain threshold, completely disable demanding visual filters.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

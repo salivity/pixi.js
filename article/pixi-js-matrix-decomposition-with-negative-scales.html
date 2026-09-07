@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js Matrix Decomposition with Negative Scales - pixi.js</title>
+    <meta name="description" content="In Pixi.js, decomposing a transformation matrix back into human-readable properties—such as position, scale, rotation, and skew—encounters mathematical ambiguity when negative scale values are involved. Because Pixi.js calculates scale magnitudes usi">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-matrix-decomposition-with-negative-scales">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js Matrix Decomposition with Negative Scales - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-matrix-decomposition-with-negative-scales" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In Pixi.js, decomposing a transformation matrix back into human-readable properties—such as position, scale, rotation, and skew—encounters mathematical ambiguity when negative scale values are involved. Because Pixi.js calculates scale magnitudes usi" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-matrix-decomposition-with-negative-scales">Pixi.js Matrix
+Decomposition with Negative Scales</h1>
+<p>In Pixi.js, decomposing a transformation matrix back into
+human-readable properties—such as position, scale, rotation, and
+skew—encounters mathematical ambiguity when negative scale values are
+involved. Because Pixi.js calculates scale magnitudes using Euclidean
+vector lengths, negative scales are inherently lost during decomposition
+and become positive values. Depending on whether one or both axes are
+inverted, Pixi.js absorbs the resulting reflection into either an
+altered rotation or a large skew offset rather than restoring the
+negative scale values.</p>
+<h3 id="the-mathematics-behind-pixijs-decomposition">The Mathematics
+Behind Pixi.js Decomposition</h3>
+<p>Pixi.js represents 2D affine transformations using a <span
+class="math inline">\(3 \times 3\)</span> matrix with six active
+components: <code>a</code>, <code>b</code>, <code>c</code>,
+<code>d</code>, <code>tx</code>, and <code>ty</code>. When an object's
+matrix is updated, these values are computed from its
+<code>position</code>, <code>scale</code>, <code>rotation</code>, and
+<code>skew</code>.</p>
+<p>When reversing this process via <code>Matrix.decompose()</code>,
+Pixi.js reconstructs the scale vectors using the Pythagorean
+theorem:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>transform<span class="op">.</span><span class="at">scale</span><span class="op">.</span><span class="at">x</span> <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sqrt</span>((a <span class="op">*</span> a) <span class="op">+</span> (b <span class="op">*</span> b))<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>transform<span class="op">.</span><span class="at">scale</span><span class="op">.</span><span class="at">y</span> <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sqrt</span>((c <span class="op">*</span> c) <span class="op">+</span> (d <span class="op">*</span> d))<span class="op">;</span></span></code></pre></div>
+<p>Because the square root function strictly returns non-negative real
+numbers, the resulting <code>transform.scale.x</code> and
+<code>transform.scale.y</code> will always be greater than or equal to
+zero.</p>
+<h3 id="case-1-both-scales-are-negative">Case 1: Both Scales Are
+Negative</h3>
+<p>When both <code>scale.x</code> and <code>scale.y</code> are negative
+(for example, <code>scale.set(-1, -1)</code>), the matrix determinant
+remains positive (<span class="math inline">\(ad - bc &gt; 0\)</span>).
+Geometrically, scaling an object by <span
+class="math inline">\(-1\)</span> on both axes is identical to rotating
+that object by 180 degrees (<span class="math inline">\(\pi\)</span>
+radians).</p>
+<p>During decomposition:</p>
+<ol type="1">
+<li><code>scale.x</code> and <code>scale.y</code> both evaluate to
+positive magnitudes.</li>
+<li>The internal angles <code>skewX</code> and <code>skewY</code> align
+such that their combined delta satisfies Pixi's condition for pure
+rotation.</li>
+<li>Pixi.js assigns the <span class="math inline">\(180^\circ\)</span>
+difference directly to <code>transform.rotation</code>.</li>
+<li>Skew remains <code>0</code>.</li>
+</ol>
+<p>The visual output remains correct, but the transform state is
+represented as positive scales accompanied by a <span
+class="math inline">\(180^\circ\)</span> rotation.</p>
+<h3 id="case-2-a-single-axis-is-negative-reflection">Case 2: A Single
+Axis Is Negative (Reflection)</h3>
+<p>When only one axis has a negative scale (such as
+<code>scale.x = -1</code> and <code>scale.y = 1</code>), the
+transformation produces a negative determinant (<span
+class="math inline">\(ad - bc &lt; 0\)</span>). This introduces a true
+reflection (mirroring) that cannot be reproduced using pure rotation and
+positive scales alone.</p>
+<p>During decomposition:</p>
+<ol type="1">
+<li><code>scale.x</code> and <code>scale.y</code> are once again forced
+positive via <code>Math.sqrt()</code>.</li>
+<li>Pixi.js computes <code>skewX</code> and <code>skewY</code>. Because
+of the reflection, the angles do not cancel out into a standard
+rotation.</li>
+<li>Pixi.js falls back to its skew branch: <code>rotation</code> is set
+to <code>0</code>, while the reflection is absorbed into
+<code>skew.x</code> or <code>skew.y</code> as an offset of <span
+class="math inline">\(\pi\)</span> radians (<span
+class="math inline">\(180^\circ\)</span>).</li>
+</ol>
+<h3 id="practical-implications">Practical Implications</h3>
+<p>When you rely on <code>matrix.decompose(transform)</code> to sync
+parent matrices, physics bodies, or interpolation engines, objects
+flipped across a single axis will not reflect <code>-1</code> in their
+scale properties. Instead, you will observe positive scale values
+combined with an unexpected <span
+class="math inline">\(180^\circ\)</span> skew.</p>
+<p>To preserve explicit negative scale values, track the original
+<code>scale</code> sign separately, or check the determinant of the
+matrix (<span class="math inline">\(a \cdot d - b \cdot c\)</span>). If
+the determinant is negative, you must manually invert one of the
+decomposed scale axes and subtract the corresponding <span
+class="math inline">\(\pi\)</span> adjustment from the rotation or
+skew.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

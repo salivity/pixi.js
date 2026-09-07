@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pass Structured Buffers to Pixi.js WGSL Shaders - pixi.js</title>
+    <meta name="description" content="Passing structured data buffers to WebGPU shaders in Pixi.js v8 allows you to send complex data models—such as particle arrays, lighting parameters, or matrix collections—directly to WGSL compute and fragment shaders. This article provides a direct g">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pass-structured-buffers-to-pixi-js-wgsl-shaders">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pass Structured Buffers to Pixi.js WGSL Shaders - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pass-structured-buffers-to-pixi-js-wgsl-shaders" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Passing structured data buffers to WebGPU shaders in Pixi.js v8 allows you to send complex data models—such as particle arrays, lighting parameters, or matrix collections—directly to WGSL compute and fragment shaders. This article provides a direct g" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pass-structured-buffers-to-pixijs-wgsl-shaders">Pass Structured
+Buffers to Pixi.js WGSL Shaders</h1>
+<p>Passing structured data buffers to WebGPU shaders in Pixi.js v8
+allows you to send complex data models—such as particle arrays, lighting
+parameters, or matrix collections—directly to WGSL compute and fragment
+shaders. This article provides a direct guide to structuring WGSL memory
+layouts, initializing typed buffers in Pixi.js, configuring
+<code>BufferUsage</code> flags for uniform and storage buffers, and
+binding those resources to custom fragment filters and compute
+pipelines.</p>
+<hr />
+<h3 id="1-memory-alignment-and-wgsl-struct-layout">1. Memory Alignment
+and WGSL Struct Layout</h3>
+<p>WGSL enforces strict byte-alignment rules for structured data (both
+<code>uniform</code> and <code>storage</code> buffers). When matching
+JavaScript typed arrays to WGSL structs:</p>
+<ul>
+<li><code>f32</code>, <code>i32</code>, <code>u32</code>: 4 bytes
+(align: 4)</li>
+<li><code>vec2&lt;f32&gt;</code>: 8 bytes (align: 8)</li>
+<li><code>vec3&lt;f32&gt;</code>: 16 bytes (align: 16)</li>
+<li><code>vec4&lt;f32&gt;</code>: 16 bytes (align: 16)</li>
+<li>Structs inside arrays must be aligned to multiples of 16 bytes.</li>
+</ul>
+<pre class="wgsl"><code>// WGSL Struct Definition
+struct ItemData {
+    position: vec2&lt;f32&gt;, // 8 bytes (offset 0)
+    scale: f32,          // 4 bytes (offset 8)
+    padding: f32,        // 4 bytes (offset 12, ensures 16-byte struct size)
+    color: vec4&lt;f32&gt;,    // 16 bytes (offset 16)
+};
+
+// Storage buffer binding (Compute or Fragment)
+@group(0) @binding(0) var&lt;storage, read&gt; items: array&lt;ItemData&gt;;</code></pre>
+<hr />
+<h3 id="2-creating-the-structured-buffer-in-pixijs">2. Creating the
+Structured Buffer in Pixi.js</h3>
+<p>Pixi.js manages WebGPU buffers via the <code>Buffer</code> class.
+Populate a <code>Float32Array</code> matching your WGSL struct's byte
+offsets, then create the buffer with appropriate usage flags:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { <span class="bu">Buffer</span><span class="op">,</span> BufferUsage } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ITEM_COUNT <span class="op">=</span> <span class="dv">100</span><span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FLOATS_PER_ITEM <span class="op">=</span> <span class="dv">8</span><span class="op">;</span> <span class="co">// 32 bytes total per item (8 * 4 bytes)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> bufferData <span class="op">=</span> <span class="kw">new</span> <span class="bu">Float32Array</span>(ITEM_COUNT <span class="op">*</span> FLOATS_PER_ITEM)<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> ITEM_COUNT<span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> offset <span class="op">=</span> i <span class="op">*</span> FLOATS_PER_ITEM<span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// position (vec2)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    bufferData[offset <span class="op">+</span> <span class="dv">0</span>] <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">random</span>() <span class="op">*</span> <span class="dv">800</span><span class="op">;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    bufferData[offset <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">random</span>() <span class="op">*</span> <span class="dv">600</span><span class="op">;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// scale (f32)</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    bufferData[offset <span class="op">+</span> <span class="dv">2</span>] <span class="op">=</span> <span class="fl">1.0</span><span class="op">;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">// padding</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    bufferData[offset <span class="op">+</span> <span class="dv">3</span>] <span class="op">=</span> <span class="fl">0.0</span><span class="op">;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">// color (vec4)</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    bufferData[offset <span class="op">+</span> <span class="dv">4</span>] <span class="op">=</span> <span class="fl">1.0</span><span class="op">;</span> <span class="co">// r</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    bufferData[offset <span class="op">+</span> <span class="dv">5</span>] <span class="op">=</span> <span class="fl">0.5</span><span class="op">;</span> <span class="co">// g</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    bufferData[offset <span class="op">+</span> <span class="dv">6</span>] <span class="op">=</span> <span class="fl">0.2</span><span class="op">;</span> <span class="co">// b</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    bufferData[offset <span class="op">+</span> <span class="dv">7</span>] <span class="op">=</span> <span class="fl">1.0</span><span class="op">;</span> <span class="co">// a</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co">// Create the Pixi.js Buffer</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> structuredBuffer <span class="op">=</span> <span class="kw">new</span> <span class="bu">Buffer</span>({</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="dt">data</span><span class="op">:</span> bufferData<span class="op">,</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="dt">usage</span><span class="op">:</span> BufferUsage<span class="op">.</span><span class="at">STORAGE</span> <span class="op">|</span> BufferUsage<span class="op">.</span><span class="at">COPY_DST</span><span class="op">,</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<ul>
+<li>For uniform buffers, use
+<code>BufferUsage.UNIFORM | BufferUsage.COPY_DST</code>.</li>
+<li>For storage buffers (read/write in compute, or read-only in
+fragment), use <code>BufferUsage.STORAGE</code>.</li>
+</ul>
+<hr />
+<h3 id="3-binding-to-a-fragment-shader-via-filter">3. Binding to a
+Fragment Shader via Filter</h3>
+<p>To pass your structured buffer to a fragment shader, use a custom
+<code>Filter</code> with a WGSL shader program:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { Filter<span class="op">,</span> GlProgram<span class="op">,</span> GpuProgram } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> wgslFragmentSource <span class="op">=</span> <span class="vs">`</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="vs">    struct ItemData {</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="vs">        position: vec2&lt;f32&gt;,</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="vs">        scale: f32,</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="vs">        padding: f32,</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="vs">        color: vec4&lt;f32&gt;,</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="vs">    };</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="vs">    @group(0) @binding(1) var&lt;storage, read&gt; items: array&lt;ItemData&gt;;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="vs">    @fragment</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="vs">    fn mainFragment(</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="vs">        @location(0) uv: vec2&lt;f32&gt;</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="vs">    ) -&gt; @location(0) vec4&lt;f32&gt; {</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="vs">        let firstItem = items[0];</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="vs">        return firstItem.color;</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="vs">    }</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="vs">`</span><span class="op">;</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> gpuProgram <span class="op">=</span> GpuProgram<span class="op">.</span><span class="fu">from</span>({</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="dt">fragment</span><span class="op">:</span> {</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>        <span class="dt">source</span><span class="op">:</span> wgslFragmentSource<span class="op">,</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>        <span class="dt">entryPoint</span><span class="op">:</span> <span class="st">&#39;mainFragment&#39;</span><span class="op">,</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    }<span class="op">,</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> customFilter <span class="op">=</span> <span class="kw">new</span> <span class="fu">Filter</span>({</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    gpuProgram<span class="op">,</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="dt">resources</span><span class="op">:</span> {</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>        <span class="dt">items</span><span class="op">:</span> structuredBuffer<span class="op">,</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    }<span class="op">,</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="co">// Apply to any Pixi Container/Sprite</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>sprite<span class="op">.</span><span class="at">filters</span> <span class="op">=</span> [customFilter]<span class="op">;</span></span></code></pre></div>
+<hr />
+<h3 id="4-binding-to-a-compute-shader">4. Binding to a Compute
+Shader</h3>
+<p>Compute shaders allow high-performance calculations on structured
+buffers. You can bind read/write buffers to execute compute passes:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { WebGPUSystem } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> computeSource <span class="op">=</span> <span class="vs">`</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="vs">    struct ItemData {</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="vs">        position: vec2&lt;f32&gt;,</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="vs">        scale: f32,</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="vs">        padding: f32,</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="vs">        color: vec4&lt;f32&gt;,</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="vs">    };</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="vs">    @group(0) @binding(0) var&lt;storage, read_write&gt; items: array&lt;ItemData&gt;;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="vs">    @compute @workgroup_size(64)</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="vs">    fn mainCompute(@builtin(global_invocation_id) id: vec3&lt;u32&gt;) {</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="vs">        let index = id.x;</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="vs">        if (index &gt;= arrayLength(&amp;items)) {</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="vs">            return;</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="vs">        }</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="vs">        items[index].position.x += 1.0;</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="vs">    }</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="vs">`</span><span class="op">;</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co">// Execution via WebGPU device wrapper</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> device <span class="op">=</span> renderer<span class="op">.</span><span class="at">gpu</span><span class="op">.</span><span class="at">device</span><span class="op">;</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> computeModule <span class="op">=</span> device<span class="op">.</span><span class="fu">createShaderModule</span>({ <span class="dt">code</span><span class="op">:</span> computeSource })<span class="op">;</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> bindGroupLayout <span class="op">=</span> device<span class="op">.</span><span class="fu">createBindGroupLayout</span>({</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    <span class="dt">entries</span><span class="op">:</span> [{</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>        <span class="dt">binding</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>        <span class="dt">visibility</span><span class="op">:</span> GPUShaderStage<span class="op">.</span><span class="at">COMPUTE</span><span class="op">,</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>        <span class="dt">buffer</span><span class="op">:</span> { <span class="dt">type</span><span class="op">:</span> <span class="st">&#39;storage&#39;</span> }<span class="op">,</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>    }]<span class="op">,</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> computePipeline <span class="op">=</span> device<span class="op">.</span><span class="fu">createComputePipeline</span>({</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    <span class="dt">layout</span><span class="op">:</span> device<span class="op">.</span><span class="fu">createPipelineLayout</span>({ <span class="dt">bindGroupLayouts</span><span class="op">:</span> [bindGroupLayout] })<span class="op">,</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>    <span class="dt">compute</span><span class="op">:</span> { <span class="dt">module</span><span class="op">:</span> computeModule<span class="op">,</span> <span class="dt">entryPoint</span><span class="op">:</span> <span class="st">&#39;mainCompute&#39;</span> }<span class="op">,</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> bindGroup <span class="op">=</span> device<span class="op">.</span><span class="fu">createBindGroup</span>({</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>    <span class="dt">layout</span><span class="op">:</span> bindGroupLayout<span class="op">,</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>    <span class="dt">entries</span><span class="op">:</span> [{</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>        <span class="dt">binding</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>        <span class="dt">resource</span><span class="op">:</span> { <span class="dt">buffer</span><span class="op">:</span> structuredBuffer<span class="op">.</span><span class="at">gpuBuffer</span> }<span class="op">,</span></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>    }]<span class="op">,</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a><span class="co">// Dispatch compute work</span></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> commandEncoder <span class="op">=</span> device<span class="op">.</span><span class="fu">createCommandEncoder</span>()<span class="op">;</span></span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> passEncoder <span class="op">=</span> commandEncoder<span class="op">.</span><span class="fu">beginComputePass</span>()<span class="op">;</span></span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>passEncoder<span class="op">.</span><span class="fu">setPipeline</span>(computePipeline)<span class="op">;</span></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>passEncoder<span class="op">.</span><span class="fu">setBindGroup</span>(<span class="dv">0</span><span class="op">,</span> bindGroup)<span class="op">;</span></span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>passEncoder<span class="op">.</span><span class="fu">dispatchWorkgroups</span>(<span class="bu">Math</span><span class="op">.</span><span class="fu">ceil</span>(ITEM_COUNT <span class="op">/</span> <span class="dv">64</span>))<span class="op">;</span></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>passEncoder<span class="op">.</span><span class="fu">end</span>()<span class="op">;</span></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>device<span class="op">.</span><span class="at">queue</span><span class="op">.</span><span class="fu">submit</span>([commandEncoder<span class="op">.</span><span class="fu">finish</span>()])<span class="op">;</span></span></code></pre></div>
+<hr />
+<h3 id="5-updating-structured-data-at-runtime">5. Updating Structured
+Data at Runtime</h3>
+<p>When your structured data changes, write directly to the local typed
+array and inform Pixi.js to mark the buffer for upload:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Modify the data</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>bufferData[<span class="dv">0</span>] <span class="op">=</span> <span class="fl">350.0</span><span class="op">;</span> <span class="co">// Update first item&#39;s x-coordinate</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Queue buffer update to GPU</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>structuredBuffer<span class="op">.</span><span class="fu">update</span>()<span class="op">;</span></span></code></pre></div>
+<p>Pixi.js manages the underlying <code>queue.writeBuffer</code> call on
+the subsequent render cycle, ensuring the WGSL shader receives the
+updated values.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

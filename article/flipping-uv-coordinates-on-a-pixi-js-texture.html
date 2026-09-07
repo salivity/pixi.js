@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flipping UV Coordinates on a Pixi.js Texture - pixi.js</title>
+    <meta name="description" content="This article explains how to flip texture UV coordinates horizontally or vertically in Pixi.js without changing the scale property of a Sprite. You will learn how UV coordinates are structured within Pixi.js textures, how to clone a texture to prevent si">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/flipping-uv-coordinates-on-a-pixi-js-texture">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Flipping UV Coordinates on a Pixi.js Texture - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/flipping-uv-coordinates-on-a-pixi-js-texture" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how to flip texture UV coordinates horizontally or vertically in Pixi.js without changing the scale property of a Sprite. You will learn how UV coordinates are structured within Pixi.js textures, how to clone a texture to prevent si" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="flipping-uv-coordinates-on-a-pixijs-texture">Flipping UV
+Coordinates on a Pixi.js Texture</h1>
+<p>This article explains how to flip texture UV coordinates horizontally
+or vertically in Pixi.js without changing the <code>scale</code>
+property of a <code>Sprite</code>. You will learn how UV coordinates are
+structured within Pixi.js textures, how to clone a texture to prevent
+side effects on other sprites, and how to programmatically swap UV
+corner points or apply dihedral symmetries (<code>groupD8</code>) to
+invert the rendered image.</p>
+<hr />
+<h3 id="why-avoid-inverting-sprite-scale">Why Avoid Inverting Sprite
+Scale?</h3>
+<p>Setting <code>sprite.scale.x = -1</code> or
+<code>sprite.scale.y = -1</code> is the common way to mirror a sprite,
+but it alters the transformation matrix of the entire display object.
+This inversion cascades down to all child display objects, reverses
+physics collider offsets, and complicates local coordinate calculations.
+Inverting the UV coordinates directly on the texture flips the visual
+content without altering the sprite's transform hierarchy.</p>
+<h3 id="understanding-pixijs-uv-mapping">Understanding Pixi.js UV
+Mapping</h3>
+<p>Pixi.js stores UV mapping in a <code>TextureUvs</code> object
+accessed via <code>texture.uvs</code>. The UV data is stored in a
+<code>Float32Array</code> named <code>uvsFloat32</code> containing eight
+numbers representing four coordinate pairs:</p>
+<ul>
+<li><code>(x0, y0)</code>: Top-Left</li>
+<li><code>(x1, y1)</code>: Top-Right</li>
+<li><code>(x2, y2)</code>: Bottom-Right</li>
+<li><code>(x3, y3)</code>: Bottom-Left</li>
+</ul>
+<p>Because multiple sprites often share the same <code>Texture</code>
+instance, you should always clone the texture before mutating its UV
+data.</p>
+<h3 id="method-1-manually-swapping-uv-coordinates">Method 1: Manually
+Swapping UV Coordinates</h3>
+<p>To flip an image horizontally, swap the top-left and top-right
+coordinates, along with the bottom-left and bottom-right coordinates. To
+flip vertically, swap the top-left and bottom-left coordinates, along
+with the top-right and bottom-right coordinates.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> <span class="op">*</span> <span class="im">as</span> PIXI <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">getFlippedTexture</span>(sourceTexture<span class="op">,</span> flipX <span class="op">=</span> <span class="kw">false</span><span class="op">,</span> flipY <span class="op">=</span> <span class="kw">false</span>) {</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Clone to avoid mutating the original texture used by other sprites</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> texture <span class="op">=</span> sourceTexture<span class="op">.</span><span class="fu">clone</span>()<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Ensure UVs are computed</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    texture<span class="op">.</span><span class="fu">updateUvs</span>()<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> uvs <span class="op">=</span> texture<span class="op">.</span><span class="at">uvs</span><span class="op">.</span><span class="at">uvsFloat32</span><span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// uvs format: [x0, y0, x1, y1, x2, y2, x3, y3]</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> x0 <span class="op">=</span> uvs[<span class="dv">0</span>]<span class="op">,</span> y0 <span class="op">=</span> uvs[<span class="dv">1</span>]<span class="op">;</span> <span class="co">// Top-Left</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> x1 <span class="op">=</span> uvs[<span class="dv">2</span>]<span class="op">,</span> y1 <span class="op">=</span> uvs[<span class="dv">3</span>]<span class="op">;</span> <span class="co">// Top-Right</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> x2 <span class="op">=</span> uvs[<span class="dv">4</span>]<span class="op">,</span> y2 <span class="op">=</span> uvs[<span class="dv">5</span>]<span class="op">;</span> <span class="co">// Bottom-Right</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> x3 <span class="op">=</span> uvs[<span class="dv">6</span>]<span class="op">,</span> y3 <span class="op">=</span> uvs[<span class="dv">7</span>]<span class="op">;</span> <span class="co">// Bottom-Left</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (flipX) {</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Swap left corners with right corners</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        [x0<span class="op">,</span> x1] <span class="op">=</span> [x1<span class="op">,</span> x0]<span class="op">;</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        [y0<span class="op">,</span> y1] <span class="op">=</span> [y1<span class="op">,</span> y0]<span class="op">;</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>        [x3<span class="op">,</span> x2] <span class="op">=</span> [x2<span class="op">,</span> x3]<span class="op">;</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>        [y3<span class="op">,</span> y2] <span class="op">=</span> [y2<span class="op">,</span> y3]<span class="op">;</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (flipY) {</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Swap top corners with bottom corners</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        [x0<span class="op">,</span> x3] <span class="op">=</span> [x3<span class="op">,</span> x0]<span class="op">;</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        [y0<span class="op">,</span> y3] <span class="op">=</span> [y3<span class="op">,</span> y0]<span class="op">;</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>        [x1<span class="op">,</span> x2] <span class="op">=</span> [x2<span class="op">,</span> x1]<span class="op">;</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        [y1<span class="op">,</span> y2] <span class="op">=</span> [y2<span class="op">,</span> y1]<span class="op">;</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    uvs[<span class="dv">0</span>] <span class="op">=</span> x0<span class="op">;</span> uvs[<span class="dv">1</span>] <span class="op">=</span> y0<span class="op">;</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    uvs[<span class="dv">2</span>] <span class="op">=</span> x1<span class="op">;</span> uvs[<span class="dv">3</span>] <span class="op">=</span> y1<span class="op">;</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    uvs[<span class="dv">4</span>] <span class="op">=</span> x2<span class="op">;</span> uvs[<span class="dv">5</span>] <span class="op">=</span> y2<span class="op">;</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    uvs[<span class="dv">6</span>] <span class="op">=</span> x3<span class="op">;</span> uvs[<span class="dv">7</span>] <span class="op">=</span> y3<span class="op">;</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> texture<span class="op">;</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="co">// Usage:</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> originalTexture <span class="op">=</span> PIXI<span class="op">.</span><span class="at">Texture</span><span class="op">.</span><span class="fu">from</span>(<span class="st">&#39;character.png&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> flippedTexture <span class="op">=</span> <span class="fu">getFlippedTexture</span>(originalTexture<span class="op">,</span> <span class="kw">true</span><span class="op">,</span> <span class="kw">false</span>)<span class="op">;</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> sprite <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Sprite</span>(flippedTexture)<span class="op">;</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="co">// sprite.scale remains (1, 1)</span></span></code></pre></div>
+<p><em>Note: Calling <code>texture.updateUvs()</code> again later on
+this cloned texture will reset the UV values back to their default
+layout based on <code>frame</code> and <code>rotate</code>.</em></p>
+<h3 id="method-2-using-pixis-built-in-dihedral-group-groupd8">Method 2:
+Using Pixi's Built-in Dihedral Group (<code>groupD8</code>)</h3>
+<p>Pixi.js features an internal math utility, <code>PIXI.groupD8</code>,
+to handle square rotations and reflections. <code>Texture.rotate</code>
+accepts <code>groupD8</code> flags, which automatically recalibrate the
+UV coordinates upon calling <code>texture.updateUvs()</code>.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> <span class="op">*</span> <span class="im">as</span> PIXI <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">createMirroredTexture</span>(sourceTexture<span class="op">,</span> flipX <span class="op">=</span> <span class="kw">false</span><span class="op">,</span> flipY <span class="op">=</span> <span class="kw">false</span>) {</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> texture <span class="op">=</span> sourceTexture<span class="op">.</span><span class="fu">clone</span>()<span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> rotation <span class="op">=</span> texture<span class="op">.</span><span class="at">rotate</span> <span class="op">||</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (flipX) {</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Mirror horizontally using groupD8</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        rotation <span class="op">=</span> PIXI<span class="op">.</span><span class="at">groupD8</span><span class="op">.</span><span class="fu">mirrorX</span>(rotation)<span class="op">;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (flipY) {</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Mirror vertically using groupD8</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        rotation <span class="op">=</span> PIXI<span class="op">.</span><span class="at">groupD8</span><span class="op">.</span><span class="fu">mirrorY</span>(rotation)<span class="op">;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    texture<span class="op">.</span><span class="at">rotate</span> <span class="op">=</span> rotation<span class="op">;</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    texture<span class="op">.</span><span class="fu">updateUvs</span>()<span class="op">;</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> texture<span class="op">;</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co">// Usage:</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> flippedTexture <span class="op">=</span> <span class="fu">createMirroredTexture</span>(baseTexture<span class="op">,</span> <span class="kw">true</span><span class="op">,</span> <span class="kw">false</span>)<span class="op">;</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> sprite <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Sprite</span>(flippedTexture)<span class="op">;</span></span></code></pre></div>
+<p>Using <code>groupD8</code> preserves changes across internal frame
+updates because the reflection state is stored directly within the
+texture's transformation definition rather than as raw array
+overrides.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

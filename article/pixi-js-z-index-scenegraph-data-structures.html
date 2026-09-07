@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js Z-Index Scenegraph Data Structures - pixi.js</title>
+    <meta name="description" content="Pixi.js maintains its scenegraph and z-index ordering primarily through standard JavaScript arrays combined with a deferred dirty-flag sorting mechanism. Rather than employing complex tree structures like AVL trees or dedicated priority queues for depth">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-z-index-scenegraph-data-structures">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js Z-Index Scenegraph Data Structures - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-z-index-scenegraph-data-structures" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Pixi.js maintains its scenegraph and z-index ordering primarily through standard JavaScript arrays combined with a deferred dirty-flag sorting mechanism. Rather than employing complex tree structures like AVL trees or dedicated priority queues for depth" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-z-index-scenegraph-data-structures">Pixi.js Z-Index
+Scenegraph Data Structures</h1>
+<p>Pixi.js maintains its scenegraph and z-index ordering primarily
+through standard JavaScript arrays combined with a deferred dirty-flag
+sorting mechanism. Rather than employing complex tree structures like
+AVL trees or dedicated priority queues for depth ordering, Pixi.js
+leverages a tree of <code>Container</code> objects where each node holds
+a flat array of children. When <code>zIndex</code> sorting is enabled,
+Pixi.js marks containers as dirty and performs an in-place stable sort
+on their child arrays immediately before rendering.</p>
+<h3 id="the-tree-of-flat-arrays">The Tree of Flat Arrays</h3>
+<p>At the core of the Pixi.js scenegraph is the <code>Container</code>
+class, which forms an n-ary tree representing the scene hierarchy. Each
+<code>Container</code> stores its direct descendants in a contiguous,
+linear data structure:</p>
+<ul>
+<li><strong><code>children</code> Array</strong>: A standard JavaScript
+<code>Array</code> (<code>this.children = []</code>) holding references
+to child <code>DisplayObject</code> or <code>Container</code>
+instances.</li>
+</ul>
+<p>Pixi.js relies on this standard array structure because it provides
+fast index-based lookups, optimal iteration speed for WebGL draw calls,
+and avoids the memory overhead and garbage collection pressure that
+complex pointer-based node networks create in JavaScript runtimes.</p>
+<h3 id="z-index-properties-and-tracking">Z-Index Properties and
+Tracking</h3>
+<p>Every child object in Pixi.js contains a <code>zIndex</code>
+numerical property, which defaults to <code>0</code>. However, the scene
+is not sorted automatically by default. Z-index ordering is controlled
+through specific flags:</p>
+<ul>
+<li><strong><code>sortableChildren</code></strong>: A boolean flag on
+the parent <code>Container</code>. When set to <code>false</code>,
+Pixi.js preserves the default rendering order, which is the exact order
+in which children were appended via <code>addChild()</code>.</li>
+<li><strong><code>zIndex</code></strong>: A numerical value assigned to
+an individual child specifying its relative stacking priority among
+siblings.</li>
+<li><strong><code>sortDirty</code></strong>: An internal boolean flag on
+the parent container. Whenever a child’s <code>zIndex</code> is updated,
+or when children are added or removed, Pixi.js sets
+<code>parent.sortDirty = true</code>.</li>
+</ul>
+<h3 id="the-deferred-sorting-mechanism">The Deferred Sorting
+Mechanism</h3>
+<p>Pixi.js does not sort the <code>children</code> array immediately
+when a <code>zIndex</code> property is modified. Immediate insertion
+sorting would degrade performance when multiple objects update their
+depths within the same frame (such as in a game loop). Instead, Pixi.js
+uses deferred evaluation.</p>
+<p>During the render or update cycle (typically within
+<code>updateTransform</code> or prior to the render pass), the engine
+checks the container's <code>sortDirty</code> flag. If
+<code>sortableChildren</code> is <code>true</code> and
+<code>sortDirty</code> is <code>true</code>, Pixi.js invokes its
+internal <code>sortChildren()</code> method:</p>
+<ol type="1">
+<li><strong>In-Place Stable Sort</strong>: Pixi.js sorts the underlying
+<code>children</code> array directly using JavaScript’s native
+<code>Array.prototype.sort()</code>.</li>
+<li><strong>Comparator Logic</strong>: The comparator evaluates the
+difference between child <code>zIndex</code> values
+(<code>a.zIndex - b.zIndex</code>).</li>
+<li><strong>Stability Preservation</strong>: Modern JavaScript engines
+implement ECMAScript-compliant stable sorting (such as TimSort in V8).
+If two children have identical <code>zIndex</code> values, their
+relative insertion order within the array is preserved.</li>
+<li><strong>Flag Reset</strong>: Once sorted, <code>sortDirty</code> is
+toggled back to <code>false</code>, ensuring no redundant sorting occurs
+on subsequent frames unless depths are altered again.</li>
+</ol>
+<h3 id="tree-traversal-and-draw-calls">Tree Traversal and Draw
+Calls</h3>
+<p>Once each dirty <code>children</code> array is sorted, the
+scenegraph's final visual hierarchy is determined via a pre-order
+depth-first traversal. Because sorting is scoped strictly to siblings
+within each local <code>Container.children</code> array, z-index values
+do not globally cross container boundaries. The rendering pipeline
+traverses down the tree, transforming matrices and executing WebGL batch
+draw calls in the sequence defined by each container's sorted array.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

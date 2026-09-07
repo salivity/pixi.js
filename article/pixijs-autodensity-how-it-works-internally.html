@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS autoDensity: How It Works Internally - pixi.js</title>
+    <meta name="description" content="When configured in a PixiJS application, the autoDensity: true setting automatically synchronizes the canvas element's CSS dimensions with its internal rendering resolution. By bridging the gap between physical device pixels and CSS display pixels, this">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-autodensity-how-it-works-internally">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS autoDensity: How It Works Internally - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-autodensity-how-it-works-internally" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When configured in a PixiJS application, the autoDensity: true setting automatically synchronizes the canvas element's CSS dimensions with its internal rendering resolution. By bridging the gap between physical device pixels and CSS display pixels, this" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-autodensity-how-it-works-internally">PixiJS autoDensity:
+How It Works Internally</h1>
+<p>When configured in a PixiJS application, the
+<code>autoDensity: true</code> setting automatically synchronizes the
+canvas element's CSS dimensions with its internal rendering resolution.
+By bridging the gap between physical device pixels and CSS display
+pixels, this property prevents the canvas from visually expanding or
+blurring on high-DPI (Retina) displays without requiring manual CSS
+calculations.</p>
+<h3 id="the-problem-physical-pixels-vs-css-pixels">The Problem: Physical
+Pixels vs. CSS Pixels</h3>
+<p>An HTML <code>&lt;canvas&gt;</code> element possesses two distinct
+sets of dimensions:</p>
+<ol type="1">
+<li><strong>Drawing Buffer Dimensions (<code>width</code> and
+<code>height</code> attributes):</strong> The internal coordinate space
+specifying how many physical pixels the GPU draws to.</li>
+<li><strong>Display Dimensions (<code>style.width</code> and
+<code>style.height</code>):</strong> The external size of the element on
+the web page, measured in CSS pixels.</li>
+</ol>
+<p>When you configure PixiJS with a <code>resolution</code> greater than
+<code>1</code> (such as <code>window.devicePixelRatio</code>), PixiJS
+scales up the canvas's drawing buffer so that visuals remain sharp on
+dense screens. However, by default, the browser treats each unit in the
+drawing buffer as a CSS pixel. If an 800x600 stage is given a
+<code>resolution</code> of <code>2</code>, the drawing buffer expands to
+1600x1200 pixels. Without explicit CSS styling, the canvas renders at
+twice its intended visual size on screen.</p>
+<h3 id="the-internal-mechanics-of-autodensity">The Internal Mechanics of
+<code>autoDensity</code></h3>
+<p>Internally, PixiJS delegates canvas management to its
+<code>ViewSystem</code> (or the underlying renderer system). The
+<code>autoDensity</code> boolean directly alters how this system handles
+canvas sizing during initialization and inside the
+<code>renderer.resize()</code> method.</p>
+<p>When <code>autoDensity</code> is enabled, PixiJS executes the
+following operations under the hood:</p>
+<h4 id="1-resolution-scaling">1. Resolution Scaling</h4>
+<p>PixiJS sets the internal drawing buffer to match the requested
+logical size multiplied by the resolution factor:</p>
+<pre><code>canvas.width = Math.round(screen.width * resolution);
+canvas.height = Math.round(screen.height * resolution);</code></pre>
+<h4 id="2-automatic-css-dimension-assignment">2. Automatic CSS Dimension
+Assignment</h4>
+<p>Immediately following the buffer calculation, the
+<code>ViewSystem</code> checks the <code>autoDensity</code> flag. If
+<code>autoDensity</code> is <code>true</code>, it writes directly to the
+canvas's inline style object:</p>
+<pre><code>canvas.style.width = `${screen.width}px`;
+canvas.style.height = `${screen.height}px`;</code></pre>
+<p>By explicitly forcing the CSS width and height back down to the
+unscaled screen dimensions, the high-resolution internal buffer is
+compressed into the intended visual space on the page.</p>
+<h4 id="3-continuous-synchronization-via-resize">3. Continuous
+Synchronization via <code>resize()</code></h4>
+<p>Whenever <code>app.renderer.resize(width, height)</code> is called,
+the renderer recalculates both internal render targets and re-evaluates
+the <code>autoDensity</code> condition. If active, it continuously
+updates <code>canvas.style.width</code> and
+<code>canvas.style.height</code> to match the newly passed logical
+dimensions.</p>
+<h3 id="what-happens-when-autodensity-is-false">What Happens When
+<code>autoDensity</code> Is <code>false</code></h3>
+<p>When <code>autoDensity</code> is set to <code>false</code> (the
+default behavior in earlier versions), PixiJS completely ignores
+<code>canvas.style.width</code> and
+<code>canvas.style.height</code>.</p>
+<p>As a result:</p>
+<ul>
+<li>The canvas relies entirely on external CSS stylesheets or default
+browser rules.</li>
+<li>If no external CSS overrides exist, the canvas visually stretches to
+match the internal pixel dimensions, breaking the intended page layout
+whenever <code>resolution &gt; 1</code>.</li>
+<li>Developers must manually calculate and assign
+<code>canvas.style.width</code> and <code>canvas.style.height</code>
+whenever the renderer is resized.</li>
+</ul>
+<p>Enabling <code>autoDensity: true</code> eliminates this boilerplate
+by ensuring the DOM presentation size remains anchored to the logical
+scene size, while the GPU renders at the native hardware resolution.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

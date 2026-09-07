@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Render Tiled JSON Tilemaps in Pixi.js - pixi.js</title>
+    <meta name="description" content="Rendering Tiled maps in Pixi.js involves exporting your project as a JSON file, loading the map data and tileset images via the Pixi.js asset loader, and mapping individual tile IDs to textures. This guide covers the complete process of reading layer dat">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/render-tiled-json-tilemaps-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Render Tiled JSON Tilemaps in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/render-tiled-json-tilemaps-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Rendering Tiled maps in Pixi.js involves exporting your project as a JSON file, loading the map data and tileset images via the Pixi.js asset loader, and mapping individual tile IDs to textures. This guide covers the complete process of reading layer dat" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="render-tiled-json-tilemaps-in-pixijs">Render Tiled JSON Tilemaps
+in Pixi.js</h1>
+<p>Rendering Tiled maps in Pixi.js involves exporting your project as a
+JSON file, loading the map data and tileset images via the Pixi.js asset
+loader, and mapping individual tile IDs to textures. This guide covers
+the complete process of reading layer data, slicing tileset textures
+using coordinate math, and drawing the final 2D grid efficiently on
+screen.</p>
+<h3 id="1-exporting-the-map-from-tiled">1. Exporting the Map from
+Tiled</h3>
+<ol type="1">
+<li>In Tiled, open your map and ensure your tileset is embedded or uses
+relative paths for external images.</li>
+<li>Go to <strong>File &gt; Export As...</strong></li>
+<li>Select <strong>JSON map files (*.json)</strong> as the output
+format.</li>
+<li>Keep the output JSON file and your tileset image files in your web
+project's public assets directory.</li>
+</ol>
+<h3 id="2-understanding-the-tiled-json-structure">2. Understanding the
+Tiled JSON Structure</h3>
+<p>The exported JSON file contains key properties required for
+rendering:</p>
+<ul>
+<li><code>tilewidth</code> and <code>tileheight</code>: The dimensions
+of an individual tile in pixels.</li>
+<li><code>width</code> and <code>height</code>: The dimensions of the
+map measured in tile counts.</li>
+<li><code>tilesets</code>: An array containing tileset metadata,
+including <code>firstgid</code> (the starting Global Tile ID),
+<code>image</code> source path, <code>imagewidth</code>, and
+<code>imageheight</code>.</li>
+<li><code>layers</code>: An array containing layer objects. A tile layer
+contains a <code>data</code> array representing the grid, where each
+number corresponds to a Global Tile ID (GID). A value of <code>0</code>
+denotes an empty tile.</li>
+</ul>
+<h3 id="3-slicing-the-tileset-into-textures">3. Slicing the Tileset into
+Textures</h3>
+<p>Tiled uses 1-based GIDs, while <code>0</code> represents empty space.
+To retrieve a tile texture from the tileset image:</p>
+<ol type="1">
+<li>Subtract <code>firstgid</code> from the tile's GID to get the local
+tile index.</li>
+<li>Calculate the column and row of the tile within the tileset image:
+<ul>
+<li><code>col = localIndex % (tilesetWidth / tileWidth)</code></li>
+<li><code>row = Math.floor(localIndex / (tilesetWidth / tileWidth))</code></li>
+</ul></li>
+<li>Create a <code>PIXI.Rectangle</code> frame for that region and
+create a sub-texture.</li>
+</ol>
+<h3 id="4-implementation-example">4. Implementation Example</h3>
+<p>The following implementation uses modern Pixi.js
+(<code>PIXI.Assets</code>) to load resources, parse layer data, and
+assemble the map into a <code>PIXI.Container</code>.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> <span class="op">*</span> <span class="im">as</span> PIXI <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">loadAndRenderMap</span>(app<span class="op">,</span> mapUrl) {</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 1. Fetch map JSON data</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> mapData <span class="op">=</span> <span class="cf">await</span> PIXI<span class="op">.</span><span class="at">Assets</span><span class="op">.</span><span class="fu">load</span>(mapUrl)<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 2. Load the tileset image</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Assumes single tileset; adjust path resolution as necessary</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> tilesetInfo <span class="op">=</span> mapData<span class="op">.</span><span class="at">tilesets</span>[<span class="dv">0</span>]<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> tilesetTexture <span class="op">=</span> <span class="cf">await</span> PIXI<span class="op">.</span><span class="at">Assets</span><span class="op">.</span><span class="fu">load</span>(tilesetInfo<span class="op">.</span><span class="at">image</span>)<span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> tileWidth <span class="op">=</span> mapData<span class="op">.</span><span class="at">tilewidth</span><span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> tileHeight <span class="op">=</span> mapData<span class="op">.</span><span class="at">tileheight</span><span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> tilesPerRow <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">floor</span>(tilesetInfo<span class="op">.</span><span class="at">imagewidth</span> <span class="op">/</span> tileWidth)<span class="op">;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Container to hold the entire map</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> mapContainer <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Container</span>()<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Cache generated sub-textures to avoid recreating identical textures</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> textureCache <span class="op">=</span> <span class="kw">new</span> <span class="bu">Map</span>()<span class="op">;</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">getTileTexture</span>(gid) {</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (textureCache<span class="op">.</span><span class="fu">has</span>(gid)) {</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> textureCache<span class="op">.</span><span class="fu">get</span>(gid)<span class="op">;</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> localId <span class="op">=</span> gid <span class="op">-</span> tilesetInfo<span class="op">.</span><span class="at">firstgid</span><span class="op">;</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> col <span class="op">=</span> localId <span class="op">%</span> tilesPerRow<span class="op">;</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> row <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">floor</span>(localId <span class="op">/</span> tilesPerRow)<span class="op">;</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> frame <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Rectangle</span>(</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>            col <span class="op">*</span> tileWidth<span class="op">,</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>            row <span class="op">*</span> tileHeight<span class="op">,</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>            tileWidth<span class="op">,</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>            tileHeight</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>        )<span class="op">;</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> texture <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Texture</span>({</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>            <span class="dt">source</span><span class="op">:</span> tilesetTexture<span class="op">.</span><span class="at">source</span><span class="op">,</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>            <span class="dt">frame</span><span class="op">:</span> frame</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>        textureCache<span class="op">.</span><span class="fu">set</span>(gid<span class="op">,</span> texture)<span class="op">;</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> texture<span class="op">;</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 3. Iterate through map layers</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    mapData<span class="op">.</span><span class="at">layers</span><span class="op">.</span><span class="fu">forEach</span>((layer) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (layer<span class="op">.</span><span class="at">type</span> <span class="op">!==</span> <span class="st">&#39;tilelayer&#39;</span> <span class="op">||</span> <span class="op">!</span>layer<span class="op">.</span><span class="at">visible</span>) <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> layerContainer <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Container</span>()<span class="op">;</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>        layerContainer<span class="op">.</span><span class="at">alpha</span> <span class="op">=</span> layer<span class="op">.</span><span class="at">opacity</span><span class="op">;</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>        layer<span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="fu">forEach</span>((gid<span class="op">,</span> index) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Skip empty tiles</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (gid <span class="op">===</span> <span class="dv">0</span>) <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>            <span class="kw">const</span> tileTexture <span class="op">=</span> <span class="fu">getTileTexture</span>(gid)<span class="op">;</span></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>            <span class="kw">const</span> sprite <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Sprite</span>(tileTexture)<span class="op">;</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Calculate grid position</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>            <span class="kw">const</span> x <span class="op">=</span> (index <span class="op">%</span> layer<span class="op">.</span><span class="at">width</span>) <span class="op">*</span> tileWidth<span class="op">;</span></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>            <span class="kw">const</span> y <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">floor</span>(index <span class="op">/</span> layer<span class="op">.</span><span class="at">width</span>) <span class="op">*</span> tileHeight<span class="op">;</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>            sprite<span class="op">.</span><span class="at">position</span><span class="op">.</span><span class="fu">set</span>(x<span class="op">,</span> y)<span class="op">;</span></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>            layerContainer<span class="op">.</span><span class="fu">addChild</span>(sprite)<span class="op">;</span></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>        mapContainer<span class="op">.</span><span class="fu">addChild</span>(layerContainer)<span class="op">;</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>    app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(mapContainer)<span class="op">;</span></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="5-performance-optimization-for-large-maps">5. Performance
+Optimization for Large Maps</h3>
+<p>Standard <code>PIXI.Sprite</code> instances work well for small or
+medium maps. For larger maps with thousands of tiles:</p>
+<ul>
+<li><strong>Use <code>@pixi/tilemap</code>:</strong> This official Pixi
+extension batches entire tilemaps into dedicated vertex buffers,
+eliminating performance overhead caused by thousands of individual
+sprite objects.</li>
+<li><strong>Culling:</strong> Render only the tiles visible inside the
+current camera viewport by comparing tile positions against
+<code>app.screen</code> boundaries.</li>
+<li><strong>Chunking:</strong> Divide the map into larger grid sections
+(chunks) and cache static chunks onto single textures using
+<code>app.renderer.extract</code> or render textures.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

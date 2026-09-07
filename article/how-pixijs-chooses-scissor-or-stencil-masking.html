@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How PixiJS Chooses Scissor or Stencil Masking - pixi.js</title>
+    <meta name="description" content="PixiJS dynamically optimizes render performance by automatically selecting between scissor masking and stencil masking based on the geometry and transform properties of the masking object. Scissor masking leverages hardware-level viewport clipping to res">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-pixijs-chooses-scissor-or-stencil-masking">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How PixiJS Chooses Scissor or Stencil Masking - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-pixijs-chooses-scissor-or-stencil-masking" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="PixiJS dynamically optimizes render performance by automatically selecting between scissor masking and stencil masking based on the geometry and transform properties of the masking object. Scissor masking leverages hardware-level viewport clipping to res" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-pixijs-chooses-scissor-or-stencil-masking">How PixiJS
+Chooses Scissor or Stencil Masking</h1>
+<p>PixiJS dynamically optimizes render performance by automatically
+selecting between scissor masking and stencil masking based on the
+geometry and transform properties of the masking object. Scissor masking
+leverages hardware-level viewport clipping to restrict rendering to an
+axis-aligned rectangular area with virtually zero performance overhead.
+When a mask cannot satisfy strict rectangular and alignment criteria,
+PixiJS falls back to stencil masking, which utilizes the WebGL stencil
+buffer to handle complex, arbitrary shapes at the cost of additional
+draw operations.</p>
+<h2 id="the-automatic-selection-mechanism">The Automatic Selection
+Mechanism</h2>
+<p>PixiJS evaluates masks through its internal <code>MaskSystem</code>.
+When you assign a mask to a display container, the engine checks whether
+the mask candidate can be mapped to a native WebGL scissor test
+(<code>gl.scissor</code>). The automatic decision comes down to two
+primary evaluations: geometric structure and screen-space alignment.</p>
+<h3 id="1-geometry-verification">1. Geometry Verification</h3>
+<p>PixiJS inspects the underlying data of the mask object:</p>
+<ul>
+<li><strong>Simple Rectangles:</strong> If the mask is a standard
+<code>PIXI.Rectangle</code> instance or a <code>PIXI.Graphics</code>
+object composed strictly of a single rectangular draw call
+(<code>drawRect</code>), it qualifies as a candidate for scissor
+masking.</li>
+<li><strong>Complex Shapes:</strong> If the mask contains curves,
+polygons, circles, rounded rectangles (<code>drawRoundedRect</code>),
+multiple path instructions, or holes, scissor masking is instantly ruled
+out. PixiJS assigns stencil masking to preserve the irregular contours
+using the stencil buffer.</li>
+</ul>
+<h3 id="2-world-transform-and-axis-alignment">2. World Transform and
+Axis Alignment</h3>
+<p>Even if a mask is a flat rectangle, it must remain strictly
+axis-aligned to the screen viewport:</p>
+<ul>
+<li><strong>Translation and Scale:</strong> Operations that only move or
+resize the rectangle along the X and Y axes preserve axis alignment.
+Under these transforms, the edges remain parallel to the viewport edges,
+and PixiJS utilizes scissor masking.</li>
+<li><strong>Rotation and Skew:</strong> If the mask or any of its parent
+containers apply a rotation (that is not an exact orthogonal 90-degree
+increment) or a skew, the rectangle's edges tilt relative to the screen
+grid. WebGL scissor rectangles can only be aligned to the screen
+coordinates; they cannot rotate. Therefore, any angular distortion
+forces PixiJS to automatically elevate the mask to a stencil mask.</li>
+</ul>
+<h2 id="webgl-execution-differences">WebGL Execution Differences</h2>
+<p>The decision determines how PixiJS configures the GPU pipeline:</p>
+<ul>
+<li><strong>Scissor Masking (<code>MASK_TYPES.SCISSOR</code>):</strong>
+PixiJS calculates the screen-space bounding box of the rectangular mask
+and executes <code>gl.enable(gl.SCISSOR_TEST)</code> along with
+<code>gl.scissor(x, y, width, height)</code>. The GPU discards pixels
+outside this box prior to pixel processing. No auxiliary framebuffers or
+stencil buffers are cleared or written to, resulting in optimal
+speed.</li>
+<li><strong>Stencil Masking (<code>MASK_TYPES.STENCIL</code>):</strong>
+PixiJS enables the stencil test
+(<code>gl.enable(gl.STENCIL_TEST)</code>), clears the stencil buffer,
+and renders the mask geometry to define pixel visibility. The masked
+object is then drawn where the stencil values permit. While robust and
+capable of rendering intricate vector silhouettes, this path requires
+multiple draw passes and state changes.</li>
+</ul>
+<h2 id="overriding-the-automatic-system">Overriding the Automatic
+System</h2>
+<p>PixiJS exposes explicit control via the <code>MaskData</code> class.
+While the automatic system handles most use cases reliably, developers
+can explicitly set <code>maskData.type</code> to force scissor or
+stencil behavior when building custom rendering pipelines. If a
+non-conforming shape is forced to use scissor masking, PixiJS clips
+using that shape's rectangular bounding box rather than its actual
+visual perimeter.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Texture Sub-Regions in Pixi.js - pixi.js</title>
+    <meta name="description" content="Updating a specific pixel region of an existing GPU texture without re-uploading the entire asset is possible in Pixi.js, though it is not the default behavior. Standard methods like texture.update() trigger a full CPU-to-GPU re-upload of the underlying">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/update-texture-sub-regions-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Update Texture Sub-Regions in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/update-texture-sub-regions-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Updating a specific pixel region of an existing GPU texture without re-uploading the entire asset is possible in Pixi.js, though it is not the default behavior. Standard methods like texture.update() trigger a full CPU-to-GPU re-upload of the underlying" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="update-texture-sub-regions-in-pixijs">Update Texture Sub-Regions
+in Pixi.js</h1>
+<p>Updating a specific pixel region of an existing GPU texture without
+re-uploading the entire asset is possible in Pixi.js, though it is not
+the default behavior. Standard methods like
+<code>texture.update()</code> trigger a full CPU-to-GPU re-upload of the
+underlying image or canvas source. To modify only a designated
+sub-region and save bandwidth, you must either draw into a
+<code>RenderTexture</code> or tap directly into Pixi's low-level WebGL
+context using <code>texSubImage2D</code>.</p>
+<h2 id="method-1-using-rendertexture-gpu-side-updates">Method 1: Using
+<code>RenderTexture</code> (GPU-Side Updates)</h2>
+<p>If your update originates from another display object, sprite, or
+graphical shape, using a <code>RenderTexture</code> is the cleanest
+approach. Instead of updating raw pixel arrays from the CPU, you can
+composite new elements directly onto the target texture on the GPU.</p>
+<p>By disabling the auto-clear behavior during rendering, Pixi.js will
+leave existing pixels intact and draw only the specified region:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Assume &#39;renderTexture&#39; is an existing RenderTexture</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> patchSprite <span class="op">=</span> PIXI<span class="op">.</span><span class="at">Sprite</span><span class="op">.</span><span class="fu">from</span>(<span class="st">&#39;brush_stamp.png&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>patchSprite<span class="op">.</span><span class="at">position</span><span class="op">.</span><span class="fu">set</span>(<span class="dv">50</span><span class="op">,</span> <span class="dv">50</span>)<span class="op">;</span> <span class="co">// Target region coordinates</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Render the patch into the existing texture without clearing previous pixels</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="fu">render</span>(patchSprite<span class="op">,</span> {</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">renderTexture</span><span class="op">:</span> renderTexture<span class="op">,</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">clear</span><span class="op">:</span> <span class="kw">false</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>This approach avoids transferring raw pixel buffers across the PCIe
+bus, keeping operations entirely on the GPU.</p>
+<h2
+id="method-2-using-webgl-texsubimage2d-cpu-to-gpu-partial-uploads">Method
+2: Using WebGL <code>texSubImage2D</code> (CPU-to-GPU Partial
+Uploads)</h2>
+<p>If you have raw pixel data in a typed array (such as a
+<code>Uint8Array</code>) or a small offscreen canvas that you need to
+push to a specific offset of a larger texture, you must use WebGL's
+native <code>gl.texSubImage2D</code> function. Pixi.js abstracts WebGL
+calls through its texture system, but you can bypass this abstraction
+safely.</p>
+<h3 id="implementation-steps">Implementation Steps</h3>
+<ol type="1">
+<li>Bind the target Pixi texture to a WebGL texture unit using Pixi's
+texture system.</li>
+<li>Retrieve the active <code>WebGLRenderingContext</code>.</li>
+<li>Call <code>gl.texSubImage2D</code> to write the sub-region
+data.</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">updateTextureRegion</span>(renderer<span class="op">,</span> baseTexture<span class="op">,</span> x<span class="op">,</span> y<span class="op">,</span> width<span class="op">,</span> height<span class="op">,</span> pixelData) {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> gl <span class="op">=</span> renderer<span class="op">.</span><span class="at">gl</span><span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> glTexture <span class="op">=</span> baseTexture<span class="op">.</span><span class="at">_glTextures</span>[renderer<span class="op">.</span><span class="at">CONTEXT_UID</span>]<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="op">!</span>glTexture) {</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="co">// The texture has not been initialized on the GPU yet</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        renderer<span class="op">.</span><span class="at">texture</span><span class="op">.</span><span class="fu">bind</span>(baseTexture)<span class="op">;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Bind Pixi&#39;s GPU texture explicitly</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    gl<span class="op">.</span><span class="fu">bindTexture</span>(gl<span class="op">.</span><span class="at">TEXTURE_2D</span><span class="op">,</span> glTexture<span class="op">.</span><span class="at">texture</span>)<span class="op">;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Upload only the modified pixel rectangle</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    gl<span class="op">.</span><span class="fu">texSubImage2D</span>(</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        gl<span class="op">.</span><span class="at">TEXTURE_2D</span><span class="op">,</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="dv">0</span><span class="op">,</span>                 <span class="co">// Level of detail (mip level)</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        x<span class="op">,</span>                 <span class="co">// X offset within the destination texture</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        y<span class="op">,</span>                 <span class="co">// Y offset within the destination texture</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        width<span class="op">,</span>             <span class="co">// Width of the sub-region</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        height<span class="op">,</span>            <span class="co">// Height of the sub-region</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        gl<span class="op">.</span><span class="at">RGBA</span><span class="op">,</span>           <span class="co">// Source format</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        gl<span class="op">.</span><span class="at">UNSIGNED_BYTE</span><span class="op">,</span>  <span class="co">// Source type</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        pixelData          <span class="co">// ArrayBufferView or HTMLCanvasElement/ImageBitmap</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h2 id="critical-considerations">Critical Considerations</h2>
+<ul>
+<li><strong>Mipmapping:</strong> If your base texture has mipmaps
+enabled, <code>texSubImage2D</code> only updates base level 0. You must
+manually call <code>gl.generateMipmap(gl.TEXTURE_2D)</code> after the
+update, or disable mipmaps
+(<code>baseTexture.mipmap = PIXI.MIPMAP_MODES.OFF</code>) on the texture
+to avoid visual artifacts when scaled down.</li>
+<li><strong>Context State:</strong> Avoid modifying texture parameters
+or rebinding without returning control, as Pixi.js maintains an internal
+cache of bound textures to minimize state changes.</li>
+<li><strong>PixiJS Version Differences:</strong> In PixiJS v7 and
+earlier, textures are accessed via <code>baseTexture._glTextures</code>.
+In PixiJS v8, the rendering pipeline relies on a unified WebGL/WebGPU
+abstraction layer (<code>TextureSource</code>), meaning direct WebGL
+calls require accessing the underlying device context via
+<code>renderer.backend.gl</code>.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detect Memory Leaks in PixiJS Textures and Listeners - pixi.js</title>
+    <meta name="description" content="Unreleased GPU textures and dangling event listeners are the two most common causes of performance degradation and memory bloat in Pixi.js applications. This guide details how to identify, track, and isolate these memory leaks using Chrome DevTools, inte">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/detect-memory-leaks-in-pixijs-textures-and-listeners">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Detect Memory Leaks in PixiJS Textures and Listeners - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/detect-memory-leaks-in-pixijs-textures-and-listeners" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Unreleased GPU textures and dangling event listeners are the two most common causes of performance degradation and memory bloat in Pixi.js applications. This guide details how to identify, track, and isolate these memory leaks using Chrome DevTools, inte" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="detect-memory-leaks-in-pixijs-textures-and-listeners">Detect
+Memory Leaks in PixiJS Textures and Listeners</h1>
+<p>Unreleased GPU textures and dangling event listeners are the two most
+common causes of performance degradation and memory bloat in Pixi.js
+applications. This guide details how to identify, track, and isolate
+these memory leaks using Chrome DevTools, internal Pixi.js cache
+inspections, and proper disposal patterns. By understanding how the
+JavaScript garbage collector interacts with WebGL resources, you can
+quickly locate retained references and ensure your scenes clean up
+properly.</p>
+<h2 id="understanding-pixijs-leaks-cpu-vs-gpu">Understanding Pixi.js
+Leaks: CPU vs. GPU</h2>
+<p>Memory leaks in Pixi.js manifest in two distinct areas:</p>
+<ol type="1">
+<li><strong>CPU Memory (Heap):</strong> Lingering JavaScript references
+to objects, functions, and listeners that prevent the garbage collector
+(GC) from reclaiming memory.</li>
+<li><strong>GPU Memory (VRAM):</strong> WebGL textures and buffers that
+remain allocated on the graphics card even if the CPU-side JavaScript
+objects representing them have been dereferenced.</li>
+</ol>
+<p>Failing to remove an event listener keeps the host display object in
+CPU memory, which in turn retains its parent container and underlying
+textures. Conversely, removing a sprite from the display tree without
+destroying its underlying texture leaves that texture stranded in GPU
+memory.</p>
+<h2 id="detecting-leaks-with-chrome-devtools-heap-snapshots">Detecting
+Leaks with Chrome DevTools Heap Snapshots</h2>
+<p>Chrome DevTools provides the most reliable way to identify retained
+CPU objects.</p>
+<ol type="1">
+<li>Open Chrome DevTools and navigate to the <strong>Memory</strong>
+panel.</li>
+<li>Select <strong>Heap snapshot</strong> and click <strong>Take
+snapshot</strong> to capture a baseline state.</li>
+<li>Perform the action that should allocate and then clean up memory
+(for example, opening and closing an in-game menu or switching
+levels).</li>
+<li>Click the trash can icon in the DevTools toolbar to force garbage
+collection.</li>
+<li>Take a second heap snapshot.</li>
+<li>Change the snapshot view dropdown from <strong>Summary</strong> to
+<strong>Comparison</strong> to compare Snapshot 2 against Snapshot
+1.</li>
+</ol>
+<h3 id="what-to-look-for">What to Look For:</h3>
+<ul>
+<li><strong><code>PIXI.Texture</code> and
+<code>PIXI.BaseTexture</code>:</strong> If these counts have a positive
+<code># Delta</code> after a scene transition, textures are not being
+freed.</li>
+<li><strong><code>EventEmitter</code> or <code>Listener</code>:</strong>
+Pixi's display objects extend event emitters. A positive delta indicates
+handlers are still attached.</li>
+<li><strong><code>Detached HTMLCanvasElement</code>:</strong> Indicates
+that offscreen render textures or canvas contexts are hanging around
+without disposal.</li>
+</ul>
+<p>Inspect the <strong>Retainers</strong> tree at the bottom of the
+Memory panel for any leaked object. Expand the tree to identify the
+specific variable, array, or closure holding the reference.</p>
+<h2 id="inspecting-texture-caches-directly">Inspecting Texture Caches
+Directly</h2>
+<p>Pixi.js maintains internal registries to avoid re-uploading duplicate
+image data. Even if you discard all direct references to a texture, it
+remains in memory if it is still registered in the cache.</p>
+<p>You can inspect the state of cached textures at runtime using the
+console:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// For Pixi.js v7+</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(PIXI<span class="op">.</span><span class="at">Assets</span><span class="op">.</span><span class="at">cache</span>)<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">// For older Pixi.js versions</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(PIXI<span class="op">.</span><span class="at">utils</span><span class="op">.</span><span class="at">TextureCache</span>)<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(PIXI<span class="op">.</span><span class="at">utils</span><span class="op">.</span><span class="at">BaseTextureCache</span>)<span class="op">;</span></span></code></pre></div>
+<p>If you navigate between scenes and see the number of keys in these
+cache objects continuously grow, your assets are not being purged.
+Ensure you release them via the assets API:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Unload an asset and remove its texture from GPU memory</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> PIXI<span class="op">.</span><span class="at">Assets</span><span class="op">.</span><span class="fu">unload</span>(<span class="st">&#39;path/to/asset.png&#39;</span>)<span class="op">;</span></span></code></pre></div>
+<h2 id="finding-unreleased-event-listeners">Finding Unreleased Event
+Listeners</h2>
+<p>Event listeners typically leak when anonymous functions or bound
+methods are registered and never removed, preventing their scope from
+being collected.</p>
+<h3 id="display-object-listeners">Display Object Listeners</h3>
+<p>In Pixi.js, objects listening for interaction events (such as
+<code>pointerdown</code>) retain references to their callbacks:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Leaking pattern:</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>button<span class="op">.</span><span class="fu">on</span>(<span class="st">&#39;pointerdown&#39;</span><span class="op">,</span> <span class="kw">this</span><span class="op">.</span><span class="at">onButtonClick</span><span class="op">,</span> <span class="kw">this</span>)<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">// If button is removed without off(), &#39;this&#39; remains in memory.</span></span></code></pre></div>
+<p>To verify whether listeners are cleared:</p>
+<ol type="1">
+<li>Select the component in your code and check
+<code>button._events</code>.</li>
+<li>Inspect the returned object keys to see if callbacks are still
+actively bound.</li>
+<li>Use the DevTools <strong>Heap Snapshot</strong>, search for
+<code>Listener</code>, and check the retainers for references pointing
+back to your controller or state classes.</li>
+</ol>
+<p>To resolve this, explicitly remove listeners or rely on Pixi's
+built-in cleanup mechanisms:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>button<span class="op">.</span><span class="fu">off</span>(<span class="st">&#39;pointerdown&#39;</span><span class="op">,</span> <span class="kw">this</span><span class="op">.</span><span class="at">onButtonClick</span><span class="op">,</span> <span class="kw">this</span>)<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">// Or remove all listeners at once:</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>button<span class="op">.</span><span class="fu">removeAllListeners</span>()<span class="op">;</span></span></code></pre></div>
+<h2 id="using-the-devtools-performance-panel">Using the DevTools
+Performance Panel</h2>
+<p>The <strong>Performance</strong> panel helps visualize overall trends
+over extended periods:</p>
+<ol type="1">
+<li>Open the <strong>Performance</strong> panel and check the
+<strong>Memory</strong> checkbox.</li>
+<li>Click <strong>Record</strong>, interact with your application
+repeatedly (e.g., open/close a view 10 times), and click
+<strong>Stop</strong>.</li>
+<li>Observe the generated memory timeline.</li>
+</ol>
+<p>In a healthy application, the JS Heap and Node counts resemble a
+sawtooth pattern: memory rises during use and drops sharply after a
+garbage collection event. If the baseline floor of the sawtooth
+consistently steps upward with each iteration, a leak is present.</p>
+<h2 id="implementing-proper-disposal-patterns">Implementing Proper
+Disposal Patterns</h2>
+<p>Most Pixi.js leaks occur because developers remove an object from the
+stage via <code>removeChild()</code> without destroying it.
+<code>removeChild()</code> only detaches the item from the scene graph;
+it does not clear GPU data or event bindings.</p>
+<p>Always invoke the <code>destroy()</code> method when a display object
+or texture is no longer needed:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Destroy a container and all of its children, textures, and base textures</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>container<span class="op">.</span><span class="fu">destroy</span>({</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">children</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">texture</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">baseTexture</span><span class="op">:</span> <span class="kw">true</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>Using these flags ensures that display nodes, CPU-side caches, WebGL
+texture buffers, and internal interaction listeners are completely
+stripped and marked for garbage collection.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

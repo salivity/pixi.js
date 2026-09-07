@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS 4K Video Texture Upload Performance - pixi.js</title>
+    <meta name="description" content="Rendering 4K video textures in PixiJS requires continuous streaming of large amounts of visual data from the browser’s media pipeline to the GPU. PixiJS manages this process by wrapping the native HTML5 <video> element inside a specialized VideoResourc">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-4k-video-texture-upload-performance">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS 4K Video Texture Upload Performance - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-4k-video-texture-upload-performance" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Rendering 4K video textures in PixiJS requires continuous streaming of large amounts of visual data from the browser’s media pipeline to the GPU. PixiJS manages this process by wrapping the native HTML5 <video> element inside a specialized VideoResourc" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-4k-video-texture-upload-performance">PixiJS 4K Video
+Texture Upload Performance</h1>
+<p>Rendering 4K video textures in PixiJS requires continuous streaming
+of large amounts of visual data from the browser’s media pipeline to the
+GPU. PixiJS manages this process by wrapping the native HTML5
+<code>&lt;video&gt;</code> element inside a specialized
+<code>VideoResource</code> within its core texture management system.
+This overview explains how PixiJS synchronizes and uploads these
+high-resolution frames via WebGL, the memory bandwidth bottlenecks
+associated with 3840x2160 textures, and the rendering strategies
+required to achieve smooth playback without dropping frames.</p>
+<h3 id="the-videoresource-upload-pipeline">The VideoResource Upload
+Pipeline</h3>
+<p>PixiJS does not process raw video containers (such as MP4 or WebM)
+directly; instead, it delegates decoding to the host browser's media
+engine. The connection between the HTML5 <code>&lt;video&gt;</code>
+element and the WebGL canvas is handled by
+<code>PIXI.VideoResource</code>.</p>
+<p>When a video plays, the browser decodes compressed frames in a
+background thread. For each render tick, PixiJS checks whether a new
+video frame is ready to be painted. If a new frame is present, PixiJS
+issues a WebGL call—typically <code>gl.texSubImage2D</code>—to copy the
+pixel data from the HTML5 video element into an allocated GPU texture
+buffer.</p>
+<h3 id="managing-4k-bandwidth-and-overhead">Managing 4K Bandwidth and
+Overhead</h3>
+<p>A single uncompressed 4K frame (3840 × 2160 pixels) in 8-bit RGBA
+format requires roughly 33.17 megabytes of memory. At 60 frames per
+second, this represents an continuous data transfer rate of nearly 2
+GB/s across the system bus from CPU-accessible memory to GPU VRAM.</p>
+<p>Because <code>gl.texSubImage2D</code> is a synchronous operation on
+the WebGL context, naive uploads of 4K video can block the main
+execution thread, causing severe frame stutters. PixiJS counters this
+through several internal behaviors:</p>
+<ul>
+<li><strong>Mipmap Suppression:</strong> PixiJS automatically sets
+<code>mipmap: false</code> on base textures associated with video
+resources. Calculating mipmaps on a 33 MB texture buffer every frame
+causes severe GPU bottlenecks; disabling mipmaps removes this overhead
+completely.</li>
+<li><strong>Buffer Pre-allocation:</strong> PixiJS allocates the GPU
+memory for the 4K texture once during the initial load using
+<code>gl.texImage2D</code>. Subsequent updates use
+<code>gl.texSubImage2D</code> to write directly into existing GPU
+memory, preventing garbage collection thrashing and memory reallocation
+per frame.</li>
+<li><strong>Frame Rate Synchronization:</strong> Modern versions of
+PixiJS leverage the browser's
+<code>HTMLVideoElement.requestVideoFrameCallback()</code> (rVFC) API
+when available. This ensures that texture uploads only occur when the
+video decoder produces a genuinely new frame, avoiding redundant uploads
+of identical 4K frames during display refreshes.</li>
+</ul>
+<h3 id="hardware-acceleration-and-zero-copy-textures">Hardware
+Acceleration and Zero-Copy Textures</h3>
+<p>PixiJS’s performance with 4K video relies heavily on underlying
+browser and GPU driver architectures. In modern Chromium and WebKit
+browsers on supported hardware, texture uploads from video elements take
+advantage of hardware-accelerated video decoding (such as NVDEC, Intel
+Quick Sync, or Apple VideoToolbox).</p>
+<p>When hardware acceleration is active, decoded video frames often
+reside in shared GPU surfaces (such as DirectX NV12 surfaces on Windows
+or IOSurfaces on macOS). In these environments, the browser can execute
+an internal, fast GPU-to-GPU copy into the WebGL texture instead of a
+slow readback from system RAM. PixiJS benefits directly from this
+platform-level optimization, allowing 4K 60 FPS playback that would
+otherwise saturate the CPU bus.</p>
+<h3 id="optimization-strategies-for-production">Optimization Strategies
+for Production</h3>
+<p>To ensure consistent 60 FPS performance when working with 4K video
+textures in PixiJS, consider the following production practices:</p>
+<ol type="1">
+<li><strong>Limit Active Video Textures:</strong> Avoid playing multiple
+4K video textures simultaneously. Every active video texture multiplies
+the required memory bandwidth linearly.</li>
+<li><strong>Control the Update Loop:</strong> For background elements or
+ambient loops, set
+<code>texture.baseTexture.resource.autoUpdate = false</code> and
+manually trigger texture updates at a reduced framerate (e.g., 24 or 30
+FPS) while maintaining a 60 FPS canvas render loop.</li>
+<li><strong>Use WebGL 2.0:</strong> Ensure PixiJS initializes using
+WebGL 2.0 (<code>PIXI.Renderer</code>). WebGL 2.0 optimizes pixel-unpack
+handling and provides broader support for non-blocking texture
+allocation patterns.</li>
+<li><strong>Choose Appropriate Encodings:</strong> Encode 4K assets
+using codecs that support hardware acceleration on target devices
+(commonly H.264 or H.265/HEVC), maintaining standard chroma subsampling
+(4:2:0) to prevent fallback to software decoding paths in the
+browser.</li>
+</ol></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

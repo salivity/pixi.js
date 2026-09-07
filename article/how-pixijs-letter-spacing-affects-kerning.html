@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How PixiJS Letter Spacing Affects Kerning - pixi.js</title>
+    <meta name="description" content="The letterSpacing property in PixiJS modifies the horizontal distance between text characters, but its effect on font kerning calculations depends entirely on whether you are rendering standard PIXI.Text or PIXI.BitmapText. While kerning adjusts the vari">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-pixijs-letter-spacing-affects-kerning">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How PixiJS Letter Spacing Affects Kerning - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-pixijs-letter-spacing-affects-kerning" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The letterSpacing property in PixiJS modifies the horizontal distance between text characters, but its effect on font kerning calculations depends entirely on whether you are rendering standard PIXI.Text or PIXI.BitmapText. While kerning adjusts the vari" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-pixijs-letter-spacing-affects-kerning">How PixiJS Letter
+Spacing Affects Kerning</h1>
+<p>The <code>letterSpacing</code> property in PixiJS modifies the
+horizontal distance between text characters, but its effect on font
+kerning calculations depends entirely on whether you are rendering
+standard <code>PIXI.Text</code> or <code>PIXI.BitmapText</code>. While
+kerning adjusts the variable space between specific pairs of adjacent
+glyphs based on font design, <code>letterSpacing</code> applies a
+uniform offset across all characters. In standard Canvas-rendered text,
+applying manual letter spacing often disables or bypasses natural pair
+kerning entirely, whereas in bitmap fonts, it acts as an additive value
+that preserves the underlying kerning table metrics.</p>
+<h3 id="kerning-mechanics-in-standard-pixitext">Kerning Mechanics in
+Standard <code>PIXI.Text</code></h3>
+<p>Standard text rendering in PixiJS relies on the HTML5 Canvas 2D
+rendering context. Natural typographic kerning is calculated
+automatically by the browser's font engine when rendering entire strings
+together (for instance, reducing the space between "A" and "V").</p>
+<p>When <code>letterSpacing</code> is set to <code>0</code>, PixiJS
+delegates the rendering of text fragments directly to the canvas engine
+using methods like <code>fillText()</code>. This approach allows the
+browser's native text shaper to read the font's OpenType/TrueType
+kerning pairs (<code>GPOS</code> or <code>kern</code> tables) and render
+accurately kerned text.</p>
+<p>When a non-zero <code>letterSpacing</code> value is assigned in
+<code>PIXI.TextStyle</code>, PixiJS historically overrides standard
+whole-string rendering to ensure exact cross-browser pixel spacing. To
+apply this spacing:</p>
+<ol type="1">
+<li>PixiJS splits the string into individual glyphs or code points.</li>
+<li>Each glyph is measured and positioned sequentially along the
+x-axis.</li>
+<li>The formula for the next character's position is: <span
+class="math display">\[\text{Position}_{n+1} = \text{Position}_n +
+\text{Width}(\text{Glyph}_n) + \text{letterSpacing}\]</span></li>
+</ol>
+<p>Because characters are measured and drawn in isolation rather than as
+a continuous string, the browser engine cannot evaluate contextual glyph
+pairs. Consequently, native kerning calculations are lost, and only the
+glyph’s isolated advance width plus the <code>letterSpacing</code> value
+determines the final position.</p>
+<h3 id="kerning-calculations-in-pixibitmaptext">Kerning Calculations in
+<code>PIXI.BitmapText</code></h3>
+<p>Unlike canvas-based text, <code>PIXI.BitmapText</code> uses
+pre-rendered texture atlases paired with font descriptor files (such as
+BMFont XML or JSON). These descriptor files explicitly store the glyph
+metrics, advance widths, and specific kerning pairs.</p>
+<p>In <code>BitmapText</code>, kerning calculations are not overridden
+by <code>letterSpacing</code>; instead, <code>letterSpacing</code> is
+additive:</p>
+<ol type="1">
+<li>PixiJS retrieves the base horizontal advance value
+(<code>xAdvance</code>) for the current glyph from the font
+metrics.</li>
+<li>It queries the font's kerning dictionary using the character code of
+the previous glyph and the current glyph to retrieve the kerning offset:
+<span class="math display">\[\text{KerningOffset} =
+\text{getKerning}(\text{Glyph}_{n-1}, \text{Glyph}_n)\]</span></li>
+<li>The <code>letterSpacing</code> value is then added directly into the
+horizontal offset calculation: <span
+class="math display">\[\text{Advance} = \text{xAdvance} +
+\text{KerningOffset} + \text{letterSpacing}\]</span></li>
+</ol>
+<p>Because <code>BitmapText</code> handles glyph placement manually
+through its own layout engine, proportional kerning relationships remain
+intact regardless of how large or small the <code>letterSpacing</code>
+value is.</p>
+<h3 id="visual-implications">Visual Implications</h3>
+<p>Applying positive <code>letterSpacing</code> increases the uniform
+tracking across the string. As letter spacing increases, the visual
+impact of pair kerning diminishes because the relative proportion of the
+kerning adjustment becomes negligible compared to the total whitespace
+between letters.</p>
+<p>Conversely, applying negative <code>letterSpacing</code> pulls glyphs
+closer together. In <code>PIXI.BitmapText</code>, characters with
+negative kerning pairs (like "To" or "Wa") will collapse into each other
+faster than pairs without kerning adjustments. In standard
+<code>PIXI.Text</code>, the collapse will be completely uniform across
+all glyphs due to the absence of pair-specific calculations.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

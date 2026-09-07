@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Optimize Pixi.js Games for Mobile 60FPS - pixi.js</title>
+    <meta name="description" content="Achieving a smooth 60fps in Pixi.js games on older, low-end mobile devices requires aggressive optimization of rendering processes, asset management, and code execution. This article outlines actionable strategies to minimize draw calls, optimize texture">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-to-optimize-pixi-js-games-for-mobile-60fps">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Optimize Pixi.js Games for Mobile 60FPS - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-to-optimize-pixi-js-games-for-mobile-60fps" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Achieving a smooth 60fps in Pixi.js games on older, low-end mobile devices requires aggressive optimization of rendering processes, asset management, and code execution. This article outlines actionable strategies to minimize draw calls, optimize texture" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-to-optimize-pixijs-games-for-mobile-60fps">How to Optimize
+Pixi.js Games for Mobile 60FPS</h1>
+<p>Achieving a smooth 60fps in Pixi.js games on older, low-end mobile
+devices requires aggressive optimization of rendering processes, asset
+management, and code execution. This article outlines actionable
+strategies to minimize draw calls, optimize textures, manage memory
+efficiently, and reduce CPU overhead to ensure peak performance on
+hardware-constrained mobile browsers.</p>
+<h2 id="1-minimize-draw-calls-with-texture-atlases">1. Minimize Draw
+Calls with Texture Atlases</h2>
+<p>Draw calls are the primary bottleneck on older mobile GPUs. Every
+time the GPU has to switch textures, a new draw call is created.</p>
+<ul>
+<li><strong>Use Sprite Sheets:</strong> Pack all game assets into a
+single texture atlas (using tools like TexturePacker). This allows
+Pixi.js to batch sprites together and render them in a single draw
+call.</li>
+<li><strong>Keep Textures to a Minimum:</strong> Group similar UI
+elements and gameplay sprites into the same sheet to maximize batching
+efficiency.</li>
+</ul>
+<h2 id="2-leverage-particlecontainer-for-static-or-simple-sprites">2.
+Leverage ParticleContainer for Static or Simple Sprites</h2>
+<p>For rendering large numbers of sprites (like bullets, particles, or
+background elements), the standard <code>PIXI.Container</code> is too
+heavy because it calculates full transform matrices for every child.</p>
+<ul>
+<li>Use <code>PIXI.ParticleContainer</code> instead of
+<code>PIXI.Container</code> when rendering simple sprites that do not
+require complex nesting, filters, or masks.</li>
+<li>Turn off unused properties when initializing the container to save
+memory and CPU cycles:
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> container <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">ParticleContainer</span>(<span class="dv">1000</span><span class="op">,</span> {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vertices</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">position</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">rotation</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uvs</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">tint</span><span class="op">:</span> <span class="kw">false</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div></li>
+</ul>
+<h2 id="3-scale-down-render-resolution">3. Scale Down Render
+Resolution</h2>
+<p>Rendering at high DPI (like 3x Retina displays) on older devices will
+tank performance due to high fill-rate demands.</p>
+<ul>
+<li><strong>Cap the Resolution:</strong> Limit the renderer's device
+pixel ratio. Instead of using <code>window.devicePixelRatio</code>
+directly, cap it at <code>1.0</code> or <code>1.5</code> for older
+devices.</li>
+<li><strong>Scale the Canvas:</strong> Run the game at a lower internal
+resolution (e.g., 640x360) and let the CSS scale the canvas up to fit
+the screen. This dramatically reduces the number of pixels the GPU has
+to shade.</li>
+</ul>
+<h2 id="4-optimize-texture-sizes-and-formats">4. Optimize Texture Sizes
+and Formats</h2>
+<p>Large textures consume precious VRAM, leading to browser crashes or
+severe stuttering on low-end devices.</p>
+<ul>
+<li><strong>Power of Two:</strong> Ensure all texture dimensions are
+powers of two (e.g., 512x512, 1024x1024) to allow the GPU to handle them
+efficiently.</li>
+<li><strong>Avoid Large Textures:</strong> Never exceed 2048x2048 pixel
+textures on mobile.</li>
+<li><strong>Use Compressed Textures:</strong> Implement ASTC, ETC2, or
+PVRTC texture formats using the <code>@pixi/compressed-textures</code>
+plugin to reduce VRAM usage up to 75% compared to PNGs.</li>
+</ul>
+<h2 id="5-disable-interactive-events-on-non-interactive-elements">5.
+Disable Interactive Events on Non-Interactive Elements</h2>
+<p>By default, Pixi.js searches the entire display tree to process
+interaction events (touches, taps).</p>
+<ul>
+<li>Set <code>interactive = false</code> and
+<code>interactiveChildren = false</code> on every container and sprite
+that does not require user input. This prevents Pixi from executing
+costly hit-test calculations on every frame.</li>
+</ul>
+<h2 id="6-eliminate-garbage-collection-spikes">6. Eliminate Garbage
+Collection Spikes</h2>
+<p>Garbage collection (GC) pauses cause noticeable stutter
+(micro-stutters) on mobile browsers.</p>
+<ul>
+<li><strong>Implement Object Pooling:</strong> Avoid creating new
+instances of Sprites, Points, Vectors, or Matrices in your update loop.
+Reuse existing objects from a pool instead.</li>
+<li><strong>Avoid Array Allocation:</strong> Do not use
+<code>filter()</code>, <code>map()</code>, or slice operations in
+high-frequency update loops, as these methods allocate new arrays.</li>
+</ul>
+<h2 id="7-avoid-heavy-shaders-filters-and-blend-modes">7. Avoid Heavy
+Shaders, Filters, and Blend Modes</h2>
+<p>Mobile GPUs struggle with complex fragment shaders and blending
+operations.</p>
+<ul>
+<li><strong>Ditch Filters:</strong> Avoid runtime filters like
+<code>BlurFilter</code> or <code>GlowFilter</code>. Instead, bake these
+effects directly into your static sprite sheets.</li>
+<li><strong>Use Normal Blend Mode:</strong> Avoid using complex blend
+modes (like <code>MULTIPLY</code>, <code>SCREEN</code>, or
+<code>ADD</code>) on multiple overlapping sprites. Stick to
+<code>NORMAL</code> whenever possible.</li>
+<li><strong>Disable Antialiasing:</strong> Set
+<code>antialias: false</code> in your Pixi Application options.</li>
+</ul>
+<h2 id="8-optimize-the-game-loop">8. Optimize the Game Loop</h2>
+<p>Keep your CPU update loop as lightweight as possible to leave room
+for the rendering engine.</p>
+<ul>
+<li><strong>Use Delta Time Correctly:</strong> Ensure physics and
+animations are tied to delta time so the game speed remains consistent
+even if the framerate fluctuates.</li>
+<li><strong>Prune the Display Tree:</strong> Remove off-screen objects
+from the display list entirely
+(<code>container.removeChild(sprite)</code>) instead of just setting
+their <code>visible</code> property to <code>false</code>, as hidden
+objects still undergo some transform calculations.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

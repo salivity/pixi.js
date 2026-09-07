@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS WebGPU GpuBuffer Class Explained - pixi.js</title>
+    <meta name="description" content="This article explores the GpuBuffer class in Pixi.js, detailing its architectural role within the modern WebGPU rendering subsystem. It explains how GpuBuffer abstracts hardware-level memory, coordinates resource allocation, and synchronizes geometry, in">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-webgpu-gpubuffer-class-explained">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS WebGPU GpuBuffer Class Explained - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-webgpu-gpubuffer-class-explained" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explores the GpuBuffer class in Pixi.js, detailing its architectural role within the modern WebGPU rendering subsystem. It explains how GpuBuffer abstracts hardware-level memory, coordinates resource allocation, and synchronizes geometry, in" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-webgpu-gpubuffer-class-explained">PixiJS WebGPU GpuBuffer
+Class Explained</h1>
+<p>This article explores the <code>GpuBuffer</code> class in Pixi.js,
+detailing its architectural role within the modern WebGPU rendering
+subsystem. It explains how <code>GpuBuffer</code> abstracts
+hardware-level memory, coordinates resource allocation, and synchronizes
+geometry, index, and uniform data between the CPU and the GPU to ensure
+high-performance rendering.</p>
+<p>In Pixi.js (version 8 and above), the <code>GpuBuffer</code> class
+serves as a direct wrapper around the native WebGPU
+<code>GPUBuffer</code> interface. While high-level Pixi.js abstractions
+like <code>Buffer</code> manage application-facing data arrays (such as
+vertices, colors, and UV coordinates), the <code>GpuBuffer</code>
+operates within the WebGPU rendering backend to represent that data
+inside actual VRAM allocated by the physical graphics device.</p>
+<h3 id="native-resource-allocation-and-encapsulation">Native Resource
+Allocation and Encapsulation</h3>
+<p>The primary responsibility of <code>GpuBuffer</code> is managing the
+lifecycle of the underlying <code>GPUBuffer</code> instance. When the
+renderer encounters new or updated data, <code>GpuBuffer</code> uses the
+<code>GPUDevice.createBuffer()</code> API to allocate memory. It
+dynamically configures the necessary <code>GPUBufferUsage</code> bit
+flags based on the data’s intended role, including:</p>
+<ul>
+<li><strong>Vertex and Index Buffers:</strong> Flagged with
+<code>VERTEX</code> or <code>INDEX</code> to stream geometric meshes
+directly to the vertex assembly stage.</li>
+<li><strong>Uniform and Storage Buffers:</strong> Flagged with
+<code>UNIFORM</code> or <code>STORAGE</code> to deliver transforms,
+projection matrices, materials, and custom shader parameters.</li>
+<li><strong>Data Transfer Targets:</strong> Flagged with
+<code>COPY_DST</code> to permit the device queue to write updated CPU
+memory directly into the buffer.</li>
+</ul>
+<h3 id="data-synchronization-and-updates">Data Synchronization and
+Updates</h3>
+<p><code>GpuBuffer</code> facilitates efficient memory transfers from
+JavaScript typed arrays (<code>Float32Array</code>,
+<code>Uint16Array</code>, etc.) to the GPU. Instead of rebuilding entire
+buffer structures whenever data changes, it leverages
+<code>queue.writeBuffer()</code> to transfer only updated memory ranges.
+This minimizes synchronization overhead and prevents unnecessary
+CPU-to-GPU pipeline stalls during frame rendering.</p>
+<h3 id="dynamic-resizing-and-state-tracking">Dynamic Resizing and State
+Tracking</h3>
+<p>Graphic elements frequently change vertex counts or require expanded
+uniform data during runtime. <code>GpuBuffer</code> tracks the byte
+length of the existing hardware allocation. When the source data exceeds
+the current buffer capacity, <code>GpuBuffer</code> handles the
+reallocation process: it destroys the undersized native buffer, creates
+a replacement with adequate capacity, and updates internal references
+without breaking the high-level scene graph.</p>
+<h3 id="pipeline-binding-and-cleanup">Pipeline Binding and Cleanup</h3>
+<p>During the render pass, the WebGPU render system binds the memory
+held by <code>GpuBuffer</code> to the active render pipeline or
+integrates it into a <code>GPUBindGroup</code>. Finally,
+<code>GpuBuffer</code> handles cleanup via the native
+<code>destroy()</code> method when geometries or textures are unmounted,
+preventing memory leaks in the GPU's VRAM.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

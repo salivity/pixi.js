@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How ObservablePoint Notifies Transforms in Pixi.js - pixi.js</title>
+    <meta name="description" content="In Pixi.js, the ObservablePoint class plays a critical role in scene graph management by alerting parent transforms whenever coordinate or dimension properties change. Instead of relying on expensive per-frame polling to detect spatial mutations, Observa">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-observablepoint-notifies-transforms-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How ObservablePoint Notifies Transforms in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-observablepoint-notifies-transforms-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In Pixi.js, the ObservablePoint class plays a critical role in scene graph management by alerting parent transforms whenever coordinate or dimension properties change. Instead of relying on expensive per-frame polling to detect spatial mutations, Observa" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-observablepoint-notifies-transforms-in-pixijs">How
+ObservablePoint Notifies Transforms in Pixi.js</h1>
+<p>In Pixi.js, the <code>ObservablePoint</code> class plays a critical
+role in scene graph management by alerting parent transforms whenever
+coordinate or dimension properties change. Instead of relying on
+expensive per-frame polling to detect spatial mutations,
+<code>ObservablePoint</code> uses a callback-driven architecture to
+notify a display container’s transform that a property has changed,
+invalidating cached matrices and scheduling updates only when
+necessary.</p>
+<h3 id="the-role-of-observablepoint">The Role of ObservablePoint</h3>
+<p>In a rendering pipeline, objects constantly alter their position,
+scale, skew, and pivot. A standard point object simply stores
+<code>x</code> and <code>y</code> values. If a developer mutates a
+standard point (for example, <code>container.position.x += 10</code>),
+the container has no native way of knowing that its coordinate values
+shifted unless it checks every property on every frame.</p>
+<p>To solve this, Pixi.js uses <code>ObservablePoint</code> for
+properties like <code>position</code>, <code>scale</code>,
+<code>pivot</code>, and <code>skew</code>. While it behaves like a
+standard <code>Point</code> on the surface, its internal setters are
+hooked into an observer pattern.</p>
+<h3 id="the-callback-registration-pattern">The Callback Registration
+Pattern</h3>
+<p>When a container's <code>Transform</code> component initializes its
+observable points, it provides a callback function and an execution
+scope.</p>
+<p>Under the hood, the instantiation resembles:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">this</span><span class="op">.</span><span class="at">position</span> <span class="op">=</span> <span class="kw">new</span> <span class="fu">ObservablePoint</span>(<span class="kw">this</span><span class="op">.</span><span class="at">onChange</span><span class="op">,</span> <span class="kw">this</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">this</span><span class="op">.</span><span class="at">scale</span> <span class="op">=</span> <span class="kw">new</span> <span class="fu">ObservablePoint</span>(<span class="kw">this</span><span class="op">.</span><span class="at">onChange</span><span class="op">,</span> <span class="kw">this</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span>)<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">this</span><span class="op">.</span><span class="at">pivot</span> <span class="op">=</span> <span class="kw">new</span> <span class="fu">ObservablePoint</span>(<span class="kw">this</span><span class="op">.</span><span class="at">onChange</span><span class="op">,</span> <span class="kw">this</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">this</span><span class="op">.</span><span class="at">skew</span> <span class="op">=</span> <span class="kw">new</span> <span class="fu">ObservablePoint</span>(<span class="kw">this</span><span class="op">.</span><span class="at">onChange</span><span class="op">,</span> <span class="kw">this</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">;</span></span></code></pre></div>
+<p>The <code>onChange</code> function belongs to the parent
+<code>Transform</code> instance, meaning the point retains a direct
+reference to the method that handles transformation updates.</p>
+<h3 id="the-mutation-trigger">The Mutation Trigger</h3>
+<p>When any code modifies a coordinate on an
+<code>ObservablePoint</code>—such as calling
+<code>point.set(x, y)</code> or setting <code>point.x = 100</code>—the
+class executes its internal setter.</p>
+<p>The setter performs two actions:</p>
+<ol type="1">
+<li>It updates the internal numerical value (<code>_x</code> or
+<code>_y</code>).</li>
+<li>It immediately invokes the registered observer callback
+(<code>this._onUpdate</code>).</li>
+</ol>
+<p>Because the callback is bound to the parent <code>Transform</code>,
+control immediately shifts back to the transform system the moment a
+value changes.</p>
+<h3 id="transform-invalidation-and-dirty-flags">Transform Invalidation
+and Dirty Flags</h3>
+<p>Rather than immediately recalculating complex transformation
+matrices—which would be computationally wasteful if multiple properties
+change in the same frame—the <code>onChange</code> callback flags the
+transform as "dirty."</p>
+<p>In Pixi.js, this invalidation typically updates internal versioning
+identifiers, such as incrementing <code>_localID</code>. When
+<code>_localID</code> no longer matches the ID cached during the
+previous matrix computation, the system recognizes that the local matrix
+is stale.</p>
+<h3 id="deferred-matrix-calculation">Deferred Matrix Calculation</h3>
+<p>The notification chain ends with deferred matrix resolution:</p>
+<ol type="1">
+<li><strong>Mutation</strong>: Code executes
+<code>sprite.position.x = 50</code>.</li>
+<li><strong>Notification</strong>: <code>ObservablePoint</code> calls
+the transform's <code>onChange</code> method.</li>
+<li><strong>Flagging</strong>: The transform increments its local
+version ID and sets its dirty flags.</li>
+<li><strong>Propagation</strong>: When the render loop or scene graph
+traversal requests the object's <code>worldTransform</code>, the
+container compares the version IDs.</li>
+<li><strong>Update</strong>: Seeing the discrepancy caused by the dirty
+flag, Pixi.js recalculates the local transformation matrix and cascades
+the update down to child nodes.</li>
+</ol>
+<p>By utilizing this callback mechanism within
+<code>ObservablePoint</code>, Pixi.js decouples value assignments from
+heavy mathematical calculations, ensuring optimal performance across
+complex display hierarchies.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

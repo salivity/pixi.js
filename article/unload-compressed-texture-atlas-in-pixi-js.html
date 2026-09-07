@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unload Compressed Texture Atlas in Pixi.js - pixi.js</title>
+    <meta name="description" content="Managing GPU memory effectively is critical for maintaining high performance in WebGL applications. This article explains how to unload a specific compressed texture atlas from Video RAM (VRAM) in Pixi.js to prevent memory leaks and optimize resource con">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/unload-compressed-texture-atlas-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Unload Compressed Texture Atlas in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/unload-compressed-texture-atlas-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Managing GPU memory effectively is critical for maintaining high performance in WebGL applications. This article explains how to unload a specific compressed texture atlas from Video RAM (VRAM) in Pixi.js to prevent memory leaks and optimize resource con" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="unload-compressed-texture-atlas-in-pixijs">Unload Compressed
+Texture Atlas in Pixi.js</h1>
+<p>Managing GPU memory effectively is critical for maintaining high
+performance in WebGL applications. This article explains how to unload a
+specific compressed texture atlas from Video RAM (VRAM) in Pixi.js to
+prevent memory leaks and optimize resource consumption, covering both
+the modern <code>Assets</code> manager and manual texture destruction
+techniques.</p>
+<h3 id="using-the-assets-manager-pixijs-v7">Using the Assets Manager
+(Pixi.js v7+)</h3>
+<p>If you loaded the compressed texture atlas using the modern
+<code>Assets</code> API, the cleanest way to release it from both system
+memory (RAM) and GPU memory (VRAM) is calling
+<code>Assets.unload()</code>.</p>
+<p>Pass the URL or alias of the atlas manifest file (usually a
+<code>.json</code> file that references the compressed
+<code>.ktx2</code>, <code>.dds</code>, or <code>.basis</code> file):</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> PIXI<span class="op">.</span><span class="at">Assets</span><span class="op">.</span><span class="fu">unload</span>(<span class="st">&#39;path/to/atlas.json&#39;</span>)<span class="op">;</span></span></code></pre></div>
+<p>When called on an atlas asset, <code>Assets.unload()</code>
+recursively removes references from the asset cache, destroys all child
+textures, and destroys the underlying <code>BaseTexture</code>, which
+instructs WebGL to release the texture buffer from VRAM via
+<code>gl.deleteTexture()</code>.</p>
+<h3 id="manually-destroying-the-spritesheet-instance">Manually
+Destroying the Spritesheet Instance</h3>
+<p>If you hold a direct reference to the <code>Spritesheet</code>
+instance, you can unload it directly by invoking its
+<code>destroy()</code> method. You must pass <code>true</code> to ensure
+the base texture residing on the GPU is also destroyed:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Retrieve your spritesheet reference</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> sheet <span class="op">=</span> PIXI<span class="op">.</span><span class="at">Assets</span><span class="op">.</span><span class="fu">get</span>(<span class="st">&#39;path/to/atlas.json&#39;</span>)<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Pass true to destroy the BaseTexture and remove it from VRAM</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>sheet<span class="op">.</span><span class="fu">destroy</span>(<span class="kw">true</span>)<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">// Remove the entry from the global texture cache if it was manually added</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>PIXI<span class="op">.</span><span class="at">utils</span><span class="op">.</span><span class="fu">clearTextureCache</span>()<span class="op">;</span> <span class="co">// Or PIXI.Texture.removeFromCache(sheet.baseTexture);</span></span></code></pre></div>
+<p>The first argument (<code>destroyBase</code>) specifies whether the
+underlying <code>BaseTexture</code> should be destroyed along with all
+frame textures. Setting this to <code>true</code> releases the GPU
+memory allocated for the compressed asset.</p>
+<h3 id="targeting-the-basetexture-directly">Targeting the BaseTexture
+Directly</h3>
+<p>In scenarios where you only have access to a specific sub-texture or
+the raw <code>BaseTexture</code> of the compressed atlas, you can target
+the base texture directly:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Access the BaseTexture from any sub-texture of the atlas</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> baseTexture <span class="op">=</span> myAtlasSubTexture<span class="op">.</span><span class="at">baseTexture</span><span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Destroy the BaseTexture, forcing WebGL to release VRAM</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>baseTexture<span class="op">.</span><span class="fu">destroy</span>()<span class="op">;</span></span></code></pre></div>
+<p>When a <code>BaseTexture</code> is destroyed, Pixi.js calls
+<code>dispose()</code> on its internal <code>GLTexture</code>
+representations across all active renderers, freeing the hardware
+texture memory immediately.</p>
+<h3 id="verification-of-memory-deallocation">Verification of Memory
+Deallocation</h3>
+<p>To verify that VRAM has been reclaimed:</p>
+<ol type="1">
+<li>Use the Chrome DevTools <strong>Memory</strong> tab or <strong>Task
+Manager</strong> (viewing GPU Memory).</li>
+<li>Use WebGL extensions via the browser console to track active WebGL
+textures by inspecting
+<code>renderer.gl.getParameter(renderer.gl.TEXTURE_BINDING_2D)</code>.</li>
+<li>Check <code>renderer.texture.managedTextures</code> (in Pixi.js v7)
+to confirm the compressed <code>BaseTexture</code> is no longer tracked
+by the render pipeline.</li>
+</ol></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

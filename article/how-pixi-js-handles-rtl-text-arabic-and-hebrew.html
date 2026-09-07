@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Pixi.js Handles RTL Text: Arabic and Hebrew - pixi.js</title>
+    <meta name="description" content="Pixi.js does not provide native, out-of-the-box support for right-to-left (RTL) languages like Arabic and Hebrew, primarily because standard canvas-based text rendering struggles with bidirectional text (BiDi) and complex character shaping. While basic R">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-pixi-js-handles-rtl-text-arabic-and-hebrew">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How Pixi.js Handles RTL Text: Arabic and Hebrew - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-pixi-js-handles-rtl-text-arabic-and-hebrew" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Pixi.js does not provide native, out-of-the-box support for right-to-left (RTL) languages like Arabic and Hebrew, primarily because standard canvas-based text rendering struggles with bidirectional text (BiDi) and complex character shaping. While basic R" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-pixijs-handles-rtl-text-arabic-and-hebrew">How Pixi.js
+Handles RTL Text: Arabic and Hebrew</h1>
+<p>Pixi.js does not provide native, out-of-the-box support for
+right-to-left (RTL) languages like Arabic and Hebrew, primarily because
+standard canvas-based text rendering struggles with bidirectional text
+(BiDi) and complex character shaping. While basic RTL rendering can work
+in limited scenarios via the underlying HTML5 Canvas 2D API, complex
+scripts and features like word wrapping require specific workarounds. To
+achieve accurate RTL text in Pixi.js, developers typically rely on
+HTML-based text components or external preprocessing libraries.</p>
+<h3 id="the-underlying-rendering-pipeline">The Underlying Rendering
+Pipeline</h3>
+<p>Standard text in Pixi.js is handled via the <code>PIXI.Text</code>
+class. Under the hood, Pixi.js creates a hidden HTML5
+<code>&lt;canvas&gt;</code> element, draws the text using the browser's
+<code>CanvasRenderingContext2D.fillText()</code> method, and converts
+the resulting canvas into a WebGL texture.</p>
+<p>Because of this approach, text display depends entirely on the
+browser's native canvas capabilities. Modern browsers natively support
+basic RTL text rendering to some degree when proper Unicode characters
+are detected, but the implementation in Canvas 2D lacks the
+comprehensive layout engines found in standard HTML/CSS DOM
+environments.</p>
+<h3 id="the-problem-with-pixijs-and-rtl-scripts">The Problem with
+Pixi.js and RTL Scripts</h3>
+<p>RTL languages present two primary challenges in Pixi.js:</p>
+<ol type="1">
+<li><strong>Broken Word Wrapping</strong>: Pixi.js implements its own
+custom text-wrapping algorithm to measure string widths and break lines.
+This algorithm expects text to flow left-to-right (LTR). When text
+wrapping is enabled in Pixi.js, it slices strings based on spaces or
+character counts without accounting for the Unicode Bidirectional
+Algorithm. This causes lines to break in incorrect orders and reverses
+character sequences.</li>
+<li><strong>Contextual Ligatures and Shaping (Arabic)</strong>: Arabic
+is a cursive script where character glyphs change depending on their
+position in a word (isolated, initial, medial, or final). While the
+browser's <code>fillText</code> can often shape basic continuous
+strings, any manual manipulation, splitting, or word-wrapping by Pixi.js
+breaks the text-shaping context, resulting in detached, reversed, or
+improperly formed letters.</li>
+<li><strong>Bidirectional Mixing</strong>: When text contains both RTL
+(Hebrew/Arabic) and LTR (English or numbers) scripts, Pixi.js cannot
+independently calculate the visual layout order, leading to numbers and
+punctuation rendering at the wrong end of phrases.</li>
+</ol>
+<h3 id="how-to-properly-display-rtl-in-pixijs">How to Properly Display
+RTL in Pixi.js</h3>
+<p>Developers use two primary methods to resolve RTL rendering issues in
+Pixi.js applications:</p>
+<h4 id="1-using-htmltext-pixitext-html">1. Using HTMLText
+(<code>@pixi/text-html</code>)</h4>
+<p>The most robust solution is to use Pixi.js's HTMLText plugin
+(included natively in Pixi.js v7 and v8 via
+<code>@pixi/text-html</code>).</p>
+<p>HTMLText renders text using an SVG foreignObject containing actual
+HTML and CSS before rasterizing it to a canvas. This delegates text
+layout, bidirectional ordering, and ligature shaping entirely to the
+browser’s full layout engine (such as Blink, WebKit, or Gecko). By
+setting the CSS <code>direction: rtl;</code> style on an HTMLText
+element, Arabic and Hebrew text—along with complex line wrapping and
+mixed-script strings—will render accurately.</p>
+<h4 id="2-pre-processing-strings-with-bidi-and-shaping-libraries">2.
+Pre-processing Strings with BiDi and Shaping Libraries</h4>
+<p>If performance constraints prevent using HTMLText (which can be
+slower to generate than native <code>PIXI.Text</code>), developers
+preprocess strings before passing them to <code>PIXI.Text</code>. This
+pipeline involves:</p>
+<ul>
+<li><strong>Arabic Reshaping</strong>: Libraries like
+<code>arabic-persian-reshaper</code> convert generic Arabic Unicode
+characters into their context-dependent glyph variants (initial, medial,
+final).</li>
+<li><strong>BiDi Reordering</strong>: A library like
+<code>bidi-js</code> applies the Unicode Bidirectional Algorithm to
+reorder the characters from logical order (how they are typed) into
+visual order (how they appear on the screen from left to right).</li>
+</ul>
+<p>Once the string is converted to visual LTR order with mapped glyphs,
+native <code>PIXI.Text</code> can render it correctly without requiring
+browser-level bidirectional parsing. However, Pixi's built-in word
+wrapping must remain disabled; line breaks must be calculated and
+applied manually prior to shaping.</p>
+<h3 id="what-about-bitmaptext">What About BitmapText?</h3>
+<p>Pixi.js <code>BitmapText</code> relies on pre-rendered font atlases
+mapping individual character codes to texture coordinates. Because
+BitmapText cannot dynamically generate ligatures, context-dependent
+glyphs, or complex script shaping, it cannot be used for Arabic without
+extensive pre-computed ligature mapping. For Hebrew, BitmapText can
+theoretically work, provided the text is pre-processed into visual order
+using a BiDi library.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

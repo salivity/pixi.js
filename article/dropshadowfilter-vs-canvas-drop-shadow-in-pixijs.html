@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DropShadowFilter vs Canvas Drop Shadow in PixiJS - pixi.js</title>
+    <meta name="description" content="When developing applications with PixiJS, adding depth to elements through drop shadows can be achieved either through built-in canvas drop shadow text styling or via the DropShadowFilter from the pixi-filters package. This article breaks down the fundam">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/dropshadowfilter-vs-canvas-drop-shadow-in-pixijs">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="DropShadowFilter vs Canvas Drop Shadow in PixiJS - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/dropshadowfilter-vs-canvas-drop-shadow-in-pixijs" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When developing applications with PixiJS, adding depth to elements through drop shadows can be achieved either through built-in canvas drop shadow text styling or via the DropShadowFilter from the pixi-filters package. This article breaks down the fundam" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1
+id="dropshadowfilter-vs-canvas-drop-shadow-in-pixijs">DropShadowFilter
+vs Canvas Drop Shadow in PixiJS</h1>
+<p>When developing applications with PixiJS, adding depth to elements
+through drop shadows can be achieved either through built-in canvas drop
+shadow text styling or via the <code>DropShadowFilter</code> from the
+<code>pixi-filters</code> package. This article breaks down the
+fundamental differences between these two approaches, contrasting how
+they are rendered, their performance characteristics, and the specific
+scenarios where one should be chosen over the other.</p>
+<h3 id="rendering-pipeline-cpu-rasterization-vs-gpu-shaders">Rendering
+Pipeline: CPU Rasterization vs. GPU Shaders</h3>
+<p>The primary difference between the two approaches lies in where and
+how the shadow is rendered.</p>
+<ul>
+<li><strong>Canvas Drop Shadow Text Styling:</strong> Implemented
+natively within <code>PIXI.Text</code>, this method uses the standard
+HTML5 Canvas 2D API (<code>CanvasRenderingContext2D</code>). When text
+is styled with <code>dropShadow: true</code>, the CPU renders the text
+glyphs along with the shadow (via <code>ctx.shadowColor</code>,
+<code>ctx.shadowBlur</code>, etc.) directly into a temporary offscreen
+canvas, which is then uploaded to the GPU as a static WebGL
+texture.</li>
+<li><strong>DropShadowFilter:</strong> This is a GPU-driven
+post-processing filter. It renders the target object to an offscreen
+framebuffer (render texture) and executes a multi-pass fragment shader
+to blur, offset, and tint the shadow before compositing it back into the
+main render pass.</li>
+</ul>
+<h3 id="target-compatibility-and-flexibility">Target Compatibility and
+Flexibility</h3>
+<ul>
+<li><strong>Canvas Text Styling:</strong> Strictly restricted to
+<code>PIXI.Text</code> objects. It cannot be applied to
+<code>PIXI.BitmapText</code>, sprites, graphics, or complex
+containers.</li>
+<li><strong>DropShadowFilter:</strong> Can be applied to any PixiJS
+<code>Container</code> or <code>DisplayObject</code>. This allows you to
+apply a single, unified drop shadow to complex groups consisting of
+sprites, vector shapes, bitmap text, and standard text
+simultaneously.</li>
+</ul>
+<h3 id="performance-and-dynamic-updates">Performance and Dynamic
+Updates</h3>
+<ul>
+<li><strong>Static Scenarios:</strong> Canvas drop shadow text styling
+is more performant for static or infrequently changed text. Once the
+text texture is generated and cached in GPU VRAM, drawing it incurs the
+exact same lightweight draw-call overhead as a standard sprite, with no
+ongoing GPU post-processing cost.</li>
+<li><strong>Dynamic Scenarios:</strong> If you need to animate shadow
+properties—such as animating shadow distance, angle, blur, or alpha in
+real-time—canvas text styling is inefficient. Every change requires
+clearing the canvas, re-rasterizing on the CPU, and re-uploading a new
+texture to the GPU, causing CPU spikes and memory garbage collection
+pressure.</li>
+<li><strong>Filter Overhead:</strong> <code>DropShadowFilter</code>
+excels at dynamic property animations because modifying uniforms
+(offset, blur, color) does not re-rasterize source textures. However,
+each active filter forces WebGL context state changes and extra render
+passes (draw calls), which can degrade performance on lower-end mobile
+GPUs if used on dozens of individual objects simultaneously.</li>
+</ul>
+<h3 id="visual-quality-and-clipping">Visual Quality and Clipping</h3>
+<ul>
+<li><strong>Canvas Text Styling:</strong> Avoids texture boundary
+clipping issues because PixiJS automatically calculates the required
+canvas bounding box, factoring in shadow blur and distance padding.
+However, because it relies on standard canvas rasterization, scaling the
+text up post-creation will lead to pixelation unless the text resolution
+is explicitly increased.</li>
+<li><strong>DropShadowFilter:</strong> Operates on the bounding box of
+the display object. If the shadow blur or distance extends beyond the
+default bounds, it can result in visual artifacts where the shadow
+abruptly cuts off. Developers must manually manage
+<code>filter.padding</code> to ensure the offscreen texture accommodates
+the full extent of the blurred shadow.</li>
+</ul>
+<h3 id="summary-when-to-use-which">Summary: When to Use Which</h3>
+<p>Use <strong>Canvas Drop Shadow Text Styling</strong>
+(<code>style.dropShadow</code>) when you have static text that rarely
+updates its string content or styling. It keeps draw calls low and
+offloads processing from the GPU.</p>
+<p>Use <strong>DropShadowFilter</strong> when you need to apply shadows
+to non-text objects (such as UI panels, cards, or sprites), when
+grouping multiple objects under a single shadow, or when actively
+animating shadow properties per frame.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

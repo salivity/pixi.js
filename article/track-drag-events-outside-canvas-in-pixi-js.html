@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Drag Events Outside Canvas in Pixi.js - pixi.js</title>
+    <meta name="description" content="Tracking pointer events beyond the boundaries of a <canvas> element is essential for creating smooth drag-and-drop interactions in Pixi.js. By default, moving the cursor outside the canvas halts event dispatching, causing dragged elements to stick or stu">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/track-drag-events-outside-canvas-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Track Drag Events Outside Canvas in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/track-drag-events-outside-canvas-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Tracking pointer events beyond the boundaries of a <canvas> element is essential for creating smooth drag-and-drop interactions in Pixi.js. By default, moving the cursor outside the canvas halts event dispatching, causing dragged elements to stick or stu" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="track-drag-events-outside-canvas-in-pixijs">Track Drag Events
+Outside Canvas in Pixi.js</h1>
+<p>Tracking pointer events beyond the boundaries of a
+<code>&lt;canvas&gt;</code> element is essential for creating smooth
+drag-and-drop interactions in Pixi.js. By default, moving the cursor
+outside the canvas halts event dispatching, causing dragged elements to
+stick or stutter. This guide explains how to use the HTML5 Pointer
+Capture API alongside Pixi.js's modern Federated Events system to
+maintain continuous pointer tracking anywhere on the screen.</p>
+<h3 id="the-problem-with-canvas-boundaries">The Problem with Canvas
+Boundaries</h3>
+<p>When a user drags an object in Pixi.js, the event system relies on
+DOM events dispatched by the canvas element. If the user moves the
+pointer too quickly or drags an object near the edge of the viewport,
+the pointer leaves the canvas. Once outside, the canvas stops receiving
+standard mouse or touch events, preventing <code>pointermove</code>
+updates and often missing the terminating <code>pointerup</code>
+event.</p>
+<h3 id="the-solution-setpointercapture">The Solution:
+<code>setPointerCapture</code></h3>
+<p>The native DOM <code>Element.setPointerCapture()</code> method
+redirects all subsequent pointer events for a specific
+<code>pointerId</code> to the target DOM element, even if the cursor
+moves outside the browser window or over other DOM elements. Integrating
+this with the Pixi.js canvas ensures uninterrupted event delivery.</p>
+<h3 id="implementation">Implementation</h3>
+<p>To implement pointer capture in Pixi.js (v7 and v8):</p>
+<ol type="1">
+<li>Set the target display object's <code>eventMode</code> to
+<code>'static'</code>.</li>
+<li>Access the <code>pointerId</code> from the Pixi event on
+<code>pointerdown</code>.</li>
+<li>Call <code>setPointerCapture(event.pointerId)</code> on the Pixi
+canvas (<code>app.canvas</code> in v8 or <code>app.view</code> in
+v7).</li>
+<li>Listen for movement and handle cleanup by calling
+<code>releasePointerCapture</code> when the drag ends.</li>
+</ol>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { Application<span class="op">,</span> Graphics } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> app <span class="op">=</span> <span class="kw">new</span> <span class="fu">Application</span>()<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> app<span class="op">.</span><span class="fu">init</span>({ <span class="dt">width</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">600</span> })<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">document</span><span class="op">.</span><span class="at">body</span><span class="op">.</span><span class="fu">appendChild</span>(app<span class="op">.</span><span class="at">canvas</span>)<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">// Create a draggable object</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> box <span class="op">=</span> <span class="kw">new</span> <span class="fu">Graphics</span>()</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">rect</span>(<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">100</span><span class="op">,</span> <span class="dv">100</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">fill</span>(<span class="bn">0x3498db</span>)<span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>box<span class="op">.</span><span class="at">eventMode</span> <span class="op">=</span> <span class="st">&#39;static&#39;</span><span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>box<span class="op">.</span><span class="at">cursor</span> <span class="op">=</span> <span class="st">&#39;grab&#39;</span><span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> isDragging <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> dragOffset <span class="op">=</span> { <span class="dt">x</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="dv">0</span> }<span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>box<span class="op">.</span><span class="fu">on</span>(<span class="st">&#39;pointerdown&#39;</span><span class="op">,</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    isDragging <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    box<span class="op">.</span><span class="at">cursor</span> <span class="op">=</span> <span class="st">&#39;grabbing&#39;</span><span class="op">;</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Calculate local offset so the object doesn&#39;t jump to the cursor</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    dragOffset<span class="op">.</span><span class="at">x</span> <span class="op">=</span> <span class="bu">event</span><span class="op">.</span><span class="at">global</span><span class="op">.</span><span class="at">x</span> <span class="op">-</span> box<span class="op">.</span><span class="at">x</span><span class="op">;</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    dragOffset<span class="op">.</span><span class="at">y</span> <span class="op">=</span> <span class="bu">event</span><span class="op">.</span><span class="at">global</span><span class="op">.</span><span class="at">y</span> <span class="op">-</span> box<span class="op">.</span><span class="at">y</span><span class="op">;</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Capture the pointer on the canvas element</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> canvas <span class="op">=</span> app<span class="op">.</span><span class="at">canvas</span> <span class="op">||</span> app<span class="op">.</span><span class="at">view</span><span class="op">;</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    canvas<span class="op">.</span><span class="fu">setPointerCapture</span>(<span class="bu">event</span><span class="op">.</span><span class="at">pointerId</span>)<span class="op">;</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>box<span class="op">.</span><span class="fu">on</span>(<span class="st">&#39;globalpointermove&#39;</span><span class="op">,</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="op">!</span>isDragging) <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    box<span class="op">.</span><span class="at">x</span> <span class="op">=</span> <span class="bu">event</span><span class="op">.</span><span class="at">global</span><span class="op">.</span><span class="at">x</span> <span class="op">-</span> dragOffset<span class="op">.</span><span class="at">x</span><span class="op">;</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    box<span class="op">.</span><span class="at">y</span> <span class="op">=</span> <span class="bu">event</span><span class="op">.</span><span class="at">global</span><span class="op">.</span><span class="at">y</span> <span class="op">-</span> dragOffset<span class="op">.</span><span class="at">y</span><span class="op">;</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> onDragEnd <span class="op">=</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="op">!</span>isDragging) <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    isDragging <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    box<span class="op">.</span><span class="at">cursor</span> <span class="op">=</span> <span class="st">&#39;grab&#39;</span><span class="op">;</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Release the captured pointer</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> canvas <span class="op">=</span> app<span class="op">.</span><span class="at">canvas</span> <span class="op">||</span> app<span class="op">.</span><span class="at">view</span><span class="op">;</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (canvas<span class="op">.</span><span class="fu">hasPointerCapture</span>(<span class="bu">event</span><span class="op">.</span><span class="at">pointerId</span>)) {</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>        canvas<span class="op">.</span><span class="fu">releasePointerCapture</span>(<span class="bu">event</span><span class="op">.</span><span class="at">pointerId</span>)<span class="op">;</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>box<span class="op">.</span><span class="fu">on</span>(<span class="st">&#39;pointerup&#39;</span><span class="op">,</span> onDragEnd)<span class="op">;</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>box<span class="op">.</span><span class="fu">on</span>(<span class="st">&#39;pointerupoutside&#39;</span><span class="op">,</span> onDragEnd)<span class="op">;</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(box)<span class="op">;</span></span></code></pre></div>
+<h3 id="key-considerations">Key Considerations</h3>
+<ul>
+<li><strong>Global Movement</strong>: Use the
+<code>globalpointermove</code> event on the dragged object or attach a
+<code>pointermove</code> listener to <code>app.stage</code>. This
+ensures coordinate updates continue processing as long as pointer
+capture is active.</li>
+<li><strong>Handling Interrupted Drags</strong>: Always listen to
+<code>pointerupoutside</code> and native <code>lostpointercapture</code>
+events to reset drag states if the browser cancels tracking (such as
+when switching applications or handling multi-touch gestures).</li>
+<li><strong>DOM Canvas Access</strong>: Pixi.js v8 references the canvas
+via <code>app.canvas</code>, whereas v7 and earlier use
+<code>app.view</code>. Checking <code>app.canvas || app.view</code>
+guarantees compatibility across versions.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

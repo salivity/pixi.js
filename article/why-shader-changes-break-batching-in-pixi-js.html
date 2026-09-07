@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Shader Changes Break Batching in Pixi.js - pixi.js</title>
+    <meta name="description" content="In Pixi.js, high rendering performance is achieved through automatic batching, which groups multiple display objects into a single WebGL draw call to minimize CPU-to-GPU communication. However, every WebGL draw call is strictly bound to a single active s">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/why-shader-changes-break-batching-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Why Shader Changes Break Batching in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/why-shader-changes-break-batching-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In Pixi.js, high rendering performance is achieved through automatic batching, which groups multiple display objects into a single WebGL draw call to minimize CPU-to-GPU communication. However, every WebGL draw call is strictly bound to a single active s" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="why-shader-changes-break-batching-in-pixijs">Why Shader Changes
+Break Batching in Pixi.js</h1>
+<p>In Pixi.js, high rendering performance is achieved through automatic
+batching, which groups multiple display objects into a single WebGL draw
+call to minimize CPU-to-GPU communication. However, every WebGL draw
+call is strictly bound to a single active shader program. Alternating
+between different shaders while traversing the display tree breaks this
+batching pipeline, forcing the renderer to prematurely flush geometry to
+the GPU, switch pipeline states, and execute separate draw calls for
+each transition, leading to degraded performance.</p>
+<h2 id="the-mechanics-of-the-pixijs-batching-system">The Mechanics of
+the Pixi.js Batching System</h2>
+<p>Pixi.js renders the scene by traversing the display tree in a
+depth-first manner. During this traversal, the batch renderer collects
+vertex attributes—such as positions, texture coordinates, tint colors,
+and texture unit indices—from consecutive display objects and appends
+them into a shared vertex buffer.</p>
+<p>When the buffer fills up, or when a rendering state change occurs,
+Pixi.js executes a single draw call (such as
+<code>gl.drawElements</code>) to render the accumulated geometry all at
+once. By doing this, hundreds or thousands of sprites can be drawn in a
+fraction of a millisecond.</p>
+<h2 id="why-shaders-cause-pipeline-flushes">Why Shaders Cause Pipeline
+Flushes</h2>
+<p>A WebGL context is a state machine. One of the fundamental rules of
+WebGL is that a draw call can execute only one shader program
+(<code>gl.useProgram</code>) at any given moment.</p>
+<p>When Pixi.js traverses the display tree and encounters an object
+requiring a different shader program:</p>
+<ol type="1">
+<li><strong>The current batch must close:</strong> Any geometry already
+packed into the current vertex buffer must be rendered immediately using
+the currently active shader.</li>
+<li><strong>State change occurs:</strong> The renderer binds the new
+shader program, reconfigures vertex attribute pointers, and updates
+uniform values.</li>
+<li><strong>A new batch begins:</strong> The new object’s geometry is
+added to an empty batch buffer for the new shader.</li>
+</ol>
+<p>If an application alternates between two shaders (e.g., Shader A
+-&gt; Shader B -&gt; Shader A -&gt; Shader B), the batcher cannot
+combine the objects using Shader A together because doing so out of
+order would violate the visual z-ordering defined by the display tree.
+Consequently, four objects that could theoretically fit into two batches
+end up producing four separate draw calls.</p>
+<h2 id="the-hidden-costs-of-frequent-shader-alternation">The Hidden
+Costs of Frequent Shader Alternation</h2>
+<p>The degradation in performance is caused by two main bottlenecks:</p>
+<ul>
+<li><strong>CPU Overhead:</strong> Preparing and executing each draw
+call requires the CPU to validate WebGL states, update uniform data, and
+manage buffer offsets. When draw call counts spike from dozens to
+thousands, the JavaScript thread becomes CPU-bound.</li>
+<li><strong>GPU Pipeline Stalls:</strong> Switching shader programs
+forces the GPU driver to reconfigure its programmable stages. Frequent
+state switching prevents the GPU from maintaining peak pipeline
+occupancy, introducing latency and reducing frame rates.</li>
+</ul>
+<h2 id="strategies-to-preserve-batching-efficiency">Strategies to
+Preserve Batching Efficiency</h2>
+<p>To avoid breaking batches when using multiple shaders:</p>
+<ul>
+<li><strong>Group by Material/Shader:</strong> Organize the display tree
+or sort children so that objects sharing the same shader render
+sequentially, provided it does not disrupt the required visual
+layering.</li>
+<li><strong>Consolidate Shader Logic:</strong> Instead of using multiple
+distinct shaders for minor visual variations, combine effects into a
+single uber-shader that uses vertex attributes or uniform flags to
+branch logic.</li>
+<li><strong>Extend the Batch Renderer:</strong> For specialized custom
+effects, create a custom batch renderer plugin that allows multiple
+variations of an effect to be packed and decoded within a single shared
+shader program.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

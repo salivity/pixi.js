@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Pixi.js Stencil Masks Lose Antialiased Edges - pixi.js</title>
+    <meta name="description" content="When using basic stencil masks in Pixi.js, previously smooth, antialiased edges frequently turn jagged and pixelated. This article explains the technical reasons behind this behavior, focusing on how the WebGL stencil buffer functions compared to alpha b">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/why-pixi-js-stencil-masks-lose-antialiased-edges">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Why Pixi.js Stencil Masks Lose Antialiased Edges - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/why-pixi-js-stencil-masks-lose-antialiased-edges" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When using basic stencil masks in Pixi.js, previously smooth, antialiased edges frequently turn jagged and pixelated. This article explains the technical reasons behind this behavior, focusing on how the WebGL stencil buffer functions compared to alpha b" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="why-pixijs-stencil-masks-lose-antialiased-edges">Why Pixi.js
+Stencil Masks Lose Antialiased Edges</h1>
+<p>When using basic stencil masks in Pixi.js, previously smooth,
+antialiased edges frequently turn jagged and pixelated. This article
+explains the technical reasons behind this behavior, focusing on how the
+WebGL stencil buffer functions compared to alpha blending, and
+highlights the standard workarounds to achieve smooth, masked edges in
+your renders.</p>
+<h2 id="how-basic-stencil-masks-work-in-webgl">How Basic Stencil Masks
+Work in WebGL</h2>
+<p>Pixi.js applies basic masks—such as when assigning a
+<code>PIXI.Graphics</code> object directly to a display object's
+<code>mask</code> property—using the underlying WebGL stencil
+buffer.</p>
+<p>The stencil buffer functions as a per-pixel integer scratchpad. When
+a stencil mask is rendered:</p>
+<ol type="1">
+<li>Pixi.js draws the mask geometry exclusively into the stencil buffer
+rather than the color buffer.</li>
+<li>For each pixel covered by the geometry, WebGL writes an integer
+value (typically <code>1</code>).</li>
+<li>When the masked object is subsequently drawn, WebGL runs a stencil
+test. If a pixel's stencil value meets the condition (e.g., equals
+<code>1</code>), the pixel renders to the screen. If it fails, the pixel
+is discarded entirely.</li>
+</ol>
+<h2 id="the-problem-binary-passfail-vs-fractional-alpha">The Problem:
+Binary Pass/Fail vs. Fractional Alpha</h2>
+<p>Antialiasing relies on partial transparency. To create the visual
+illusion of a smooth curve or diagonal line on a pixel grid, the edges
+of a shape are drawn with fractional alpha values between
+<code>0.0</code> (fully transparent) and <code>1.0</code> (fully
+opaque). These semi-transparent edge pixels blend with the background
+colors underneath them.</p>
+<p>The stencil buffer cannot process this fractional data:</p>
+<ul>
+<li><strong>No Fractional Values:</strong> The stencil buffer stores
+discrete integers, not floating-point alpha values. A pixel either
+passes the stencil test or fails it.</li>
+<li><strong>Strict Thresholds:</strong> During rasterization of the
+mask, Pixi.js applies a strict cutoff. WebGL determines whether a pixel
+center is inside or outside the polygon primitive. Edge pixels that
+would normally be blended at 25%, 50%, or 75% opacity are forced into a
+binary outcome: completely visible or completely culled.</li>
+<li><strong>Overriding Multisampling:</strong> Even if hardware
+antialiasing (MSAA) is enabled on the WebGL canvas, the 1-bit nature of
+the stencil pass/fail operation discards the intermediate color blending
+stages of the masked content, producing sharp, aliased "staircase"
+artifacts along the boundary.</li>
+</ul>
+<h2 id="how-to-get-smooth-masked-edges-in-pixijs">How to Get Smooth
+Masked Edges in Pixi.js</h2>
+<p>If your visual design requires smooth, curved, or feathered
+boundaries, you must bypass the WebGL stencil buffer in favor of
+alpha-based masking techniques.</p>
+<h3 id="1-use-alpha-masks-sprite-masks">1. Use Alpha Masks (Sprite
+Masks)</h3>
+<p>Instead of assigning a vector <code>Graphics</code> object directly
+as a stencil mask, convert it into an alpha mask using a sprite or
+texture. Alpha masking utilizes the <code>SpriteMaskFilter</code>, which
+evaluates the red or alpha channel of a texture via a fragment shader.
+Because shaders compute fractional values from <code>0.0</code> to
+<code>1.0</code>, the partial transparency of the mask's edges is
+preserved and smoothly multiplied against the masked object.</p>
+<h3 id="2-custom-fragment-shaders">2. Custom Fragment Shaders</h3>
+<p>For procedural shapes (like rounded rectangles or circles), you can
+write a custom filter or shader that calculates distances using signed
+distance fields (SDF) and smoothly interpolates the edges using the GLSL
+<code>smoothstep()</code> function.</p>
+<h3 id="3-render-to-texture-with-downsampling">3. Render-to-Texture with
+Downsampling</h3>
+<p>You can render your content and mask to an intermediate
+<code>RenderTexture</code> at double resolution
+(<code>resolution: 2</code>) and scale it down when displayed.
+Downsampling inherently softens harsh pixel edges, reducing the visual
+impact of stencil aliasing.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

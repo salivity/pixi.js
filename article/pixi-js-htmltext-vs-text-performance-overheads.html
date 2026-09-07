@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js HTMLText vs Text Performance Overheads - pixi.js</title>
+    <meta name="description" content="In Pixi.js, rendering text involves rasterizing strings into textures for the GPU, but HTMLText and standard Text accomplish this through fundamentally different pipelines. While HTMLText allows for rich HTML and CSS formatting, updating its content freq">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-htmltext-vs-text-performance-overheads">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js HTMLText vs Text Performance Overheads - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-htmltext-vs-text-performance-overheads" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In Pixi.js, rendering text involves rasterizing strings into textures for the GPU, but HTMLText and standard Text accomplish this through fundamentally different pipelines. While HTMLText allows for rich HTML and CSS formatting, updating its content freq" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-htmltext-vs-text-performance-overheads">Pixi.js HTMLText
+vs Text Performance Overheads</h1>
+<p>In Pixi.js, rendering text involves rasterizing strings into textures
+for the GPU, but <code>HTMLText</code> and standard <code>Text</code>
+accomplish this through fundamentally different pipelines. While
+<code>HTMLText</code> allows for rich HTML and CSS formatting, updating
+its content frequently incurs severe performance penalties compared to
+standard <code>Text</code>. This article breaks down the technical
+overheads of updating <code>HTMLText</code> strings dynamically,
+including DOM parsing, layout engine dependencies, asynchronous
+rasterization, and memory pressure.</p>
+<h3 id="the-underlying-rendering-pipeline">The Underlying Rendering
+Pipeline</h3>
+<p>Standard <code>PIXI.Text</code> utilizes an internal HTML5
+<code>&lt;canvas&gt;</code> element. When a string updates, Pixi.js
+measures the text with the Canvas 2D API (<code>measureText</code>),
+clears the canvas, draws the string with <code>fillText</code>, and
+uploads the modified pixel data directly to the GPU as a WebGL
+texture.</p>
+<p><code>PIXI.HTMLText</code> achieves rich formatting by embedding HTML
+into an SVG <code>&lt;foreignObject&gt;</code>, converting it to an
+image data URI or SVG blob, loading that image into an
+<code>Image</code> element, drawing it to a canvas, and finally
+uploading it to the GPU. This multi-step process introduces multiple
+bottlenecks when executed per-frame or at high frequencies.</p>
+<h3 id="1-browser-layout-and-style-recalculation">1. Browser Layout and
+Style Recalculation</h3>
+<p>Standard <code>Text</code> relies purely on the Canvas 2D rendering
+context, which completely bypasses the browser’s DOM tree. It processes
+font styles and metrics in a lightweight, linear pass.</p>
+<p>Updating an <code>HTMLText</code> string forces the browser to engage
+its full layout and rendering engine. The browser must:</p>
+<ul>
+<li>Parse the string as an XML/HTML document.</li>
+<li>Construct a mini-DOM tree within the SVG wrapper.</li>
+<li>Calculate CSS rules, cascading styles, and layout geometry
+(reflow/layout).</li>
+</ul>
+<p>This introduces CPU overhead that scales poorly if updated
+continuously, such as in game loops, counters, or tick-based UI
+elements.</p>
+<h3 id="2-asynchronous-texture-generation-and-frame-latency">2.
+Asynchronous Texture Generation and Frame Latency</h3>
+<p>Canvas 2D drawing used by <code>PIXI.Text</code> is entirely
+synchronous. The moment you change <code>text.text = "Score: 10"</code>,
+the canvas updates immediately and is prepared for the next WebGL frame
+upload.</p>
+<p><code>PIXI.HTMLText</code> is inherently asynchronous because it
+relies on the browser's image loading pipeline:</p>
+<ol type="1">
+<li>The markup is encoded into a Data URL or Blob.</li>
+<li>An <code>HTMLImageElement</code> is created to load this URL.</li>
+<li>Rasterization waits for the image's <code>onload</code> event to
+fire before it can be drawn to the staging canvas.</li>
+</ol>
+<p>This asynchronous pipeline can cause visual stutter, frame delays,
+and synchronization issues where text updates lag behind the rest of the
+canvas state.</p>
+<h3 id="3-garbage-collection-and-memory-churn">3. Garbage Collection and
+Memory Churn</h3>
+<p>Dynamic updates to standard <code>Text</code> typically reuse the
+same underlying <code>&lt;canvas&gt;</code> element unless the
+dimensions change significantly, minimizing memory allocation.</p>
+<p>Updating <code>HTMLText</code> strings creates considerable memory
+churn:</p>
+<ul>
+<li>Generation of new HTML/SVG strings on every change.</li>
+<li>Dynamic creation and destruction of Blob URLs and <code>Image</code>
+objects.</li>
+<li>Browser-level cache retention for generated images until
+released.</li>
+</ul>
+<p>This continuous allocation and deallocation triggers frequent Garbage
+Collection (GC) sweeps, resulting in noticeable frame rate drops (jank)
+in interactive WebGL applications.</p>
+<h3 id="4-gpu-texture-uploads">4. GPU Texture Uploads</h3>
+<p>Both approaches must re-upload the canvas data to the GPU via
+<code>gl.texImage2D</code> or <code>gl.texSubImage2D</code> whenever the
+text content changes. However, because <code>HTMLText</code> requires
+longer CPU preparation times and unpredictably sized bounding boxes,
+texture cache invalidation happens more erratically, compounding the GPU
+transfer overhead.</p>
+<h3 id="summary-of-best-practices">Summary of Best Practices</h3>
+<ul>
+<li><strong>Use <code>PIXI.Text</code> for dynamic text:</strong> For
+values that change often—such as scores, player coordinates, or
+timers—standard <code>Text</code> is vastly superior. For maximum
+performance in extreme cases (e.g., hundreds of dynamic labels),
+<code>PIXI.BitmapText</code> should be preferred over both.</li>
+<li><strong>Limit <code>PIXI.HTMLText</code> to static or rarely updated
+elements:</strong> Reserve <code>HTMLText</code> for dialogue boxes,
+rich tooltips, or complex layout descriptions where text updates occur
+infrequently, allowing the initial setup cost to amortize over multiple
+frames.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Override DisplayObject Transform Matrix in PixiJS - pixi.js</title>
+    <meta name="description" content="PixiJS automatically computes transformation matrices for every DisplayObject using high-level properties like position, scale, rotation, skew, and pivot. However, when integrating physics engines, custom affine transformations, or 3D projection systems,">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/override-displayobject-transform-matrix-in-pixijs">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Override DisplayObject Transform Matrix in PixiJS - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/override-displayobject-transform-matrix-in-pixijs" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="PixiJS automatically computes transformation matrices for every DisplayObject using high-level properties like position, scale, rotation, skew, and pivot. However, when integrating physics engines, custom affine transformations, or 3D projection systems," />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="override-displayobject-transform-matrix-in-pixijs">Override
+DisplayObject Transform Matrix in PixiJS</h1>
+<p>PixiJS automatically computes transformation matrices for every
+<code>DisplayObject</code> using high-level properties like
+<code>position</code>, <code>scale</code>, <code>rotation</code>,
+<code>skew</code>, and <code>pivot</code>. However, when integrating
+physics engines, custom affine transformations, or 3D projection
+systems, you may need to bypass this calculation and manually inject
+your own matrix. This article explains how to directly override the
+transformation matrix on a <code>DisplayObject</code> by intercepting
+the default transform update cycle.</p>
+<h3 id="understanding-the-transform-system">Understanding the Transform
+System</h3>
+<p>Every <code>DisplayObject</code> (or <code>Container</code> in PixiJS
+v8) holds a <code>transform</code> property containing two critical
+matrices:</p>
+<ul>
+<li><strong><code>localTransform</code></strong>: Represents the
+object's transformations relative to its parent.</li>
+<li><strong><code>worldTransform</code></strong>: Represents the final
+transformation matrix in screen/root space after multiplying the
+parent’s <code>worldTransform</code> by the current object's
+<code>localTransform</code>.</li>
+</ul>
+<p>During each render frame, PixiJS calls <code>updateTransform()</code>
+on every object, which internally calls
+<code>updateLocalTransform()</code>. By default,
+<code>updateLocalTransform()</code> recalculates
+<code>localTransform</code> using the object's TRS (translation,
+rotation, scale) properties, overwriting any manual matrix changes you
+make.</p>
+<h3 id="method-1-override-updatelocaltransform-recommended">Method 1:
+Override <code>updateLocalTransform</code> (Recommended)</h3>
+<p>The cleanest way to maintain a custom matrix while keeping Pixi's
+scene graph hierarchy intact is to override the
+<code>updateLocalTransform</code> method. This allows you to supply a
+custom <code>PIXI.Matrix</code> while still letting PixiJS automatically
+compute the <code>worldTransform</code> and pass it down to child
+objects.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> <span class="op">*</span> <span class="im">as</span> PIXI <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> sprite <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Sprite</span>(texture)<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">// 1. Define your custom matrix</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> customMatrix <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Matrix</span>()<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">// Example: Apply translation (100, 50), rotation (45 deg), and non-uniform scaling (2, 1)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>customMatrix<span class="op">.</span><span class="fu">setTransform</span>(<span class="dv">100</span><span class="op">,</span> <span class="dv">50</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="bu">Math</span><span class="op">.</span><span class="cn">PI</span> <span class="op">/</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">// 2. Prevent PixiJS from recalculating localTransform from TRS properties</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>sprite<span class="op">.</span><span class="at">transform</span><span class="op">.</span><span class="at">updateLocalTransform</span> <span class="op">=</span> <span class="kw">function</span> () {</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Copy the custom matrix values into the localTransform</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">this</span><span class="op">.</span><span class="at">localTransform</span><span class="op">.</span><span class="fu">copyFrom</span>(customMatrix)<span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">// 3. Mark transform as dirty so Pixi updates it on the next render pass</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>sprite<span class="op">.</span><span class="at">transform</span><span class="op">.</span><span class="at">_parentID</span> <span class="op">=</span> <span class="op">-</span><span class="dv">1</span><span class="op">;</span></span></code></pre></div>
+<p>If your custom matrix changes per frame (for instance, driven by an
+external simulation loop), simply update <code>customMatrix</code>
+values, and the overridden method will apply them automatically before
+rendering.</p>
+<h3 id="method-2-override-updatetransform-entirely">Method 2: Override
+<code>updateTransform</code> Entirely</h3>
+<p>If you need complete control over the final
+<code>worldTransform</code>—bypassing parent transformations
+altogether—you can override the entire <code>updateTransform</code>
+method on the <code>DisplayObject</code>.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sprite<span class="op">.</span><span class="at">updateTransform</span> <span class="op">=</span> <span class="kw">function</span> () {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Assign your matrix directly to the worldTransform</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">this</span><span class="op">.</span><span class="at">worldTransform</span><span class="op">.</span><span class="fu">copyFrom</span>(customWorldMatrix)<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Update child bounds and interactions</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">this</span><span class="op">.</span><span class="at">_boundsID</span><span class="op">++;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Propagate world transform to children if this object has any</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> j <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">children</span><span class="op">.</span><span class="at">length</span><span class="op">;</span> i <span class="op">&lt;</span> j<span class="op">;</span> <span class="op">++</span>i) {</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> child <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">children</span>[i]<span class="op">;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (child<span class="op">.</span><span class="at">visible</span>) {</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>            child<span class="op">.</span><span class="fu">updateTransform</span>()<span class="op">;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<h3 id="key-considerations">Key Considerations</h3>
+<ul>
+<li><strong>Hit Testing and Interaction:</strong> PixiJS relies on
+<code>worldTransform</code> to perform point mapping for pointer events.
+Overriding either <code>localTransform</code> or
+<code>worldTransform</code> correctly preserves mouse and touch
+interaction.</li>
+<li><strong>Direct TRS Conflicts:</strong> Modifying
+<code>sprite.position.x</code> or <code>sprite.rotation</code> after
+overriding <code>updateLocalTransform</code> will have no visual effect,
+as the standard composition logic is bypassed.</li>
+<li><strong>PixiJS v8 Compatibility:</strong> In PixiJS v8, the reactive
+transform architecture uses <code>updateLocalTransform()</code>
+similarly, but properties are consolidated on <code>Container</code>.
+The approach of assigning a custom <code>Matrix</code> and overriding
+<code>updateLocalTransform</code> remains functionally the same.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

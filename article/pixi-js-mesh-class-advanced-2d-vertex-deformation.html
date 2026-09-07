@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js Mesh Class: Advanced 2D Vertex Deformation - pixi.js</title>
+    <meta name="description" content="The Pixi.js Mesh class is a powerful tool that enables developers to perform advanced 2D vertex deformation and custom rendering by providing direct control over geometry, shaders, and textures. This article explores how the Mesh class operates under the">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-mesh-class-advanced-2d-vertex-deformation">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js Mesh Class: Advanced 2D Vertex Deformation - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-mesh-class-advanced-2d-vertex-deformation" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The Pixi.js Mesh class is a powerful tool that enables developers to perform advanced 2D vertex deformation and custom rendering by providing direct control over geometry, shaders, and textures. This article explores how the Mesh class operates under the" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-mesh-class-advanced-2d-vertex-deformation">Pixi.js Mesh
+Class: Advanced 2D Vertex Deformation</h1>
+<p>The Pixi.js <code>Mesh</code> class is a powerful tool that enables
+developers to perform advanced 2D vertex deformation and custom
+rendering by providing direct control over geometry, shaders, and
+textures. This article explores how the <code>Mesh</code> class operates
+under the hood, detailing the mechanics of vertices, UV mapping,
+indices, and custom shaders to achieve complex visual effects like flag
+waving, page curls, and 2D skeletal animations.</p>
+<h2 id="understanding-the-pixijs-mesh-architecture">Understanding the
+Pixi.js Mesh Architecture</h2>
+<p>Unlike standard sprites that are restricted to rectangular planes, a
+<code>Mesh</code> in Pixi.js allows you to define custom shapes using a
+collection of triangles. The class relies on three primary components to
+render these shapes:</p>
+<ul>
+<li><strong>Geometry (<code>PIXI.Geometry</code>):</strong> Defines the
+structure of the shape. It holds the raw data buffers for vertex
+positions, texture coordinates (UVs), and draw order (indices).</li>
+<li><strong>Shader (<code>PIXI.Shader</code> or
+<code>PIXI.MeshMaterial</code>):</strong> Determines how the vertices
+are projected onto the screen and how pixels are colored.</li>
+<li><strong>State (<code>PIXI.State</code>):</strong> Manages WebGL
+state settings such as depth testing and blending modes.</li>
+</ul>
+<p>By manipulating these components, specifically the buffers inside the
+geometry, you can warp, stretch, and animate 2D textures in real
+time.</p>
+<h2 id="how-vertex-deformation-works">How Vertex Deformation Works</h2>
+<p>Vertex deformation is achieved by modifying the position data of the
+mesh's vertices. Each vertex represents a point in 2D space. By changing
+these coordinates over time, you deform the underlying texture mapped to
+those points.</p>
+<h3 id="1-manipulating-the-vertex-buffer">1. Manipulating the Vertex
+Buffer</h3>
+<p>The vertex buffer is a flat array of X and Y coordinates (e.g.,
+<code>[x0, y0, x1, y1, ...]</code>). To deform a mesh, you directly
+update these values in your animation loop.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Example: Modifying vertices dynamically</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> vertices <span class="op">=</span> mesh<span class="op">.</span><span class="at">geometry</span><span class="op">.</span><span class="fu">getBuffer</span>(<span class="st">&#39;aVertexPosition&#39;</span>)<span class="op">.</span><span class="at">data</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> vertices<span class="op">.</span><span class="at">length</span><span class="op">;</span> i <span class="op">+=</span> <span class="dv">2</span>) {</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Apply a wave effect using a sine wave</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    vertices[i <span class="op">+</span> <span class="dv">1</span>] <span class="op">+=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sin</span>(vertices[i] <span class="op">*</span> <span class="fl">0.05</span> <span class="op">+</span> time) <span class="op">*</span> <span class="dv">2</span><span class="op">;</span> </span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Signal Pixi.js that the buffer has changed and needs to be re-uploaded to the GPU</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>mesh<span class="op">.</span><span class="at">geometry</span><span class="op">.</span><span class="fu">getBuffer</span>(<span class="st">&#39;aVertexPosition&#39;</span>)<span class="op">.</span><span class="fu">update</span>()<span class="op">;</span></span></code></pre></div>
+<h3 id="2-uv-mapping-for-texture-alignment">2. UV Mapping for Texture
+Alignment</h3>
+<p>When vertices move, the texture must stretch naturally with them.
+This is handled by UV coordinates, which map specific points of a 2D
+image to specific vertices of the mesh. UV coordinates range from
+<code>0</code> (left/top) to <code>1</code> (right/bottom). Because the
+UV coordinates remain static while the vertex coordinates change,
+Pixi.js automatically warps the texture to fit the newly deformed
+geometry.</p>
+<h3 id="3-index-buffers-for-efficient-rendering">3. Index Buffers for
+Efficient Rendering</h3>
+<p>Instead of defining duplicate vertices for adjacent triangles, the
+<code>Mesh</code> class uses an index buffer. This buffer is an array of
+integers pointing to the indices of the vertex array. By defining
+triangles via indices, you reduce the amount of vertex data that needs
+to be processed and updated, significantly boosting rendering
+performance.</p>
+<h2 id="shader-based-deformation">Shader-Based Deformation</h2>
+<p>While updating vertex buffers on the CPU is highly flexible, doing so
+for high-density meshes can cause performance bottlenecks. To solve
+this, Pixi.js allows you to pass vertex deformation tasks directly to
+the GPU using custom vertex shaders.</p>
+<p>By writing a custom vertex shader, you can manipulate vertex
+positions instantly on the GPU. This is ideal for continuous,
+mathematically-defined animations such as water ripples, wind blowing,
+or screen shakes.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Example Vertex Shader Concept</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dt">attribute</span> <span class="dt">vec2</span> aVertexPosition<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="dt">attribute</span> <span class="dt">vec2</span> aUvs<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">mat3</span> translationMatrix<span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">mat3</span> projectionMatrix<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">float</span> uTime<span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="dt">varying</span> <span class="dt">vec2</span> vTextureCoord<span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">main</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec2</span> position <span class="op">=</span> aVertexPosition<span class="op">;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Displace X position based on Y position and time</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    position<span class="op">.</span><span class="fu">x</span> <span class="op">+=</span> <span class="bu">sin</span><span class="op">(</span>position<span class="op">.</span><span class="fu">y</span> <span class="op">*</span> <span class="fl">0.1</span> <span class="op">+</span> uTime<span class="op">)</span> <span class="op">*</span> <span class="fl">10.0</span><span class="op">;</span> </span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">gl_Position</span> <span class="op">=</span> <span class="dt">vec4</span><span class="op">((</span>projectionMatrix <span class="op">*</span> translationMatrix <span class="op">*</span> <span class="dt">vec3</span><span class="op">(</span>position<span class="op">,</span> <span class="fl">1.0</span><span class="op">)).</span><span class="fu">xy</span><span class="op">,</span> <span class="fl">0.0</span><span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    vTextureCoord <span class="op">=</span> aUvs<span class="op">;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 id="practical-use-cases-for-mesh-deformation">Practical Use Cases
+for Mesh Deformation</h2>
+<p>The flexibility of the <code>Mesh</code> class makes it the
+foundation for several advanced visual techniques in 2D web
+development:</p>
+<ul>
+<li><strong>2D Skeletal Animation (Spine/DragonBones):</strong>
+Deforming character meshes to simulate smooth joint bending, muscle
+flexing, and clothing movement without swapping static textures.</li>
+<li><strong>Physics Simulations:</strong> Simulating soft-body physics,
+water surfaces, or ropes.</li>
+<li><strong>Transition Effects:</strong> Creating page-turn transitions,
+melting effects, or portal distortions by warping the screen
+geometry.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

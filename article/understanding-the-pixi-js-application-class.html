@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding the Pixi.js Application Class - pixi.js</title>
+    <meta name="description" content="When setting up a Pixi.js project, the Application class serves as the central foundation that simplifies the initialization process. This article explains the essential role of the Application class in bootstrapping a Pixi.js application, detailing how">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/understanding-the-pixi-js-application-class">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Understanding the Pixi.js Application Class - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/understanding-the-pixi-js-application-class" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When setting up a Pixi.js project, the Application class serves as the central foundation that simplifies the initialization process. This article explains the essential role of the Application class in bootstrapping a Pixi.js application, detailing how" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="understanding-the-pixijs-application-class">Understanding the
+Pixi.js Application Class</h1>
+<p>When setting up a Pixi.js project, the <code>Application</code> class
+serves as the central foundation that simplifies the initialization
+process. This article explains the essential role of the
+<code>Application</code> class in bootstrapping a Pixi.js application,
+detailing how it automatically configures the renderer, manages the
+animation loop, and provides the root container for your visual
+elements.</p>
+<h2 id="what-is-the-pixijs-application-class">What is the Pixi.js
+Application Class?</h2>
+<p>The <code>Application</code> class is a convenient helper class that
+bundles together the core components needed to run a Pixi.js project.
+Instead of manually creating and linking a renderer, a ticker, and a
+root stage, the <code>Application</code> class instantiates and
+configures them automatically behind the scenes.</p>
+<p>By handling the boilerplate code, it allows developers to quickly
+transition from setup to writing actual game or interactive graphics
+logic.</p>
+<h2 id="key-components-managed-by-the-application">Key Components
+Managed by the Application</h2>
+<p>When you instantiate a Pixi.js <code>Application</code>, it
+automatically sets up three fundamental components:</p>
+<h3 id="1-the-renderer">1. The Renderer</h3>
+<p>The renderer is responsible for drawing your graphics onto the
+screen. The <code>Application</code> class automatically detects the
+capabilities of the host browser and selects the fastest rendering
+technology available (preferring WebGL or WebGPU, and falling back to a
+standard HTML5 Canvas if necessary). It also creates the HTML
+<code>&lt;canvas&gt;</code> element that you append to your
+document.</p>
+<h3 id="2-the-stage">2. The Stage</h3>
+<p>The stage (<code>app.stage</code>) is a <code>Container</code> object
+that serves as the root of your scene graph. Every visual object you
+want to display—such as sprites, text, shapes, or particle
+containers—must be added as a child of this root stage. The renderer
+looks at this stage and draws everything inside of it on every
+frame.</p>
+<h3 id="3-the-ticker">3. The Ticker</h3>
+<p>The ticker (<code>app.ticker</code>) is a built-in update loop
+powered by <code>requestAnimationFrame</code>. It constantly updates the
+screen (typically at 60 frames per second) and provides a delta time
+parameter. You can hook your animation and update logic directly into
+this ticker to ensure smooth, frame-rate-independent movement.</p>
+<h2 id="how-the-application-bootstraps-a-project">How the Application
+Bootstraps a Project</h2>
+<p>In modern versions of Pixi.js (such as PixiJS v8), bootstrapping a
+project using the <code>Application</code> class is highly streamlined.
+The process typically follows these steps:</p>
+<ol type="1">
+<li><strong>Instantiation:</strong> Create an instance of the
+<code>Application</code> class.</li>
+<li><strong>Initialization:</strong> Call the asynchronous
+<code>init()</code> method, passing in configuration options like the
+width, height, resolution, and background color of your canvas.</li>
+<li><strong>Mounting:</strong> Append the automatically generated canvas
+element (<code>app.canvas</code>) to the HTML DOM.</li>
+<li><strong>Populating the Scene:</strong> Create visual elements and
+add them to <code>app.stage</code>.</li>
+</ol>
+<p>Here is a basic example of this bootstrap process in practice:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { Application<span class="op">,</span> Sprite } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">// 1. Create the application instance</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> app <span class="op">=</span> <span class="kw">new</span> <span class="fu">Application</span>()<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">// 2. Initialize the application with options</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> app<span class="op">.</span><span class="fu">init</span>({ </span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span> </span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">height</span><span class="op">:</span> <span class="dv">600</span><span class="op">,</span> </span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">backgroundColor</span><span class="op">:</span> <span class="bn">0x1099bb</span> </span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">// 3. Append the canvas to the HTML document</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="bu">document</span><span class="op">.</span><span class="at">body</span><span class="op">.</span><span class="fu">appendChild</span>(app<span class="op">.</span><span class="at">canvas</span>)<span class="op">;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">// 4. Add objects to the stage</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> sprite <span class="op">=</span> Sprite<span class="op">.</span><span class="fu">from</span>(<span class="st">&#39;path/to/image.png&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(sprite)<span class="op">;</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co">// 5. Use the ticker for animations</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">ticker</span><span class="op">.</span><span class="fu">add</span>((time) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    sprite<span class="op">.</span><span class="at">rotation</span> <span class="op">+=</span> <span class="fl">0.1</span> <span class="op">*</span> time<span class="op">.</span><span class="at">deltaTime</span><span class="op">;</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h2 id="summary">Summary</h2>
+<p>The <code>Application</code> class is the ultimate entry point for
+any Pixi.js project. By automatically managing the canvas rendering, the
+scene graph root, and the animation loop, it eliminates complex setup
+procedures and allows you to focus immediately on building your
+interactive 2D experience.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

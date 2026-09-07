@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadtree Collision Detection in Pixi.js - pixi.js</title>
+    <meta name="description" content="Rendering thousands of interactive sprites at 60 frames per second is standard for Pixi.js, but computing collisions between them can instantly cripple performance due to exponential computational overhead. A quadtree data structure solves this bottlenec">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/quadtree-collision-detection-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Quadtree Collision Detection in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/quadtree-collision-detection-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Rendering thousands of interactive sprites at 60 frames per second is standard for Pixi.js, but computing collisions between them can instantly cripple performance due to exponential computational overhead. A quadtree data structure solves this bottlenec" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="quadtree-collision-detection-in-pixijs">Quadtree Collision
+Detection in Pixi.js</h1>
+<p>Rendering thousands of interactive sprites at 60 frames per second is
+standard for Pixi.js, but computing collisions between them can
+instantly cripple performance due to exponential computational overhead.
+A quadtree data structure solves this bottleneck by recursively dividing
+the 2D canvas into four quadrants, grouping nearby objects together so
+that collision checks are only performed between adjacent entities. This
+article explains the architectural limitations of naive collision
+detection in JavaScript, the operational mechanics of a quadtree, and
+how spatial partitioning transforms massive Pixi.js scenes from
+unplayable lag to smooth, optimized execution.</p>
+<h3 id="the-problem-naive-on2-collision-checks">The Problem: Naive <span
+class="math inline">\(O(n^2)\)</span> Collision Checks</h3>
+<p>Pixi.js utilizes WebGL to rapidly render thousands of 2D sprites on
+the GPU, but physics calculations and collision detection run on the
+single-threaded CPU via JavaScript.</p>
+<p>The most straightforward way to detect collisions is comparing every
+object against every other object in a nested loop. For <span
+class="math inline">\(n\)</span> objects, this requires <span
+class="math inline">\(\frac{n(n - 1)}{2}\)</span> calculations, creating
+an algorithmic time complexity of <span
+class="math inline">\(O(n^2)\)</span>.</p>
+<ul>
+<li>With 100 objects, the CPU performs roughly 4,950 checks per
+frame.</li>
+<li>With 2,000 objects, that number escalates to nearly 2,000,000 checks
+per frame.</li>
+<li>At 60 FPS, the CPU has roughly 16.6 milliseconds to update logic and
+render. Two million comparisons will immediately cause the frame rate to
+collapse into single digits.</li>
+</ul>
+<p>Most of these checks are entirely wasted because objects on opposite
+sides of the screen can never collide.</p>
+<h3 id="what-is-a-quadtree">What is a Quadtree?</h3>
+<p>A quadtree is a specialized tree data structure designed for
+two-dimensional spatial partitioning. It works by decomposing a flat 2D
+plane into four equal sub-quadrants: North-West (NW), North-East (NE),
+South-West (SW), and South-East (SE).</p>
+<p>A quadtree operates under a few simple rules:</p>
+<ol type="1">
+<li><strong>Capacity Limit:</strong> Each quadrant node has a designated
+capacity limit (for example, a maximum of 4 or 8 objects) and a maximum
+depth level to prevent infinite subdivision.</li>
+<li><strong>Subdivision:</strong> When the number of objects within a
+node exceeds the capacity, the node splits itself into four child
+nodes.</li>
+<li><strong>Distribution:</strong> Existing objects and new additions
+are distributed into the appropriate child nodes based on their
+coordinates and bounding boxes. Objects that intersect boundary lines
+are either kept at the parent level or referenced across multiple
+intersecting child nodes.</li>
+</ol>
+<h3 id="how-a-quadtree-optimizes-pixijs-performance">How a Quadtree
+Optimizes Pixi.js Performance</h3>
+<p>The quadtree acts as an ultra-fast "broad-phase" collision filter.
+Instead of running expensive hit-tests across the entire sprite array,
+the collision process is split into two phases:</p>
+<ol type="1">
+<li><strong>Broad-Phase (Quadtree Query):</strong> For a given Pixi.js
+sprite, you query the quadtree using the sprite's bounding box
+(<code>sprite.getBounds()</code>). The quadtree traverses only the
+relevant branch of the tree and returns a small array of candidate
+sprites located in the same or neighboring quadrants.</li>
+<li><strong>Narrow-Phase (Precise Collision):</strong> You run detailed
+collision checks (such as Axis-Aligned Bounding Box (AABB) intersection
+or circle radius math) only against the small subset of candidates
+returned by the quadtree.</li>
+</ol>
+<p>By discarding 95% or more of non-colliding entities before running
+math operations, the algorithmic complexity drops from <span
+class="math inline">\(O(n^2)\)</span> down to roughly <span
+class="math inline">\(O(n \log n)\)</span>. A scene with 2,000 objects
+shifts from two million checks per frame to just a few thousand, keeping
+CPU execution well within the 16.6-millisecond frame budget.</p>
+<h3 id="implementation-flow-within-the-pixijs-ticker">Implementation
+Flow Within the Pixi.js Ticker</h3>
+<p>To use a quadtree with dynamic objects in Pixi.js, the tree must be
+updated in tandem with the rendering loop via
+<code>PIXI.Ticker</code>:</p>
+<ol type="1">
+<li><strong>Clear:</strong> At the beginning of the frame update, wipe
+the quadtree clean. Rebuilding the tree every frame is computationally
+cheaper than searching, removing, and re-inserting moving objects.</li>
+<li><strong>Insert:</strong> Loop over all active Pixi.js sprites and
+insert their spatial bounds (<code>x</code>, <code>y</code>,
+<code>width</code>, <code>height</code>) into the quadtree.</li>
+<li><strong>Query &amp; Resolve:</strong> Iterate through your sprites
+once more. For each sprite, query the quadtree to retrieve nearby
+candidates, run your narrow-phase collision logic on that small group,
+and handle collision reactions accordingly.</li>
+</ol>
+<p>By leveraging a quadtree for spatial awareness, you shift the CPU's
+workload from brute-force mathematical evaluation to structured memory
+traversal, allowing Pixi.js to handle thousands of colliding elements
+without dropping frames.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

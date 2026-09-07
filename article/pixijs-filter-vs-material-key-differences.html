@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS Filter vs Material: Key Differences - pixi.js</title>
+    <meta name="description" content="In PixiJS, both Filter programs and Material programs utilize custom WebGL/WebGPU shaders to render visual effects, but they serve fundamentally different purposes within the rendering pipeline. A Filter program is a post-processing tool applied to any D">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-filter-vs-material-key-differences">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS Filter vs Material: Key Differences - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-filter-vs-material-key-differences" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In PixiJS, both Filter programs and Material programs utilize custom WebGL/WebGPU shaders to render visual effects, but they serve fundamentally different purposes within the rendering pipeline. A Filter program is a post-processing tool applied to any D" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-filter-vs-material-key-differences">PixiJS Filter vs
+Material: Key Differences</h1>
+<p>In PixiJS, both Filter programs and Material programs utilize custom
+WebGL/WebGPU shaders to render visual effects, but they serve
+fundamentally different purposes within the rendering pipeline. A Filter
+program is a post-processing tool applied to any DisplayObject (such as
+Sprites or Containers) by rendering it to an off-screen texture before
+applying shader effects. In contrast, a Material program (used primarily
+with <code>Mesh</code> objects) is applied directly during the geometry
+rendering phase, dictating how vertices and pixels are drawn in
+real-time without an intermediate off-screen buffer. Understanding the
+distinction between these two approaches is essential for optimizing
+rendering performance and achieving precise visual results.</p>
+<h3 id="what-is-a-filter-program">What is a Filter Program?</h3>
+<p>A Filter program in PixiJS is designed for post-processing. When you
+assign a filter to a display object:</p>
+<ol type="1">
+<li><strong>Off-Screen Render Pass:</strong> PixiJS pauses the standard
+render pass, creates an off-screen framebuffer (render texture), and
+draws the target object and all of its nested children onto that
+texture.</li>
+<li><strong>Shader Application:</strong> The filter’s fragment shader is
+executed on the resulting texture.</li>
+<li><strong>Composite Output:</strong> The processed texture is drawn
+back onto the main canvas or destination buffer.</li>
+</ol>
+<p>Because filters capture the bounding area of an object and its
+children, they operate in screen space or texture coordinate space
+(using uniforms like <code>uSampler</code>, <code>filterArea</code>, and
+<code>filterClamp</code>). Filters are ideal for global effects such as
+Gaussian blurs, color matrix adjustments, bloom, displacement maps, and
+drop shadows.</p>
+<h3 id="what-is-a-material-program">What is a Material Program?</h3>
+<p>A Material program (often implemented via <code>MeshMaterial</code>
+or custom <code>Shader</code> instances) defines the visual properties
+of a specific piece of geometry. When used with a <code>Mesh</code>:</p>
+<ol type="1">
+<li><strong>Direct Geometry Rendering:</strong> The material’s vertex
+shader processes the mesh's raw vertex positions, and the fragment
+shader computes the colors directly onto the current render target.</li>
+<li><strong>No Extra Framebuffers:</strong> There is no intermediate
+off-screen rendering pass required, eliminating the overhead of
+switching render targets.</li>
+<li><strong>Local Vertex Control:</strong> The shader has direct access
+to geometry attributes such as custom UV coordinates, vertex colors, and
+vertex positions.</li>
+</ol>
+<p>Materials are ideal for procedural terrain, custom 2D/3D geometry,
+flag-waving simulations, custom lighting, and deformations where vertex
+manipulation or direct fragment output is needed.</p>
+<h3 id="key-differences">Key Differences</h3>
+<h4 id="1-rendering-pipeline-and-performance">1. Rendering Pipeline and
+Performance</h4>
+<ul>
+<li><strong>Filters:</strong> Rely on secondary render passes and
+framebuffer switches. Stacking multiple filters or applying filters to
+many individual objects can cause performance bottlenecks due to GPU
+context switching and memory allocation.</li>
+<li><strong>Materials:</strong> Integrate directly into the standard
+draw call pipeline. While custom materials may break automatic sprite
+batching, they do not require extra render textures or frame buffer
+switches, making them generally faster for geometry-specific
+effects.</li>
+</ul>
+<h4 id="2-target-application">2. Target Application</h4>
+<ul>
+<li><strong>Filters:</strong> Can be assigned to almost any
+<code>DisplayObject</code>, including <code>Sprite</code>,
+<code>Container</code>, and <code>Graphics</code>. A single filter can
+alter an entire hierarchy of sprites simultaneously.</li>
+<li><strong>Materials:</strong> Bind exclusively to geometry-based
+objects, primarily <code>Mesh</code> and its derivatives (such as
+<code>SimpleMesh</code> or <code>Rope</code>). They cannot be applied
+directly across a generic container of mixed display elements.</li>
+</ul>
+<h4 id="3-coordinate-spaces-and-uniforms">3. Coordinate Spaces and
+Uniforms</h4>
+<ul>
+<li><strong>Filters:</strong> Use normalized texture coordinates mapped
+to the bounding box of the filtered region. PixiJS automatically injects
+uniforms that handle texture clamping and screen-space mapping to
+prevent sampling artifacts outside the object's bounds.</li>
+<li><strong>Materials:</strong> Rely on geometry-level attributes. You
+work directly with model-view-projection matrices, vertex-defined UV
+coordinates, and custom vertex attributes.</li>
+</ul>
+<h4 id="4-vertex-manipulation">4. Vertex Manipulation</h4>
+<ul>
+<li><strong>Filters:</strong> Primarily focus on pixel manipulation in
+the fragment shader. While a filter can alter vertex positions via its
+vertex shader, it only operates on a full-screen quad representing the
+generated texture.</li>
+<li><strong>Materials:</strong> Allow full manipulation of the
+underlying mesh geometry. The vertex shader can translate, scale, or
+distort individual vertices prior to rasterization.</li>
+</ul>
+<h3 id="summary">Summary</h3>
+<p>Use a <strong>Filter program</strong> when you need post-processing
+effects that alter an entire object or container after it has been
+drawn, such as color grading, blurring, or screen-space distortion. Use
+a <strong>Material program</strong> when you need direct control over
+how specific geometry is drawn, require vertex manipulation, or want to
+avoid the performance cost of off-screen framebuffers.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js WebGPU Texture Samplers and Wrap Modes - pixi.js</title>
+    <meta name="description" content="Pixi.js leverages the modern WebGPU API to provide high-performance rendering by mapping its internal texture styles directly to native WebGPU sampler configurations. Through Pixi’s texture styling system, developers can configure UV wrap modes such as">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-webgpu-texture-samplers-and-wrap-modes">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js WebGPU Texture Samplers and Wrap Modes - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-webgpu-texture-samplers-and-wrap-modes" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Pixi.js leverages the modern WebGPU API to provide high-performance rendering by mapping its internal texture styles directly to native WebGPU sampler configurations. Through Pixi’s texture styling system, developers can configure UV wrap modes such as" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-webgpu-texture-samplers-and-wrap-modes">Pixi.js WebGPU
+Texture Samplers and Wrap Modes</h1>
+<p>Pixi.js leverages the modern WebGPU API to provide high-performance
+rendering by mapping its internal texture styles directly to native
+WebGPU sampler configurations. Through Pixi’s texture styling system,
+developers can configure UV wrap modes such as
+<code>clamp-to-edge</code>, <code>repeat</code>, and
+<code>mirror-repeat</code>, alongside magnification and minification
+filters. This article explains how Pixi.js translates high-level texture
+settings into native WebGPU <code>GPUSampler</code> descriptors, manages
+sampler caching, and passes these configurations to the GPU
+pipeline.</p>
+<h2 id="the-role-of-webgpu-samplers">The Role of WebGPU Samplers</h2>
+<p>In WebGPU, textures and samplers are decoupled. A texture holds the
+raw texel data, while a sampler (<code>GPUSampler</code>) dictates how
+that data is read and filtered inside shaders. The sampler defines how
+coordinates outside the conventional <code>[0.0, 1.0]</code> UV range
+are handled (addressing modes) and how texels are interpolated across
+pixels (filtering modes).</p>
+<p>When using WebGPU in Pixi.js (introduced natively in Pixi.js v8), the
+renderer constructs native WebGPU samplers based on the configuration of
+each texture's source style.</p>
+<h2 id="address-modes-clamp-vs-mirror-repeat">Address Modes: Clamp vs.
+Mirror-Repeat</h2>
+<p>Pixi.js textures utilize a <code>TextureStyle</code> object attached
+to each <code>TextureSource</code>. This style defines how coordinates
+outside the standard bounds are sampled using the properties
+<code>addressModeU</code>, <code>addressModeV</code>, and
+<code>addressModeW</code>.</p>
+<p>WebGPU natively supports three primary address modes:</p>
+<ul>
+<li><code>clamp-to-edge</code>: Clamps coordinates to the range
+<code>[0.0, 1.0]</code>, causing the edge pixels to stretch
+infinitely.</li>
+<li><code>repeat</code>: Tiles the texture continuously by wrapping
+coordinates around.</li>
+<li><code>mirror-repeat</code>: Tiles the texture by repeating it, but
+mirrors the image on every integer boundary to create a seamless
+back-and-forth reflection.</li>
+</ul>
+<h3 id="how-pixijs-maps-address-modes">How Pixi.js Maps Address
+Modes</h3>
+<p>When a developer sets an addressing mode in Pixi.js, the WebGPU
+renderer maps the string values directly to the WebGPU
+<code>GPUAddressMode</code> enum:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Setting mirror-repeat on a Pixi texture source</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>texture<span class="op">.</span><span class="at">source</span><span class="op">.</span><span class="at">style</span><span class="op">.</span><span class="at">addressModeU</span> <span class="op">=</span> <span class="st">&#39;mirror-repeat&#39;</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>texture<span class="op">.</span><span class="at">source</span><span class="op">.</span><span class="at">style</span><span class="op">.</span><span class="at">addressModeV</span> <span class="op">=</span> <span class="st">&#39;mirror-repeat&#39;</span><span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Setting clamp-to-edge (often default for non-repeating assets)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>texture<span class="op">.</span><span class="at">source</span><span class="op">.</span><span class="at">style</span><span class="op">.</span><span class="at">addressModeU</span> <span class="op">=</span> <span class="st">&#39;clamp-to-edge&#39;</span><span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>texture<span class="op">.</span><span class="at">source</span><span class="op">.</span><span class="at">style</span><span class="op">.</span><span class="at">addressModeV</span> <span class="op">=</span> <span class="st">&#39;clamp-to-edge&#39;</span><span class="op">;</span></span></code></pre></div>
+<p>Under the hood, the Pixi WebGPU adapter prepares a
+<code>GPUSamplerDescriptor</code> with corresponding fields:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode typescript"><code class="sourceCode typescript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> samplerDescriptor<span class="op">:</span> GPUSamplerDescriptor <span class="op">=</span> {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    addressModeU<span class="op">:</span> style<span class="op">.</span><span class="at">addressModeU</span><span class="op">,</span> <span class="co">// &#39;clamp-to-edge&#39; | &#39;repeat&#39; | &#39;mirror-repeat&#39;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    addressModeV<span class="op">:</span> style<span class="op">.</span><span class="at">addressModeV</span><span class="op">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    addressModeW<span class="op">:</span> style<span class="op">.</span><span class="at">addressModeW</span><span class="op">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    magFilter<span class="op">:</span> style<span class="op">.</span><span class="at">magFilter</span><span class="op">,</span>       <span class="co">// &#39;linear&#39; | &#39;nearest&#39;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    minFilter<span class="op">:</span> style<span class="op">.</span><span class="at">minFilter</span><span class="op">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    mipmapFilter<span class="op">:</span> style<span class="op">.</span><span class="at">mipmapFilter</span><span class="op">,</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<h2 id="filter-modes-linear-vs-nearest">Filter Modes: Linear vs.
+Nearest</h2>
+<p>Alongside wrapping modes, texture sampling depends on interpolation
+filters:</p>
+<ul>
+<li><strong>Nearest (<code>nearest</code>):</strong> Selects the nearest
+texel value, resulting in pixelated graphics suitable for retro
+pixel-art styles.</li>
+<li><strong>Linear (<code>linear</code>):</strong> Computes a weighted
+average of the texels surrounding the sample location, producing smooth
+blending across scaled surfaces.</li>
+</ul>
+<p>Pixi.js maps its <code>scaleMode</code> configurations (e.g.,
+<code>'linear'</code> or <code>'nearest'</code>) to
+<code>magFilter</code> and <code>minFilter</code> within the same
+<code>GPUSamplerDescriptor</code>. When combined with
+<code>mirror-repeat</code>, linear filtering ensures smooth transitions
+across the mirrored boundaries without seam artifacts.</p>
+<h2 id="sampler-pooling-and-resource-management">Sampler Pooling and
+Resource Management</h2>
+<p>Creating a new <code>GPUSampler</code> via
+<code>device.createSampler()</code> carries overhead if performed
+continuously. To optimize performance, Pixi.js employs an internal
+sampler cache:</p>
+<ol type="1">
+<li><strong>Hash Generation:</strong> Pixi.js generates a unique hash
+key representing the combined state of <code>addressModeU</code>,
+<code>addressModeV</code>, <code>addressModeW</code>,
+<code>magFilter</code>, <code>minFilter</code>, and
+<code>mipmapFilter</code>.</li>
+<li><strong>Lookup and Reuse:</strong> Before instantiating a new
+sampler, the WebGPU system queries its sampler pool. If an identical
+configuration has already been registered, Pixi reuses the existing
+<code>GPUSampler</code> instance.</li>
+<li><strong>Bind Group Construction:</strong> The resolved
+<code>GPUSampler</code> is packaged into a <code>GPUBindGroup</code>
+alongside the texture's <code>GPUTextureView</code>.</li>
+</ol>
+<p>In the WGSL shader, the sampler is accessed via standard texture
+sampling functions:</p>
+<pre class="wgsl"><code>@group(0) @binding(0) var uSampler: sampler;
+@group(0) @binding(1) var uTexture: texture_2d&lt;f32&gt;;
+
+@fragment
+fn main(@location(0) uv: vec2&lt;f32&gt;) -&gt; @location(0) vec4&lt;f32&gt; {
+    return textureSample(uTexture, uSampler, uv);
+}</code></pre>
+<p>Because the hardware handles the boundary calculations directly
+through the bound <code>GPUSampler</code>, modes like
+<code>mirror-repeat</code> and <code>clamp-to-edge</code> execute with
+zero overhead in the fragment shader.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

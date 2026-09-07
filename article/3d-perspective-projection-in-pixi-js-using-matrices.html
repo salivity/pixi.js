@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Perspective Projection in Pixi.js Using Matrices - pixi.js</title>
+    <meta name="description" content="This article provides a direct guide on projecting a 2D Pixi.js stage or container into simulated 3D perspective using matrix transformations. While Pixi.js is built primarily as a 2D rendering engine using affine transforms, you can simulate depth and p">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/3d-perspective-projection-in-pixi-js-using-matrices">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="3D Perspective Projection in Pixi.js Using Matrices - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/3d-perspective-projection-in-pixi-js-using-matrices" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides a direct guide on projecting a 2D Pixi.js stage or container into simulated 3D perspective using matrix transformations. While Pixi.js is built primarily as a 2D rendering engine using affine transforms, you can simulate depth and p" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="3d-perspective-projection-in-pixijs-using-matrices">3D
+Perspective Projection in Pixi.js Using Matrices</h1>
+<p>This article provides a direct guide on projecting a 2D Pixi.js stage
+or container into simulated 3D perspective using matrix transformations.
+While Pixi.js is built primarily as a 2D rendering engine using affine
+transforms, you can simulate depth and perspective by understanding
+homogeneous coordinates, applying perspective division, and injecting
+non-affine projective matrices into custom meshes or shaders.</p>
+<hr />
+<h3 id="the-limitation-of-pixijs-2d-matrices">The Limitation of Pixi.js
+2D Matrices</h3>
+<p>By default, Pixi.js uses <code>PIXI.Matrix</code> for object
+transformations. This represents a 2D affine transformation matrix
+structured as:</p>
+<p><span class="math display">\[\begin{bmatrix} a &amp; c &amp; tx \\ b
+&amp; d &amp; ty \\ 0 &amp; 0 &amp; 1 \end{bmatrix}\]</span></p>
+<p>Affine matrices can handle translation, rotation, scale, and skew,
+but they maintain parallel lines. They cannot produce perspective
+foreshortening, where objects appear smaller and converge toward a
+vanishing point as depth (<span class="math inline">\(Z\)</span>)
+increases.</p>
+<h3 id="mathematical-concept-perspective-division">Mathematical Concept:
+Perspective Division</h3>
+<p>To project a 3D coordinate <span class="math inline">\((X, Y,
+Z)\)</span> onto a 2D screen <span class="math inline">\((x&#39;,
+y&#39;)\)</span>, you must apply perspective projection:</p>
+<p><span class="math display">\[x&#39; = \frac{X \cdot d}{Z +
+d}\]</span> <span class="math display">\[y&#39; = \frac{Y \cdot d}{Z +
+d}\]</span></p>
+<p>Where <span class="math inline">\(d\)</span> represents the distance
+from the camera to the projection plane (focal length).</p>
+<p>In matrix form, perspective requires homogeneous coordinates where
+the bottom row of a <span class="math inline">\(3 \times 3\)</span>
+projective matrix (homography) contains non-zero elements:</p>
+<p><span class="math display">\[\begin{bmatrix} x_{out} \\ y_{out} \\ w
+\end{bmatrix} = \begin{bmatrix} m_{00} &amp; m_{01} &amp; m_{02} \\
+m_{10} &amp; m_{11} &amp; m_{12} \\ p_x &amp; p_y &amp; 1 \end{bmatrix}
+\begin{bmatrix} x_{in} \\ y_{in} \\ 1 \end{bmatrix}\]</span></p>
+<p>After multiplication, the final 2D coordinates are obtained through
+perspective division:</p>
+<p><span class="math display">\[x&#39; = \frac{x_{out}}{w}, \quad y&#39;
+= \frac{y_{out}}{w}\]</span></p>
+<h3 id="implementation-approaches-in-pixijs">Implementation Approaches
+in Pixi.js</h3>
+<p>Because standard <code>PIXI.Container</code> instances only support
+2D affine transforms, you must implement perspective projection using
+either vertex meshes or custom shaders.</p>
+<h4 id="1-projecting-vertices-with-pixisimplemesh">1. Projecting
+Vertices with <code>PIXI.SimpleMesh</code></h4>
+<p>The cleanest native way to apply a 3D projection to a 2D element
+without external plugins is by manipulating the vertex buffer of a
+<code>PIXI.SimpleMesh</code>.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Define a simple 3D point transformation function</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">project3D</span>(x<span class="op">,</span> y<span class="op">,</span> z<span class="op">,</span> focalLength<span class="op">,</span> originX<span class="op">,</span> originY) {</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> distance <span class="op">=</span> z <span class="op">+</span> focalLength<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (distance <span class="op">&lt;=</span> <span class="dv">0</span>) <span class="cf">return</span> { <span class="dt">x</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="dv">0</span> }<span class="op">;</span> <span class="co">// Behind camera</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> scale <span class="op">=</span> focalLength <span class="op">/</span> distance<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="dt">x</span><span class="op">:</span> (x <span class="op">-</span> originX) <span class="op">*</span> scale <span class="op">+</span> originX<span class="op">,</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="dt">y</span><span class="op">:</span> (y <span class="op">-</span> originY) <span class="op">*</span> scale <span class="op">+</span> originY</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    }<span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">// Setup a plane mesh with a texture</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> texture <span class="op">=</span> PIXI<span class="op">.</span><span class="at">Texture</span><span class="op">.</span><span class="fu">from</span>(<span class="st">&#39;surface.png&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> width <span class="op">=</span> <span class="dv">400</span><span class="op">;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> height <span class="op">=</span> <span class="dv">400</span><span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co">// Quad vertices: [x0, y0, x1, y1, x2, y2, x3, y3]</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> rawVertices <span class="op">=</span> [</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    width<span class="op">,</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    width<span class="op">,</span> height<span class="op">,</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span> height</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>]<span class="op">;</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> uvs <span class="op">=</span> [</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>]<span class="op">;</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> indices <span class="op">=</span> [<span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>]<span class="op">;</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mesh <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">SimpleMesh</span>(texture<span class="op">,</span> <span class="kw">new</span> <span class="bu">Float32Array</span>(rawVertices)<span class="op">,</span> <span class="kw">new</span> <span class="bu">Float32Array</span>(uvs)<span class="op">,</span> <span class="kw">new</span> <span class="bu">Uint16Array</span>(indices))<span class="op">;</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(mesh)<span class="op">;</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="co">// Apply a tilt transformation around the X-axis (Pitch)</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">updatePerspective</span>(pitchAngleRad<span class="op">,</span> focalLength) {</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> cos <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">cos</span>(pitchAngleRad)<span class="op">;</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> sin <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sin</span>(pitchAngleRad)<span class="op">;</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> originY <span class="op">=</span> height <span class="op">/</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> originX <span class="op">=</span> width <span class="op">/</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> projected <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> rawVertices<span class="op">.</span><span class="at">length</span><span class="op">;</span> i <span class="op">+=</span> <span class="dv">2</span>) {</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> localX <span class="op">=</span> rawVertices[i]<span class="op">;</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> localY <span class="op">=</span> rawVertices[i <span class="op">+</span> <span class="dv">1</span>] <span class="op">-</span> originY<span class="op">;</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Rotate in 3D around X axis</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> y3D <span class="op">=</span> localY <span class="op">*</span> cos<span class="op">;</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> z3D <span class="op">=</span> localY <span class="op">*</span> sin<span class="op">;</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Perspective divide</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> point <span class="op">=</span> <span class="fu">project3D</span>(localX<span class="op">,</span> y3D <span class="op">+</span> originY<span class="op">,</span> z3D<span class="op">,</span> focalLength<span class="op">,</span> originX<span class="op">,</span> originY)<span class="op">;</span></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>        projected<span class="op">.</span><span class="fu">push</span>(point<span class="op">.</span><span class="at">x</span><span class="op">,</span> point<span class="op">.</span><span class="at">y</span>)<span class="op">;</span></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>    mesh<span class="op">.</span><span class="at">verticesBuffer</span><span class="op">.</span><span class="fu">update</span>(<span class="kw">new</span> <span class="bu">Float32Array</span>(projected))<span class="op">;</span></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="co">// Tilt the plane 45 degrees backward with a focal length of 300</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="fu">updatePerspective</span>(<span class="bu">Math</span><span class="op">.</span><span class="cn">PI</span> <span class="op">/</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">300</span>)<span class="op">;</span></span></code></pre></div>
+<h4 id="2-using-a-projective-homography-shader">2. Using a Projective
+Homography Shader</h4>
+<p>If you need entire containers with complex nested elements projected
+into 3D, you can apply a custom <code>PIXI.Filter</code> containing a
+projective matrix.</p>
+<ol type="1">
+<li><strong>Vertex Shader:</strong> Passes through normalized UVs.</li>
+<li><strong>Fragment Shader:</strong> Multiplies the output pixel
+coordinates by the inverse homography matrix to sample the original 2D
+texture.</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Fragment Shader</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dt">varying</span> <span class="dt">vec2</span> vTextureCoord<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">sampler2D</span> uSampler<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">mat3</span> uInverseMatrix<span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">main</span><span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Convert 2D UV coordinate to homogeneous coordinate</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec3</span> homogeneousCoord <span class="op">=</span> uInverseMatrix <span class="op">*</span> <span class="dt">vec3</span><span class="op">(</span>vTextureCoord<span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Perspective division</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec2</span> projectedCoord <span class="op">=</span> homogeneousCoord<span class="op">.</span><span class="fu">xy</span> <span class="op">/</span> homogeneousCoord<span class="op">.</span><span class="fu">z</span><span class="op">;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Discard fragments outside the projected plane</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> <span class="op">(</span>projectedCoord<span class="op">.</span><span class="fu">x</span> <span class="op">&lt;</span> <span class="fl">0.0</span> <span class="op">||</span> projectedCoord<span class="op">.</span><span class="fu">x</span> <span class="op">&gt;</span> <span class="fl">1.0</span> <span class="op">||</span> </span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        projectedCoord<span class="op">.</span><span class="fu">y</span> <span class="op">&lt;</span> <span class="fl">0.0</span> <span class="op">||</span> projectedCoord<span class="op">.</span><span class="fu">y</span> <span class="op">&gt;</span> <span class="fl">1.0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="kw">discard</span><span class="op">;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="va">gl_FragColor</span> <span class="op">=</span> <span class="dt">texture2D</span><span class="op">(</span>uSampler<span class="op">,</span> projectedCoord<span class="op">);</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>In the JavaScript layer, calculate the <span class="math inline">\(3
+\times 3\)</span> transformation matrix representing the rotation and
+camera perspective, invert it, and upload it to the filter uniform as a
+flat array of 9 elements.</p>
+<h3 id="subdividing-meshes-to-avoid-texture-warping">Subdividing Meshes
+to Avoid Texture Warping</h3>
+<p>When using simple quad meshes (<code>SimpleMesh</code> with 4
+vertices), affine texture interpolation across two triangles can cause a
+visible diagonal seam (affine texture mapping artifact). To produce a
+smooth, mathematically accurate perspective across a large plane,
+subdivide the mesh into an <span class="math inline">\(N \times
+N\)</span> grid of smaller quads and apply the projection to each
+vertex. This minimizes linear interpolation error and creates a
+realistic 3D perspective effect across the Pixi.js stage.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

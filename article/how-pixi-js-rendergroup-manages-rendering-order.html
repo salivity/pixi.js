@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Pixi.js RenderGroup Manages Rendering Order - pixi.js</title>
+    <meta name="description" content="Pixi.js manages rendering order in modern architectures through the RenderGroup system by isolating scene graph branches into dedicated rendering pipelines while preserving global draw sequences. This article examines how Pixi.js balances spatial hierarc">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-pixi-js-rendergroup-manages-rendering-order">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How Pixi.js RenderGroup Manages Rendering Order - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-pixi-js-rendergroup-manages-rendering-order" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Pixi.js manages rendering order in modern architectures through the RenderGroup system by isolating scene graph branches into dedicated rendering pipelines while preserving global draw sequences. This article examines how Pixi.js balances spatial hierarc" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-pixijs-rendergroup-manages-rendering-order">How Pixi.js
+RenderGroup Manages Rendering Order</h1>
+<p>Pixi.js manages rendering order in modern architectures through the
+<code>RenderGroup</code> system by isolating scene graph branches into
+dedicated rendering pipelines while preserving global draw sequences.
+This article examines how Pixi.js balances spatial hierarchy, local
+versus global <code>zIndex</code> sorting, batch generation, and
+instruction list execution when <code>RenderGroup</code> components are
+applied across the display tree.</p>
+<h3 id="the-role-of-rendergroup-in-modern-pixijs">The Role of
+RenderGroup in Modern Pixi.js</h3>
+<p>Introduced in Pixi.js v8, <code>RenderGroup</code> is an
+architectural mechanism designed to solve performance bottlenecks in
+deeply nested or rapidly transforming scene graphs. In traditional
+rendering pipelines, any transformation, opacity change, or structural
+modification forces a recursive recalculation of the entire display tree
+down to each individual leaf node.</p>
+<p>A <code>RenderGroup</code> breaks this monolithic calculation by
+converting a container and its descendants into a self-contained
+rendering unit. It isolates matrix transforms and caches rendering
+instructions. However, because it isolates subtree logic, the engine
+must employ a structured method to ensure objects within a
+<code>RenderGroup</code> appear at the correct depth relative to objects
+outside of it.</p>
+<h3 id="hierarchical-traversal-and-global-sequencing">Hierarchical
+Traversal and Global Sequencing</h3>
+<p>The overarching rendering order in Pixi.js remains driven by
+depth-first tree traversal. When the scene graph is traversed to build
+the frame's execution commands:</p>
+<ol type="1">
+<li><strong>Tree Order as the Baseline:</strong> Containers are
+processed in the order they appear in their parent's
+<code>children</code> array.</li>
+<li><strong>RenderGroup as a Discrete Boundary:</strong> When the
+traversal encounters a container designated as a
+<code>RenderGroup</code>, it does not flatten those children directly
+into the parent batch. Instead, it marks an entry point for a dedicated
+render instruction set.</li>
+<li><strong>Execution Queuing:</strong> The <code>RenderGroup</code> is
+executed at the exact temporal slot in the parent's draw sequence where
+that container resides. Even though the internal drawing operations are
+isolated, the group itself is evaluated in place relative to its sibling
+nodes.</li>
+</ol>
+<h3 id="local-sorting-vs-cross-group-interleaving">Local Sorting vs.
+Cross-Group Interleaving</h3>
+<p>The critical distinction when utilizing <code>RenderGroup</code> is
+the loss of global batch interleaving in favor of execution
+isolation:</p>
+<ul>
+<li><strong>Internal Sorting:</strong> Within a single
+<code>RenderGroup</code>, children follow standard sorting rules. If
+<code>sortableChildren</code> is enabled, the engine sorts children
+based on their local <code>zIndex</code>. The resulting draw commands
+are compiled into local batches and instructions specific to that
+group.</li>
+<li><strong>No Automatic Interleaving:</strong> In a standard Pixi.js
+hierarchy without <code>RenderGroup</code>, two distinct containers
+sharing identical textures might have their sprites merged into a single
+WebGL/WebGPU draw call, interleaving their operations if
+<code>zIndex</code> allows. When a container becomes a
+<code>RenderGroup</code>, this cross-boundary batching stops. The engine
+executes the preceding commands, draws the entire
+<code>RenderGroup</code>, and then resumes processing the remaining
+elements.</li>
+<li><strong>Sibling Precedence:</strong> If a <code>RenderGroup</code>
+has a sibling sprite positioned after it in the parent container, the
+entire contents of the <code>RenderGroup</code> will be rendered beneath
+that sibling, regardless of any high <code>zIndex</code> values assigned
+to children <em>inside</em> the <code>RenderGroup</code>.</li>
+</ul>
+<h3 id="instruction-set-compilation-and-draw-execution">Instruction Set
+Compilation and Draw Execution</h3>
+<p>Pixi.js implements a dual-phase pipeline consisting of
+<strong>Preparation (Pipe)</strong> and <strong>Execution
+(System)</strong>:</p>
+<ol type="1">
+<li><strong>Instruction Set Generation:</strong> Each
+<code>RenderGroup</code> compiles its own <code>InstructionSet</code>.
+This list contains the precise WebGL or WebGPU state changes, pipeline
+bindings, and draw calls required to render that specific branch.</li>
+<li><strong>Render Target Binding:</strong> If the
+<code>RenderGroup</code> requires an offscreen texture or filter pass,
+the instruction set begins with target-binding instructions.</li>
+<li><strong>Instruction Runner Traversal:</strong> At render time, the
+main renderer executes the instruction sets sequentially. Because each
+<code>RenderGroup</code> compiles its commands ahead of execution, the
+engine minimizes CPU overhead during the final render pass while
+strictly respecting the order established during the tree traversal
+phase.</li>
+</ol>
+<h3 id="practical-implications-for-scene-organization">Practical
+Implications for Scene Organization</h3>
+<p>To maintain predictable layering when using
+<code>RenderGroup</code>:</p>
+<ul>
+<li><strong>Treat Groups as Layers:</strong> Use
+<code>RenderGroup</code> at high-level structural boundaries (such as a
+Game UI layer, a background world layer, or a HUD layer) rather than
+individual, frequently overlapping sprites.</li>
+<li><strong>Control Depth at the Group Level:</strong> To change the
+display order of an entire subtree, adjust the <code>zIndex</code> or
+array position of the <code>RenderGroup</code> container itself, rather
+than attempting to expose its internal children to external sorting
+contexts.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

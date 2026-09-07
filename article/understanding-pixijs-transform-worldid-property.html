@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding PixiJS Transform _worldID Property - pixi.js</title>
+    <meta name="description" content="In PixiJS, the Transform class handles position, rotation, scale, and skew calculations for scene graph elements, relying on the internal worldID property as a cache invalidation mechanism. This article explains the exact purpose of worldID, how it opera">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/understanding-pixijs-transform-worldid-property">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Understanding PixiJS Transform _worldID Property - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/understanding-pixijs-transform-worldid-property" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In PixiJS, the Transform class handles position, rotation, scale, and skew calculations for scene graph elements, relying on the internal worldID property as a cache invalidation mechanism. This article explains the exact purpose of worldID, how it opera" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="understanding-pixijs-transform-_worldid-property">Understanding
+PixiJS Transform _worldID Property</h1>
+<p>In PixiJS, the <code>Transform</code> class handles position,
+rotation, scale, and skew calculations for scene graph elements, relying
+on the internal <code>_worldID</code> property as a cache invalidation
+mechanism. This article explains the exact purpose of
+<code>_worldID</code>, how it operates alongside local transforms, and
+how it prevents redundant matrix calculations to maintain high rendering
+performance.</p>
+<h3 id="purpose-of-_worldid">Purpose of <code>_worldID</code></h3>
+<p>The primary function of <code>_worldID</code> is to act as a unique
+version counter (or dirty flag) for an object's global coordinate state
+(<code>worldTransform</code>). In 2D rendering engines like PixiJS,
+converting local coordinates into screen-space world coordinates
+requires matrix multiplication. Because recalculating matrices for every
+child in a deeply nested display hierarchy on every frame is
+computationally expensive, PixiJS uses <code>_worldID</code> to
+determine whether a recalculation is strictly necessary.</p>
+<h3 id="how-the-invalidation-system-works">How the Invalidation System
+Works</h3>
+<p>The transformation pipeline relies on two coupled internal
+counters:</p>
+<ol type="1">
+<li><strong><code>_localID</code></strong>: Increments whenever an
+object's local properties change (such as <code>position</code>,
+<code>scale</code>, <code>rotation</code>, <code>skew</code>, or
+<code>pivot</code>).</li>
+<li><strong><code>_worldID</code></strong>: Increments whenever the
+<code>worldTransform</code> matrix is recalculated.</li>
+</ol>
+<p>When the <code>updateTransform</code> method is executed during the
+render loop, an object needs to know if its world matrix is stale. It
+checks two conditions:</p>
+<ul>
+<li>Has the object's own <code>_localID</code> changed since the last
+update?</li>
+<li>Has the parent container's <code>_worldID</code> changed since the
+last update?</li>
+</ul>
+<p>A child node caches the parent's <code>_worldID</code> (typically in
+an internal variable such as <code>_parentID</code>). If the parent's
+current <code>_worldID</code> does not match the cached
+<code>_parentID</code>, the child knows that an ancestor in the
+hierarchy has moved, rotated, or scaled.</p>
+<h3 id="execution-and-propagation">Execution and Propagation</h3>
+<p>When a transformation update is triggered:</p>
+<ol type="1">
+<li>The object compares its parent's current <code>_worldID</code>
+against its stored reference, and its own <code>_localID</code> against
+its stored local reference.</li>
+<li>If neither value has changed, the object skips matrix recalculation
+entirely, keeping its existing <code>worldTransform</code>.</li>
+<li>If either value has changed, PixiJS multiplies the local
+transformation matrix by the parent's world matrix to produce the new
+<code>worldTransform</code>.</li>
+<li>Once the new world matrix is calculated, the object increments its
+own <code>_worldID</code> and updates its stored reference to the
+parent's <code>_worldID</code>.</li>
+<li>Incrementing its own <code>_worldID</code> signals downstream
+children in the next step of traversal that their parent has changed,
+propagating the update down the hierarchy only where necessary.</li>
+</ol>
+<h3 id="performance-benefits">Performance Benefits</h3>
+<p>By using numeric incrementation rather than boolean flags,
+<code>_worldID</code> allows PixiJS to perform cache validation with
+simple integer comparisons. This prevents entire branches of the scene
+graph from recalculating their world matrices when neither their local
+transforms nor their ancestors have changed, significantly reducing CPU
+overhead during complex frame renders.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

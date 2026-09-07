@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Pixi.js Parses and Renders KTX2 Textures - pixi.js</title>
+    <meta name="description" content="Pixi.js processes KTX2 (Khronos Texture 2.0) containers through a dedicated asset loader pipeline that extracts compressed image metadata, transcodes the payload into a GPU-supported format via WebAssembly, and binds the raw data directly to the graphics">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-pixi-js-parses-and-renders-ktx2-textures">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How Pixi.js Parses and Renders KTX2 Textures - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-pixi-js-parses-and-renders-ktx2-textures" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Pixi.js processes KTX2 (Khronos Texture 2.0) containers through a dedicated asset loader pipeline that extracts compressed image metadata, transcodes the payload into a GPU-supported format via WebAssembly, and binds the raw data directly to the graphics" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-pixijs-parses-and-renders-ktx2-textures">How Pixi.js Parses
+and Renders KTX2 Textures</h1>
+<p>Pixi.js processes KTX2 (Khronos Texture 2.0) containers through a
+dedicated asset loader pipeline that extracts compressed image metadata,
+transcodes the payload into a GPU-supported format via WebAssembly, and
+binds the raw data directly to the graphics context. By leveraging the
+Basis Universal transcoder alongside the WebGL or WebGPU API, Pixi.js
+bypasses typical CPU-side image decompression, drastically reducing both
+memory footprints and loading times in web applications.</p>
+<h3 id="1-asset-detection-and-loading">1. Asset Detection and
+Loading</h3>
+<p>When loading a <code>.ktx2</code> asset through
+<code>@pixi/assets</code>, Pixi.js delegates the file to a specialized
+KTX2 loader parser. The loader fetches the binary payload as an
+<code>ArrayBuffer</code>. Before full processing, it validates the
+12-byte KTX2 file identifier to ensure the file conforms strictly to the
+KTX2 specification.</p>
+<h3 id="2-header-and-metadata-parsing">2. Header and Metadata
+Parsing</h3>
+<p>Once validated, the parser reads the KTX2 binary header to extract
+vital texture descriptors:</p>
+<ul>
+<li><strong>Dimensions:</strong> Pixel width, height, and layer/face
+depth.</li>
+<li><strong>Mipmap Levels:</strong> The number of downsampled mip levels
+present in the container.</li>
+<li><strong>Data Format Descriptor (DFD):</strong> Identifies the color
+model and determines whether the payload is encoded in standard
+uncompressed formats, ETC1S (BasisLZ), or UASTC (Universal ASTC).</li>
+<li><strong>Level Index Table:</strong> Offsets and byte lengths for
+each mipmap level within the binary stream.</li>
+</ul>
+<h3 id="3-basis-universal-transcoding-via-webassembly">3. Basis
+Universal Transcoding via WebAssembly</h3>
+<p>Because GPUs cannot natively sample ETC1S or UASTC formats, Pixi.js
+uses an asynchronous WebAssembly (WASM) worker running the Basis
+Universal transcoder (<code>basis_universal</code>).</p>
+<ol type="1">
+<li><strong>Hardware Capability Query:</strong> Pixi.js queries the
+WebGL context (via <code>WEBGL_compressed_texture_*</code> extensions)
+or WebGPU device features to detect supported native compressed formats.
+Common targets include:
+<ul>
+<li><strong>ASTC:</strong> Common across modern iOS and Android mobile
+GPUs.</li>
+<li><strong>BC7 / DXT (BC1/BC3):</strong> Standard for desktop Windows,
+macOS, and Linux hardware.</li>
+<li><strong>ETC2 / ETC1:</strong> Fallback for older Android
+devices.</li>
+<li><strong>PVRTC:</strong> Fallback for legacy iOS hardware.</li>
+</ul></li>
+<li><strong>Format Transcoding:</strong> The WASM transcoder converts
+the intermediate KTX2 payload (ETC1S or UASTC) directly into the optimal
+native compressed format detected on the client machine. If no
+compressed texture extensions are available, it transcodes to
+uncompressed 16-bit or 32-bit RGBA.</li>
+</ol>
+<h3 id="4-gpu-texture-resource-allocation">4. GPU Texture Resource
+Allocation</h3>
+<p>After transcoding, the worker returns typed arrays containing the
+ready-to-use compressed byte streams for every mipmap level. Pixi.js
+encapsulates this data in a <code>CompressedTextureResource</code>:</p>
+<ul>
+<li><strong>In WebGL:</strong> Pixi.js binds the texture and iterates
+over each mip level, dispatching calls to
+<code>gl.compressedTexImage2D()</code> with the target internal format
+constant (e.g., <code>COMPRESSED_RGBA_ASTC_4x4_KHR</code> or
+<code>COMPRESSED_RGBA_S3TC_DXT5_EXT</code>).</li>
+<li><strong>In WebGPU:</strong> Pixi.js allocates a
+<code>GPUTexture</code> with the corresponding
+<code>GPUTextureFormat</code> and writes the transcoded chunks directly
+using <code>GPUQueue.writeTexture()</code>.</li>
+</ul>
+<h3 id="5-rendering-pipeline-execution">5. Rendering Pipeline
+Execution</h3>
+<p>The generated <code>CompressedTextureResource</code> is wrapped
+inside a standard <code>BaseTexture</code> and <code>Texture</code>,
+making it fully compatible with Pixi.js sprites, meshes, and
+batches:</p>
+<ul>
+<li><strong>No Runtime Unpacking:</strong> Unlike standard PNG or JPEG
+files, which must be decoded into large uncompressed RGBA pixel buffers
+in system RAM, KTX2 data remains compressed in VRAM.</li>
+<li><strong>Shader Sampling:</strong> Shaders sample the texture
+identically to an uncompressed texture; the GPU hardware decompressor
+reads the texels on-the-fly during fragment rendering with minimal
+memory bandwidth consumption.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

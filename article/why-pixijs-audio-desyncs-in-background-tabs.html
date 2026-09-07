@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why PixiJS Audio Desyncs in Background Tabs - pixi.js</title>
+    <meta name="description" content="Audio desynchronization in backgrounded Pixi.js applications occurs because web browsers drastically throttle visual rendering loops while allowing underlying audio subsystems to continue running. When a user switches to another tab or minimizes the brow">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/why-pixijs-audio-desyncs-in-background-tabs">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Why PixiJS Audio Desyncs in Background Tabs - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/why-pixijs-audio-desyncs-in-background-tabs" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Audio desynchronization in backgrounded Pixi.js applications occurs because web browsers drastically throttle visual rendering loops while allowing underlying audio subsystems to continue running. When a user switches to another tab or minimizes the brow" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="why-pixijs-audio-desyncs-in-background-tabs">Why PixiJS Audio
+Desyncs in Background Tabs</h1>
+<p>Audio desynchronization in backgrounded Pixi.js applications occurs
+because web browsers drastically throttle visual rendering loops while
+allowing underlying audio subsystems to continue running. When a user
+switches to another tab or minimizes the browser, the application's
+visual updates pause or drop to minimal frame rates to conserve CPU and
+battery power. Meanwhile, the audio continues to play on a separate
+hardware-clocked thread, creating an immediate rift between the
+application's visual state and its soundtrack.</p>
+<h2 id="the-core-cause-requestanimationframe-throttling">The Core Cause:
+requestAnimationFrame Throttling</h2>
+<p>Pixi.js drives its internal update cycle using
+<code>PIXI.Ticker</code>, which relies by default on the browser's
+native <code>requestAnimationFrame</code> (rAF) API.</p>
+<p>Browsers treat background tabs aggressively:</p>
+<ul>
+<li><strong>Frame Rate Throttling:</strong> When a tab loses focus,
+modern browsers (Chrome, Firefox, Safari) reduce rAF calls to 1 frame
+per second or suspend them entirely.</li>
+<li><strong>Logic Freezing:</strong> Because game logic, sprite updates,
+and state machines are typically hooked into
+<code>app.ticker.add()</code>, your entire simulation effectively pauses
+or crawls while hidden.</li>
+</ul>
+<h2 id="the-independent-audio-thread">The Independent Audio Thread</h2>
+<p>Web audio playback does not rely on
+<code>requestAnimationFrame</code>. Instead, it operates through one of
+two mechanisms:</p>
+<ol type="1">
+<li><strong>Web Audio API (<code>AudioContext</code>):</strong> The Web
+Audio API operates on a separate high-priority, low-latency operating
+system audio thread. Its internal timeline
+(<code>AudioContext.currentTime</code>) is tied to the hardware sample
+rate, not the DOM render cycle. It never stops ticking simply because a
+tab is hidden.</li>
+<li><strong>HTML5 <code>&lt;audio&gt;</code> Elements:</strong> Standard
+media elements are handled by the browser's media pipeline, which
+continues background decoding and playback unless explicitly instructed
+otherwise.</li>
+</ol>
+<p>Because the visual engine is frozen by rAF throttling while the audio
+engine keeps running uninterrupted, the two systems diverge. If a
+character animation and a sound effect were triggered at the same time,
+the sound will finish playing long before the animation finishes its
+visual frames.</p>
+<h2 id="delta-time-spikes-upon-tab-return">Delta Time Spikes Upon Tab
+Return</h2>
+<p>A secondary desync issue appears the moment the user returns to the
+tab. When the tab regains focus:</p>
+<ul>
+<li>The Pixi.js ticker fires its next rAF callback.</li>
+<li>The elapsed time (<code>deltaTime</code>) calculated since the last
+frame can be enormous—potentially seconds or minutes long.</li>
+<li>Depending on how ticker logic is written, the engine may attempt to
+"catch up" by executing a massive delta step all at once, or it may drop
+frames entirely.</li>
+</ul>
+<p>If visual events try to skip ahead while a long-running audio track
+is already mid-stream, visual triggers and audio cue points will
+permanently misalign.</p>
+<h2 id="timer-clamping-and-logic-loops">Timer Clamping and Logic
+Loops</h2>
+<p>Developers sometimes attempt to decouple their game loop from Pixi's
+ticker by using JavaScript timers like <code>setInterval</code> or
+<code>setTimeout</code>. This does not resolve the issue. Browsers clamp
+background timers to run no more than once per second (1000ms), and in
+some power-saving modes, timer execution is throttled even further. The
+audio playback will still drastically outpace any background
+timer-driven logic.</p>
+<h2 id="how-to-prevent-audio-desync">How to Prevent Audio Desync</h2>
+<p>To maintain synchronization between Pixi.js and audio, implement one
+or more of the following patterns:</p>
+<ul>
+<li><strong>Use the Page Visibility API:</strong> Listen for the
+<code>visibilitychange</code> event on the <code>document</code>. When
+<code>document.hidden</code> is <code>true</code>, explicitly pause all
+audio sources and pause the Pixi ticker via
+<code>app.ticker.stop()</code>. Resume both when the document becomes
+visible again.</li>
+<li><strong>Sync Logic to Audio Time:</strong> Instead of relying on
+Pixi's ticker to calculate animation progress, drive critical
+time-sensitive visuals using the <code>currentTime</code> property of
+your <code>AudioContext</code>.</li>
+<li><strong>Cap Delta Time:</strong> Ensure
+<code>app.ticker.maxFPS</code> or custom delta caps are set to prevent
+massive time jumps when returning to a focused tab.</li>
+<li><strong>Web Workers for Unthrottled Loops:</strong> If gameplay
+logic must run continuously while backgrounded, offload the master clock
+to a Web Worker, as workers are not subject to the strict rAF pause
+applied to the main rendering thread.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS CanvasExtract: Reading Visual Canvas Data - pixi.js</title>
+    <meta name="description" content="The CanvasExtract system in PixiJS serves as a specialized utility for reading and extracting graphical output from a 2D canvas renderer into standard web-compatible formats. Whether generating downloadable screenshots, retrieving raw pixel buffers for p">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-canvasextract-reading-visual-canvas-data">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS CanvasExtract: Reading Visual Canvas Data - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-canvasextract-reading-visual-canvas-data" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The CanvasExtract system in PixiJS serves as a specialized utility for reading and extracting graphical output from a 2D canvas renderer into standard web-compatible formats. Whether generating downloadable screenshots, retrieving raw pixel buffers for p" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-canvasextract-reading-visual-canvas-data">PixiJS
+CanvasExtract: Reading Visual Canvas Data</h1>
+<p>The CanvasExtract system in PixiJS serves as a specialized utility
+for reading and extracting graphical output from a 2D canvas renderer
+into standard web-compatible formats. Whether generating downloadable
+screenshots, retrieving raw pixel buffers for precise collision
+detection, or creating reusable image elements, CanvasExtract bridges
+the gap between the internal rendering pipeline and external browser
+APIs. This article details the primary role of the CanvasExtract system,
+its core extraction methods, and the technical mechanics behind reading
+visual canvas data.</p>
+<h3 id="the-purpose-of-canvasextract">The Purpose of CanvasExtract</h3>
+<p>In PixiJS applications utilizing the <code>CanvasRenderer</code>,
+graphics are drawn via the HTML5 2D rendering context. While this data
+is displayed directly to the user, developers often need programmatic
+access to the rendered visual output. The CanvasExtract system provides
+a unified interface to read this visual state from any display object,
+render texture, or the main stage without requiring manual context-state
+handling or custom offscreen canvas orchestration.</p>
+<h3 id="core-methods-for-data-extraction">Core Methods for Data
+Extraction</h3>
+<p>CanvasExtract exposes several methods to convert visual elements into
+actionable web formats:</p>
+<ul>
+<li><strong><code>image(target)</code></strong>: Renders the target
+object to an offscreen surface and returns an
+<code>HTMLImageElement</code>. This is commonly used for dynamic UI
+previews or preparing assets for external DOM placement.</li>
+<li><strong><code>base64(target, format, quality)</code></strong>:
+Exports the target’s visual data as a base64-encoded data URL string
+(e.g., <code>data:image/png;base64,...</code>). This is ideal for saving
+player-generated content, uploading screenshots to a server, or
+generating downloadable files.</li>
+<li><strong><code>canvas(target)</code></strong>: Draws the specified
+display object or texture to an independent
+<code>HTMLCanvasElement</code> and returns it, allowing developers to
+perform native Canvas 2D operations outside of the PixiJS pipeline.</li>
+<li><strong><code>pixels(target)</code></strong>: Directly samples the
+underlying pixel data, returning a <code>Uint8ClampedArray</code>
+containing linear RGBA values for each pixel.</li>
+</ul>
+<h3 id="how-canvasextract-reads-visual-data">How CanvasExtract Reads
+Visual Data</h3>
+<p>Under the hood, the CanvasExtract system handles the complex matrix
+transformations, resolution scaling, and bounds calculations required to
+isolate a specific display object.</p>
+<p>When an extraction method is called on a specific container or
+sprite, the system creates or reuses an offscreen canvas sized to match
+the target's bounding box. It then renders the target into this
+auxiliary canvas context. To obtain raw pixel information, CanvasExtract
+relies on the native Canvas 2D API method <code>getImageData()</code>.
+For image or base64 extraction, it utilizes
+<code>toDataURL()</code>.</p>
+<p>By automating this sequence, CanvasExtract guarantees that tinting,
+blending modes, transforms, and masks applied within the PixiJS
+hierarchy are correctly preserved in the resulting data output.</p>
+<h3 id="performance-and-practical-considerations">Performance and
+Practical Considerations</h3>
+<p>Reading pixel data from a canvas is a synchronous operation. Calling
+<code>getImageData()</code> forces the browser to resolve all pending
+draw calls and read the framebuffer back into CPU memory, which can
+introduce a performance bottleneck or frame drop if executed frequently
+within the main render loop.</p>
+<p>Because of this performance cost, the CanvasExtract system is best
+utilized for discrete events—such as level completions, user-triggered
+screenshots, on-demand texture baking, or localized pixel
+sampling—rather than continuous, per-frame extraction routines.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

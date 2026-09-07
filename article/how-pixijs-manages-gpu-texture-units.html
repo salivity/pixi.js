@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How PixiJS Manages GPU Texture Units - pixi.js</title>
+    <meta name="description" content="This article explores the internal architecture PixiJS uses to handle large volumes of distinct textures within GPU hardware limitations. It covers how PixiJS queries device capabilities, bundles draw operations through multi-texture batching, dynamicall">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-pixijs-manages-gpu-texture-units">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How PixiJS Manages GPU Texture Units - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-pixijs-manages-gpu-texture-units" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explores the internal architecture PixiJS uses to handle large volumes of distinct textures within GPU hardware limitations. It covers how PixiJS queries device capabilities, bundles draw operations through multi-texture batching, dynamicall" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-pixijs-manages-gpu-texture-units">How PixiJS Manages GPU
+Texture Units</h1>
+<p>This article explores the internal architecture PixiJS uses to handle
+large volumes of distinct textures within GPU hardware limitations. It
+covers how PixiJS queries device capabilities, bundles draw operations
+through multi-texture batching, dynamically assigns sampler arrays in
+custom shaders, and flushes render batches when texture unit limits are
+reached.</p>
+<h2 id="the-hardware-limit-maximum-texture-image-units">The Hardware
+Limit: Maximum Texture Image Units</h2>
+<p>Web browsers and GPUs enforce a strict limit on how many textures can
+be bound concurrently during a single draw call. This limit is defined
+by the WebGL constant <code>gl.MAX_TEXTURE_IMAGE_UNITS</code>. On mobile
+devices, this is typically 8 or 16, while desktop environments
+frequently support 16 or 32.</p>
+<p>If a scene contains dozens of unique base textures, PixiJS cannot
+bind all of them simultaneously. Instead, it must dynamically schedule
+and swap textures across these fixed hardware slots without causing
+severe performance degradation from excessive draw calls.</p>
+<h2 id="multi-texture-batching-architecture">Multi-Texture Batching
+Architecture</h2>
+<p>PixiJS processes 2D render objects using a specialized batch
+rendering pipeline. Rather than drawing sprites individually—which would
+trigger a distinct draw call and texture bind for every single
+element—PixiJS collects sequential sprites into a single geometry
+buffer.</p>
+<p>When managing textures within a batch, the <code>BatchRenderer</code>
+follows this workflow:</p>
+<ol type="1">
+<li><strong>Capacity Discovery:</strong> During renderer initialization,
+PixiJS queries <code>gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)</code>
+and establishes a safe upper bound (often capped via internal settings,
+such as <code>maxTextures</code>).</li>
+<li><strong>Sequential Registration:</strong> As PixiJS iterates through
+the display list, it inspects each sprite's
+<code>BaseTexture</code>.</li>
+<li><strong>Texture ID Assignment:</strong> If the texture is already
+registered in the current batch, PixiJS assigns its existing local index
+(ranging from <code>0</code> to <code>maxTextures - 1</code>). If it is
+a new texture, it is added to the active texture list and assigned the
+next available index.</li>
+<li><strong>Vertex Attribute Injection:</strong> The assigned local
+index is written directly into the vertex data of that sprite as an
+attribute (commonly <code>aTextureId</code>).</li>
+</ol>
+<h2 id="shader-generation-for-multi-texture-sampling">Shader Generation
+for Multi-Texture Sampling</h2>
+<p>To handle multiple textures in a single draw call, PixiJS generates a
+fragment shader tailored to the device's maximum texture limit.</p>
+<p>In WebGL, sampler arrays cannot always be indexed dynamically with
+non-constant expressions across all hardware. To guarantee
+cross-platform compatibility, PixiJS builds a custom shader containing a
+conditional lookup structure or a unrolled switch-case pattern:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">sampler2D</span> uSamplers<span class="op">[%</span>count<span class="op">%];</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">varying</span> <span class="dt">float</span> vTextureId<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="dt">varying</span> <span class="dt">vec2</span> vTextureCoord<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">main</span><span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> color<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> <span class="op">(</span>vTextureId <span class="op">&lt;</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        color <span class="op">=</span> <span class="dt">texture2D</span><span class="op">(</span>uSamplers<span class="op">[</span><span class="dv">0</span><span class="op">],</span> vTextureCoord<span class="op">);</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span>vTextureId <span class="op">&lt;</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        color <span class="op">=</span> <span class="dt">texture2D</span><span class="op">(</span>uSamplers<span class="op">[</span><span class="dv">1</span><span class="op">],</span> vTextureCoord<span class="op">);</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... continues up to the batch limit</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="va">gl_FragColor</span> <span class="op">=</span> color <span class="op">*</span> vColor<span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>By reading the <code>vTextureId</code> passed from the vertex shader,
+the GPU routes the pixel lookup to the correct sampler unit within a
+single draw execution.</p>
+<h2 id="the-flush-cycle-handling-texture-capacity-overflow">The Flush
+Cycle: Handling Texture Capacity Overflow</h2>
+<p>When the rendering loop encounters a sprite whose
+<code>BaseTexture</code> would cause the batch to exceed the available
+GPU texture units, a "batch break" occurs:</p>
+<ol type="1">
+<li><strong>Flush Current Buffer:</strong> PixiJS halts the collection
+process and triggers a <code>flush()</code>.</li>
+<li><strong>Bind Active Textures:</strong> The accumulated unique
+textures are bound sequentially to <code>gl.TEXTURE0</code>,
+<code>gl.TEXTURE1</code>, up to <code>gl.TEXTURE(N-1)</code>.</li>
+<li><strong>Issue Draw Call:</strong> PixiJS submits the accumulated
+vertex buffer to the GPU using <code>gl.drawElements()</code>.</li>
+<li><strong>Reset State:</strong> The active texture registry and
+geometry buffers are cleared.</li>
+<li><strong>Begin Next Batch:</strong> The sprite that triggered the
+overflow becomes the first entry in a fresh batch, assigned to local
+texture index <code>0</code>.</li>
+</ol>
+<h2 id="practical-implications-for-rendering-performance">Practical
+Implications for Rendering Performance</h2>
+<p>Because PixiJS batches textures based on display-list order,
+alternating between dozens of unbatched textures can force a flush on
+nearly every sprite, negating the benefits of batching.</p>
+<p>To maintain high throughput when using dozens of distinct textures,
+developers should consider:</p>
+<ul>
+<li><strong>Sprite Sheets and Atlases:</strong> Packing many distinct
+images into a single larger image ensures they share a single
+<code>BaseTexture</code>, entirely bypassing texture unit switches.</li>
+<li><strong>Display Tree Sorting:</strong> Grouping sprites that share
+textures together in the display list minimizes the frequency of batch
+breaks, allowing PixiJS to fully utilize its multi-texture capacity on
+each draw call.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

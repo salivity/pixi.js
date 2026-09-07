@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js GPU Memory Mapping for Dynamic Buffers - pixi.js</title>
+    <meta name="description" content="This article provides an overview of how Pixi.js coordinates CPU-to-GPU dynamic data transfers, examining its batching systems, memory allocation strategies, and buffer mapping implementations across both WebGL and WebGPU pipelines. You will learn how Pi">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-gpu-memory-mapping-for-dynamic-buffers">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js GPU Memory Mapping for Dynamic Buffers - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-gpu-memory-mapping-for-dynamic-buffers" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of how Pixi.js coordinates CPU-to-GPU dynamic data transfers, examining its batching systems, memory allocation strategies, and buffer mapping implementations across both WebGL and WebGPU pipelines. You will learn how Pi" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-gpu-memory-mapping-for-dynamic-buffers">Pixi.js GPU
+Memory Mapping for Dynamic Buffers</h1>
+<p>This article provides an overview of how Pixi.js coordinates
+CPU-to-GPU dynamic data transfers, examining its batching systems,
+memory allocation strategies, and buffer mapping implementations across
+both WebGL and WebGPU pipelines. You will learn how Pixi.js streams
+thousands of per-frame vertex updates efficiently while avoiding
+pipeline stalls, memory fragmentation, and garbage collection
+overhead.</p>
+<hr />
+<h3 id="the-role-of-dynamic-stream-buffers">The Role of Dynamic Stream
+Buffers</h3>
+<p>In interactive 2D applications, scenes routinely modify thousands of
+sprite positions, rotations, colors, and UV coordinates every frame.
+Rendering these elements individually causes severe draw call
+bottlenecks. Pixi.js addresses this through its dynamic batch renderer,
+which aggregates disparate display objects into contiguous memory blocks
+called dynamic stream buffers.</p>
+<p>Unlike static buffers, which reside permanently in GPU memory,
+dynamic stream buffers are continuously populated on the CPU and
+transmitted to the GPU once per frame. Managing this continuous transfer
+without stalling the rendering pipeline requires distinct strategies
+depending on the active rendering backend: WebGL or WebGPU.</p>
+<h3 id="webgl-memory-transfer-buffer-orphaning-and-sub-allocation">WebGL
+Memory Transfer: Buffer Orphaning and Sub-Allocation</h3>
+<p>WebGL does not provide low-level pointer access or explicit memory
+mapping instructions like modern native APIs. Instead, Pixi.js manages
+GPU memory updates through WebGL’s buffer allocation APIs, using
+distinct techniques to prevent GPU synchronization locks.</p>
+<h4 id="buffer-orphaning">Buffer Orphaning</h4>
+<p>A common pitfall in graphics programming is updating a buffer while
+the GPU is still reading from it, which forces the CPU to wait until the
+GPU completes its work. To circumvent this, Pixi.js utilizes buffer
+orphaning:</p>
+<ol type="1">
+<li>Pixi.js calls <code>gl.bufferData()</code> with the size of the
+target buffer and a <code>null</code> data pointer, alongside the
+<code>gl.STREAM_DRAW</code> or <code>gl.DYNAMIC_DRAW</code> usage
+flags.</li>
+<li>The WebGL driver unbinds the existing GPU memory block and allocates
+a fresh block of memory behind the scenes.</li>
+<li>Pixi.js immediately invokes <code>gl.bufferSubData()</code> to copy
+the new frame's interleaved vertex data into this fresh block.</li>
+<li>The GPU continues executing draw operations from the orphaned block
+while the new block receives data, avoiding CPU stalls entirely.</li>
+</ol>
+<h4 id="shared-cpu-typedarrays">Shared CPU TypedArrays</h4>
+<p>To prevent memory churn and high garbage collection frequency,
+Pixi.js maintains persistent CPU-side <code>Float32Array</code> and
+<code>Uint32Array</code> view buffers. Instead of creating new arrays
+per frame, Pixi’s <code>BufferSystem</code> updates existing arrays in
+place, writing sprite vertices into contiguous memory partitions before
+pushing the payload to the GPU.</p>
+<h3
+id="webgpu-memory-transfer-direct-memory-mapping-and-staging-buffers">WebGPU
+Memory Transfer: Direct Memory Mapping and Staging Buffers</h3>
+<p>With the modern WebGPU backend in Pixi.js (introduced natively in
+v8), dynamic buffer handling transitions from driver-managed orphaning
+to explicit GPU memory mapping. WebGPU exposes precise memory states:
+memory can be mapped for CPU access
+(<code>GPUBufferUsage.MAP_WRITE</code>) or exposed to the render
+pipeline (<code>GPUBufferUsage.VERTEX</code>), but rarely both
+simultaneously with high throughput.</p>
+<h4 id="staging-buffers">Staging Buffers</h4>
+<p>Pixi.js utilizes staging buffers to maintain a continuous data
+pipeline in WebGPU:</p>
+<ol type="1">
+<li><strong>Creation:</strong> Pixi.js creates mapped staging buffers
+with <code>GPUBufferUsage.MAP_WRITE</code> and target vertex/index
+buffers marked with
+<code>GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX</code>.</li>
+<li><strong>Mapped Range Access:</strong> The staging buffer exposes its
+underlying memory to JavaScript through
+<code>buffer.getMappedRange()</code>. Pixi.js writes the batch's
+interleaved vertex data directly into this mapped
+<code>ArrayBufferView</code>.</li>
+<li><strong>Unmapping and Queue Submission:</strong> After the dynamic
+data is written, Pixi.js unmaps the buffer using
+<code>buffer.unmap()</code>.</li>
+<li><strong>Command Copying:</strong> A copy command
+(<code>copyBufferToBuffer</code>) is scheduled on the GPU queue to
+transfer data from the staging buffer to the destination vertex buffer
+consumed by the active render pass.</li>
+</ol>
+<h4 id="dynamic-ring-buffers">Dynamic Ring Buffers</h4>
+<p>To prevent calling asynchronous mapping operations
+(<code>mapAsync</code>) repeatedly during high-load render loops,
+Pixi.js deploys ring buffer or multi-buffering patterns. By segmenting a
+large staging buffer into sequential chunks, the engine writes to
+unoccupied offsets while previous offsets are still being read by the
+GPU. Once the write head approaches the end, it wraps to the beginning
+if the GPU has signaled completion of previous commands.</p>
+<h3 id="interleaved-buffer-architecture">Interleaved Buffer
+Architecture</h3>
+<p>Memory mapping efficiency depends heavily on cache locality and
+alignment. Pixi.js packs all vertex attributes—such as positions (2x
+float), texture coordinates (2x float), texture IDs (1x float), and
+32-bit packed color tints—into a single interleaved vertex buffer.</p>
+<p>Interleaving provides significant performance gains:</p>
+<ul>
+<li><strong>Sequential CPU Writes:</strong> The batcher writes all
+attributes for a single vertex consecutively, minimizing CPU cache
+misses.</li>
+<li><strong>Single Transfer Pass:</strong> Dynamic transfers occur in a
+single memory block upload rather than across several parallel uploads
+for separate attribute arrays.</li>
+<li><strong>Reduced State Binding:</strong> The GPU binds a single
+vertex buffer with offset strides, maximizing read bandwidth on modern
+mobile and desktop architectures.</li>
+</ul>
+<h3 id="batch-flushing-and-automatic-buffer-resizing">Batch Flushing and
+Automatic Buffer Resizing</h3>
+<p>Dynamic stream buffers in Pixi.js have predetermined capacity limits
+(commonly sized for blocks of several thousand indices or vertices).
+Pixi’s <code>BatchSystem</code> monitors buffer capacity
+continuously:</p>
+<ul>
+<li><strong>Flush on Capacity:</strong> If a draw loop exceeds the
+current buffer size, the batcher issues an immediate draw call
+(<code>flush()</code>), uploads the current batch, resets the buffer
+offset to index zero, and begins aggregating the next slice of
+objects.</li>
+<li><strong>Elastic Allocation:</strong> If the demand continuously
+exceeds the allocated staging size, Pixi.js dynamically reallocates a
+larger buffer using power-of-two growth factors. This avoids constant
+reallocation thrash while keeping overall GPU memory consumption
+balanced against application requirements.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

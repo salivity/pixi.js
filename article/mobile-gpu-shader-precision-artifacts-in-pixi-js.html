@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile GPU Shader Precision Artifacts in Pixi.js - pixi.js</title>
+    <meta name="description" content="Rendering procedural noise in Pixi.js often yields crisp, detailed visuals on desktop systems but breaks down into blocky, banded, or jittery artifacts on mobile devices. This discrepancy stems primarily from hardware-enforced floating-point precision di">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/mobile-gpu-shader-precision-artifacts-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Mobile GPU Shader Precision Artifacts in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/mobile-gpu-shader-precision-artifacts-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Rendering procedural noise in Pixi.js often yields crisp, detailed visuals on desktop systems but breaks down into blocky, banded, or jittery artifacts on mobile devices. This discrepancy stems primarily from hardware-enforced floating-point precision di" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="mobile-gpu-shader-precision-artifacts-in-pixijs">Mobile GPU
+Shader Precision Artifacts in Pixi.js</h1>
+<p>Rendering procedural noise in Pixi.js often yields crisp, detailed
+visuals on desktop systems but breaks down into blocky, banded, or
+jittery artifacts on mobile devices. This discrepancy stems primarily
+from hardware-enforced floating-point precision differences between
+desktop and mobile graphics chipsets. This guide examines the technical
+causes behind these precision artifacts—including GLSL precision
+qualifiers, floating-point mantissa limits, coordinate scaling, and
+algorithmic instability—and outlines the standard approaches to resolve
+them.</p>
+<h3 id="floating-point-precision-mediump-vs-highp">Floating-Point
+Precision: <code>mediump</code> vs. <code>highp</code></h3>
+<p>The primary cause of shader artifacts on mobile devices is the
+difference in floating-point precision implementations:</p>
+<ul>
+<li><strong>Desktop GPUs:</strong> Modern desktop GPUs typically process
+all floating-point math in full 32-bit single precision
+(<code>highp</code>), even if a GLSL shader specifies
+<code>mediump</code> or <code>lowp</code>. The hardware ignores
+lower-precision declarations because it has dedicated 32-bit execution
+units.</li>
+<li><strong>Mobile GPUs:</strong> Mobile chipsets (such as ARM Mali,
+Qualcomm Adreno, and PowerVR) are heavily optimized for battery
+efficiency and silicon area. When a shader declares
+<code>precision mediump float;</code>, mobile hardware executes
+operations using true 16-bit half-precision floats
+(<code>fp16</code>).</li>
+</ul>
+<p>In 16-bit floating-point format, only 10 bits are allocated to the
+mantissa (fractional component). This provides roughly 3 to 4 decimal
+digits of precision. When computing procedural noise—which requires
+subtle mathematical variations across tiny spatial increments—10 bits of
+precision are quickly exhausted, causing truncation, quantization, and
+stair-step banding.</p>
+<h3 id="high-frequency-hash-and-sine-instability">High-Frequency Hash
+and Sine Instability</h3>
+<p>Most basic noise shaders rely on pseudo-random hash functions
+utilizing high-frequency trigonometry, such as:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> <span class="fu">hash</span><span class="op">(</span><span class="dt">vec2</span> p<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> <span class="bu">fract</span><span class="op">(</span><span class="bu">sin</span><span class="op">(</span><span class="bu">dot</span><span class="op">(</span>p<span class="op">,</span> <span class="dt">vec2</span><span class="op">(</span><span class="fl">12.9898</span><span class="op">,</span> <span class="fl">78.233</span><span class="op">)))</span> <span class="op">*</span> <span class="fl">43758.5453</span><span class="op">);</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This classic one-liner depends entirely on high precision.
+Multiplying by a large scalar like <code>43758.5453</code> pushes values
+into a range where a 16-bit float loses all fractional data.
+Additionally, trigonometric functions like <code>sin()</code> on mobile
+architectures have lower internal accuracy in <code>mediump</code>.
+Combined with the loss of significant digits, the pseudo-random
+distribution collapses, manifesting as concentric circles, static lines,
+or complete loss of noise detail.</p>
+<h3 id="accumulating-uniforms-and-coordinate-scaling">Accumulating
+Uniforms and Coordinate Scaling</h3>
+<p>Precision degradation worsens when handling scale and time:</p>
+<ul>
+<li><strong>Unnormalized Coordinates:</strong> If you pass screen-space
+pixel coordinates (e.g., <code>gl_FragCoord.xy</code> or values from
+Pixi.js filters ranging from <code>0</code> to <code>2048</code>) into
+the noise function, values at the bottom-right of the screen lose
+precision significantly faster than those near the origin
+<code>(0, 0)</code>.</li>
+<li><strong>Accumulating Time Uniforms:</strong> Supplying a
+continuously increasing timestamp (e.g., passing
+<code>performance.now()</code> directly to a <code>uTime</code> uniform)
+causes numbers to grow indefinitely. As the integer magnitude increases,
+floating-point formats drop fractional precision to compensate, causing
+animated noise to stutter and eventually freeze.</li>
+</ul>
+<h3 id="how-to-fix-precision-artifacts-in-pixijs">How to Fix Precision
+Artifacts in Pixi.js</h3>
+<h4 id="1-enforce-highp-precision-in-the-fragment-shader">1. Enforce
+<code>highp</code> Precision in the Fragment Shader</h4>
+<p>Explicitly declare high precision at the top of your custom Pixi.js
+fragment shader:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">precision</span> <span class="dt">highp</span> <span class="dt">float</span><span class="op">;</span></span></code></pre></div>
+<p>While <code>highp</code> is standard in WebGL 2, verify WebGL 1
+support on older targets using the
+<code>OES_fragment_precision_high</code> extension. Pixi.js
+automatically manages precision headers in standard filter setups, but
+custom fragment shaders must not default to <code>mediump</code>.</p>
+<h4 id="2-normalize-input-coordinates">2. Normalize Input
+Coordinates</h4>
+<p>Transform screen coordinates into normalized device-like coordinates
+(ranging from <code>0.0</code> to <code>1.0</code>) on the CPU or in the
+vertex shader before passing them to the noise algorithm. This keeps the
+input values within the range where floating-point density is
+highest.</p>
+<h4 id="3-wrap-time-variables">3. Wrap Time Variables</h4>
+<p>Prevent uniform values from expanding indefinitely. Modulo the time
+variable on the CPU inside the Pixi.js ticker before uploading it to the
+GPU:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">ticker</span><span class="op">.</span><span class="fu">add</span>((delta) <span class="kw">=&gt;</span> {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Loop time within a defined interval rather than letting it grow infinitely</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    customFilter<span class="op">.</span><span class="at">uniforms</span><span class="op">.</span><span class="at">uTime</span> <span class="op">=</span> (<span class="bu">performance</span><span class="op">.</span><span class="fu">now</span>() <span class="op">/</span> <span class="dv">1000</span>) <span class="op">%</span> <span class="dv">3600</span><span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h4 id="4-use-low-precision-safe-noise-algorithms">4. Use
+Low-Precision-Safe Noise Algorithms</h4>
+<p>Replace sine-based pseudo-random hashes with bit-manipulation hashes
+(in WebGL 2 / GLSL 300 es) or gradient-based noise algorithms like
+Simplex noise. Simplex and Perlin noise avoid the massive multipliers
+found in older pseudo-random functions and behave more predictably on
+lower-precision mobile hardware.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

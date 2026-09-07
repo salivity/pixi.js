@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js Instanced Attributes for Repeating Patterns - pixi.js</title>
+    <meta name="description" content="Rendering thousands of repeating geometric patterns efficiently in Pixi.js requires instanced rendering to minimize draw calls. By attaching instanced buffer attributes to a custom Geometry object, you can pass unique transformation and styling data—su">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-instanced-attributes-for-repeating-patterns">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js Instanced Attributes for Repeating Patterns - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-instanced-attributes-for-repeating-patterns" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Rendering thousands of repeating geometric patterns efficiently in Pixi.js requires instanced rendering to minimize draw calls. By attaching instanced buffer attributes to a custom Geometry object, you can pass unique transformation and styling data—su" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-instanced-attributes-for-repeating-patterns">Pixi.js
+Instanced Attributes for Repeating Patterns</h1>
+<p>Rendering thousands of repeating geometric patterns efficiently in
+Pixi.js requires instanced rendering to minimize draw calls. By
+attaching instanced buffer attributes to a custom <code>Geometry</code>
+object, you can pass unique transformation and styling data—such as
+positions, rotations, or colors—for each repeated element while reusing
+a single base shape. This guide explains how to define instanced
+attributes using Pixi.js's <code>Geometry</code>, <code>Buffer</code>,
+and <code>Shader</code> APIs to achieve high-performance rendering of
+repetitive graphics.</p>
+<h3 id="understanding-instancing-in-pixijs">Understanding Instancing in
+Pixi.js</h3>
+<p>Standard rendering requires either issuing a draw call per object or
+combining all vertices into a massive CPU-bound buffer. Instancing
+allows WebGL to render multiple copies of a base geometry in a single
+draw call. The base geometry defines the local shape (such as a
+triangle, quad, or hexagon), while instanced attributes provide
+per-instance offsets, scales, or tint data.</p>
+<h3 id="step-1-define-the-base-geometry">Step 1: Define the Base
+Geometry</h3>
+<p>First, define the static vertices and indices for a single unit of
+your repeating pattern. For a standard quad or polygon, create standard
+non-instanced attributes:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> <span class="op">*</span> <span class="im">as</span> PIXI <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Base quad vertices (local space: -0.5 to 0.5)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> baseVertices <span class="op">=</span> <span class="kw">new</span> <span class="bu">Float32Array</span>([</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">-</span><span class="dv">10</span><span class="op">,</span> <span class="op">-</span><span class="dv">10</span><span class="op">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>     <span class="dv">10</span><span class="op">,</span> <span class="op">-</span><span class="dv">10</span><span class="op">,</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>     <span class="dv">10</span><span class="op">,</span>  <span class="dv">10</span><span class="op">,</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">-</span><span class="dv">10</span><span class="op">,</span>  <span class="dv">10</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>])<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> indices <span class="op">=</span> <span class="kw">new</span> <span class="bu">Uint16Array</span>([</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>])<span class="op">;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> geometry <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Geometry</span>()<span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>geometry<span class="op">.</span><span class="fu">addAttribute</span>(<span class="st">&#39;aVertexPosition&#39;</span><span class="op">,</span> baseVertices<span class="op">,</span> <span class="dv">2</span>)<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>geometry<span class="op">.</span><span class="fu">addIndex</span>(indices)<span class="op">;</span></span></code></pre></div>
+<h3 id="step-2-define-instanced-attributes">Step 2: Define Instanced
+Attributes</h3>
+<p>To define instanced data, populate a typed array containing the
+specific data for each repeated instance (such as X/Y offsets and RGB
+color values) and attach it using <code>addAttribute</code>. The eighth
+parameter of <code>geometry.addAttribute</code> is a boolean flag
+indicating whether the attribute is instanced (<code>true</code>).</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> instanceCount <span class="op">=</span> <span class="dv">5000</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> offsets <span class="op">=</span> <span class="kw">new</span> <span class="bu">Float32Array</span>(instanceCount <span class="op">*</span> <span class="dv">2</span>)<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> colors <span class="op">=</span> <span class="kw">new</span> <span class="bu">Float32Array</span>(instanceCount <span class="op">*</span> <span class="dv">3</span>)<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Generate repeating grid pattern data</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> columns <span class="op">=</span> <span class="dv">100</span><span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> spacing <span class="op">=</span> <span class="dv">25</span><span class="op">;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> instanceCount<span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> x <span class="op">=</span> (i <span class="op">%</span> columns) <span class="op">*</span> spacing<span class="op">;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> y <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">floor</span>(i <span class="op">/</span> columns) <span class="op">*</span> spacing<span class="op">;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    offsets[i <span class="op">*</span> <span class="dv">2</span>] <span class="op">=</span> x<span class="op">;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    offsets[i <span class="op">*</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> y<span class="op">;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    colors[i <span class="op">*</span> <span class="dv">3</span>] <span class="op">=</span> (i <span class="op">%</span> columns) <span class="op">/</span> columns<span class="op">;</span>       <span class="co">// Red</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    colors[i <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> <span class="fl">0.5</span><span class="op">;</span>                       <span class="co">// Green</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    colors[i <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">2</span>] <span class="op">=</span> (i <span class="op">/</span> instanceCount)<span class="op">;</span>       <span class="co">// Blue</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co">// Create buffers</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> offsetBuffer <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Buffer</span>(offsets)<span class="op">;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> colorBuffer <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Buffer</span>(colors)<span class="op">;</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">// addAttribute signature:</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">// (id, buffer, size, normalized, type, stride, start, instance)</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>geometry<span class="op">.</span><span class="fu">addAttribute</span>(<span class="st">&#39;aOffset&#39;</span><span class="op">,</span> offsetBuffer<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="kw">false</span><span class="op">,</span> PIXI<span class="op">.</span><span class="at">TYPES</span><span class="op">.</span><span class="at">FLOAT</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="kw">true</span>)<span class="op">;</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>geometry<span class="op">.</span><span class="fu">addAttribute</span>(<span class="st">&#39;aColor&#39;</span><span class="op">,</span> colorBuffer<span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="kw">false</span><span class="op">,</span> PIXI<span class="op">.</span><span class="at">TYPES</span><span class="op">.</span><span class="at">FLOAT</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="kw">true</span>)<span class="op">;</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co">// Explicitly set the number of instances</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>geometry<span class="op">.</span><span class="at">instanceCount</span> <span class="op">=</span> instanceCount<span class="op">;</span></span></code></pre></div>
+<h3 id="step-3-create-the-shaders">Step 3: Create the Shaders</h3>
+<p>Write a custom vertex shader that reads both standard attributes
+(<code>aVertexPosition</code>) and instanced attributes
+(<code>aOffset</code>, <code>aColor</code>). Pixi.js automatically
+injects standard uniform matrices like <code>translationMatrix</code>
+and <code>projectionMatrix</code>.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> vertexShader <span class="op">=</span> <span class="vs">`</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="vs">precision mediump float;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="vs">attribute vec2 aVertexPosition;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="vs">attribute vec2 aOffset;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="vs">attribute vec3 aColor;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="vs">uniform mat3 translationMatrix;</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="vs">uniform mat3 projectionMatrix;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="vs">varying vec3 vColor;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="vs">void main() {</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="vs">    vColor = aColor;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="vs">    vec3 position = translationMatrix * vec3(aVertexPosition + aOffset, 1.0);</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="vs">    gl_Position = vec4((projectionMatrix * position).xy, 0.0, 1.0);</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="vs">}</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="vs">`</span><span class="op">;</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> fragmentShader <span class="op">=</span> <span class="vs">`</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="vs">precision mediump float;</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="vs">varying vec3 vColor;</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="vs">void main() {</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="vs">    gl_FragColor = vec4(vColor, 1.0);</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="vs">}</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="vs">`</span><span class="op">;</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> shader <span class="op">=</span> PIXI<span class="op">.</span><span class="at">Shader</span><span class="op">.</span><span class="fu">from</span>(vertexShader<span class="op">,</span> fragmentShader)<span class="op">;</span></span></code></pre></div>
+<h3 id="step-4-render-using-piximesh">Step 4: Render Using
+PIXI.Mesh</h3>
+<p>Combine the geometry and shader into a <code>PIXI.Mesh</code> and add
+it to the display tree. Pixi.js detects the instanced attributes and
+executes <code>gl.drawElementsInstanced</code> under the hood.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> instancedMesh <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Mesh</span>(geometry<span class="op">,</span> shader)<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(instancedMesh)<span class="op">;</span></span></code></pre></div>
+<h3 id="updating-instanced-attributes">Updating Instanced
+Attributes</h3>
+<p>If your repeating pattern needs dynamic updates (such as pulsing
+waves, animation, or interactive positioning), modify the underlying
+typed array and notify Pixi.js that the buffer needs
+synchronization:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">updatePositions</span>() {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> bufferData <span class="op">=</span> offsetBuffer<span class="op">.</span><span class="at">data</span><span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> instanceCount<span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        bufferData[i <span class="op">*</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">1</span>] <span class="op">+=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sin</span>(<span class="bu">Date</span><span class="op">.</span><span class="fu">now</span>() <span class="op">*</span> <span class="fl">0.005</span> <span class="op">+</span> i) <span class="op">*</span> <span class="fl">0.5</span><span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    offsetBuffer<span class="op">.</span><span class="fu">update</span>()<span class="op">;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">ticker</span><span class="op">.</span><span class="fu">add</span>(updatePositions)<span class="op">;</span></span></code></pre></div>
+<p>Setting <code>instanced: true</code> on attribute declarations
+decouples memory scaling from draw calls, providing the most efficient
+pipeline for rendering dense geometric arrangements in Pixi.js.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

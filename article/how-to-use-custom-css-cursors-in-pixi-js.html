@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Use Custom CSS Cursors in Pixi.js - pixi.js</title>
+    <meta name="description" content="This guide explains what the cursor property is in Pixi.js and demonstrates how to implement both standard and custom CSS cursor styles on interactive display objects. You will learn how the Pixi.js event system manages cursor states, how to assign built">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-to-use-custom-css-cursors-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Use Custom CSS Cursors in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-to-use-custom-css-cursors-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This guide explains what the cursor property is in Pixi.js and demonstrates how to implement both standard and custom CSS cursor styles on interactive display objects. You will learn how the Pixi.js event system manages cursor states, how to assign built" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-to-use-custom-css-cursors-in-pixijs">How to Use Custom CSS
+Cursors in Pixi.js</h1>
+<p>This guide explains what the <code>cursor</code> property is in
+Pixi.js and demonstrates how to implement both standard and custom CSS
+cursor styles on interactive display objects. You will learn how the
+Pixi.js event system manages cursor states, how to assign built-in CSS
+cursor values, and how to register bespoke cursor definitions using
+images or custom CSS properties across your canvas application.</p>
+<h3 id="the-cursor-property-in-pixijs">The <code>cursor</code> Property
+in Pixi.js</h3>
+<p>In Pixi.js, the <code>cursor</code> property is a string-based
+attribute available on any display object, such as a
+<code>Container</code>, <code>Sprite</code>, or <code>Graphics</code>.
+It dictates what the mouse cursor should look like when a user hovers
+over that specific object.</p>
+<p>For the <code>cursor</code> property to take effect, the object must
+be interactive. In modern Pixi.js (v7 and v8), you enable interactivity
+by setting the object's <code>eventMode</code> property to
+<code>'static'</code> or <code>'dynamic'</code>. Once interactivity is
+active, Pixi's event system automatically reads the object's
+<code>cursor</code> value upon pointer entry and applies the
+corresponding CSS style to the canvas element.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { Application<span class="op">,</span> Sprite<span class="op">,</span> Assets } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> app <span class="op">=</span> <span class="kw">new</span> <span class="fu">Application</span>()<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> app<span class="op">.</span><span class="fu">init</span>({ <span class="dt">width</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">600</span> })<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">document</span><span class="op">.</span><span class="at">body</span><span class="op">.</span><span class="fu">appendChild</span>(app<span class="op">.</span><span class="at">canvas</span>)<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> texture <span class="op">=</span> <span class="cf">await</span> Assets<span class="op">.</span><span class="fu">load</span>(<span class="st">&#39;button.png&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> button <span class="op">=</span> <span class="kw">new</span> <span class="fu">Sprite</span>(texture)<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">// Enable interaction</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>button<span class="op">.</span><span class="at">eventMode</span> <span class="op">=</span> <span class="st">&#39;static&#39;</span><span class="op">;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">// Set standard CSS cursor</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>button<span class="op">.</span><span class="at">cursor</span> <span class="op">=</span> <span class="st">&#39;pointer&#39;</span><span class="op">;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(button)<span class="op">;</span></span></code></pre></div>
+<h3 id="using-standard-css-cursors">Using Standard CSS Cursors</h3>
+<p>Pixi.js natively supports standard CSS cursor strings out of the box.
+Any valid CSS cursor keyword—such as <code>'pointer'</code>,
+<code>'grab'</code>, <code>'grabbing'</code>, <code>'crosshair'</code>,
+<code>'text'</code>, <code>'not-allowed'</code>, or
+<code>'wait'</code>—can be assigned directly to the <code>cursor</code>
+property without additional configuration:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sprite<span class="op">.</span><span class="at">eventMode</span> <span class="op">=</span> <span class="st">&#39;static&#39;</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>sprite<span class="op">.</span><span class="at">cursor</span> <span class="op">=</span> <span class="st">&#39;crosshair&#39;</span><span class="op">;</span></span></code></pre></div>
+<h3 id="registering-custom-css-cursor-styles">Registering Custom CSS
+Cursor Styles</h3>
+<p>To use custom graphics (like PNG or SVG files) as cursors, or to
+define unique CSS cursor behaviors, you must register them in the
+Pixi.js event system using the <code>cursorStyles</code> dictionary.</p>
+<p>In Pixi.js, cursor mappings are managed via
+<code>app.renderer.events.cursorStyles</code>. You can add your own key
+to this object, mapping a custom name to any valid CSS
+<code>cursor</code> rule, including the <code>url()</code> syntax with
+fallback options and coordinates.</p>
+<h4 id="step-1-define-the-custom-cursor-style">Step 1: Define the Custom
+Cursor Style</h4>
+<p>Map a custom cursor identifier to a CSS cursor declaration:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Register a custom image cursor with an offset hotspot (x: 0, y: 0) and fallback to &#39;auto&#39;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="at">events</span><span class="op">.</span><span class="at">cursorStyles</span>[<span class="st">&#39;sword&#39;</span>] <span class="op">=</span> <span class="st">&#39;url(&quot;assets/sword-cursor.png&quot;) 0 0, auto&#39;</span><span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Register another custom cursor using standard CSS fallback</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="at">events</span><span class="op">.</span><span class="at">cursorStyles</span>[<span class="st">&#39;target&#39;</span>] <span class="op">=</span> <span class="st">&#39;url(&quot;assets/crosshair.cur&quot;), crosshair&#39;</span><span class="op">;</span></span></code></pre></div>
+<h4 id="step-2-assign-the-custom-style-to-an-object">Step 2: Assign the
+Custom Style to an Object</h4>
+<p>After registering the identifier in <code>cursorStyles</code>, set
+your display object's <code>cursor</code> property to match the custom
+key:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> enemy <span class="op">=</span> <span class="kw">new</span> <span class="fu">Sprite</span>(enemyTexture)<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>enemy<span class="op">.</span><span class="at">eventMode</span> <span class="op">=</span> <span class="st">&#39;static&#39;</span><span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>enemy<span class="op">.</span><span class="at">cursor</span> <span class="op">=</span> <span class="st">&#39;sword&#39;</span><span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(enemy)<span class="op">;</span></span></code></pre></div>
+<p>When the user hovers over the <code>enemy</code> sprite, Pixi.js
+resolves <code>'sword'</code> in <code>cursorStyles</code> and updates
+the canvas element's style attribute to
+<code>cursor: url("assets/sword-cursor.png") 0 0, auto;</code>. When the
+pointer leaves the object, the canvas cursor automatically reverts to
+the default style.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

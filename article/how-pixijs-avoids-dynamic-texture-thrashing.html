@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How PixiJS Avoids Dynamic Texture Thrashing - pixi.js</title>
+    <meta name="description" content="In high-performance WebGL applications, swapping thousands of dynamic textures each frame can overwhelm the GPU pipeline with excessive state changes and data uploads, a bottleneck known as texture thrashing. PixiJS avoids this performance degradation th">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-pixijs-avoids-dynamic-texture-thrashing">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How PixiJS Avoids Dynamic Texture Thrashing - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-pixijs-avoids-dynamic-texture-thrashing" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In high-performance WebGL applications, swapping thousands of dynamic textures each frame can overwhelm the GPU pipeline with excessive state changes and data uploads, a bottleneck known as texture thrashing. PixiJS avoids this performance degradation th" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-pixijs-avoids-dynamic-texture-thrashing">How PixiJS Avoids
+Dynamic Texture Thrashing</h1>
+<p>In high-performance WebGL applications, swapping thousands of dynamic
+textures each frame can overwhelm the GPU pipeline with excessive state
+changes and data uploads, a bottleneck known as texture thrashing.
+PixiJS avoids this performance degradation through an architecture
+centered on multi-texture batching, efficient GPU resource abstraction,
+targeted sub-image updates, and automated texture lifecycle management.
+Together, these systems keep the rendering loop tight and preserve 60
+frames per second even under heavy dynamic texture workloads.</p>
+<h3 id="multi-texture-batching">Multi-Texture Batching</h3>
+<p>The primary defense against texture thrashing in PixiJS is its
+built-in batching system (<code>BatchRenderer</code>). Standard WebGL
+pipelines switch the active texture unit every time a sprite with a
+different texture is drawn, triggering costly state alterations. PixiJS
+bypasses this by querying the hardware limit of active texture units
+using <code>gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)</code>, which
+typically allows between 8 and 32 textures bound simultaneously.</p>
+<p>During the render pass, PixiJS groups sprites into single draw calls.
+If consecutive sprites use different textures, PixiJS assigns each
+unique texture to an available texture unit in the current batch and
+passes the corresponding unit index directly into the vertex attributes.
+As long as the number of unique dynamic textures in a queue fits within
+the available hardware texture units, PixiJS renders the entire set in a
+single <code>gl.drawElements</code> call without unbinding or rebinding
+a single texture.</p>
+<h3 id="basetexture-and-uv-coordinate-decoupling">BaseTexture and UV
+Coordinate Decoupling</h3>
+<p>PixiJS splits texture handling into two concepts:
+<code>BaseTexture</code>, which represents the actual GPU-allocated
+image data, and <code>Texture</code>, which represents a frame or UV
+bounding box on that <code>BaseTexture</code>.</p>
+<p>When dynamic sprites visually swap textures, they often swap
+coordinate frames rather than the underlying GPU resource. Changing the
+frame adjusts only the UV coordinates stored in the sprite's vertex
+buffer. Because the underlying <code>BaseTexture</code> remains loaded
+in GPU memory, the engine requires zero WebGL state modifications or
+memory reallocations to display the new frame.</p>
+<h3 id="efficient-dynamic-updates-with-texsubimage2d">Efficient Dynamic
+Updates with <code>texSubImage2D</code></h3>
+<p>When dynamic textures mutate on the CPU—such as updates from HTML5
+<code>&lt;canvas&gt;</code>, video elements, or procedural
+buffers—reallocating GPU texture memory via <code>gl.texImage2D</code>
+will quickly exhaust bandwidth. PixiJS avoids this by using its internal
+<code>Resource</code> binding system.</p>
+<p>When a dynamic resource is marked as "dirty" via
+<code>texture.update()</code>, PixiJS does not destroy and recreate the
+GPU texture handle. Instead, it uploads only the modified byte data
+directly to the existing memory space using
+<code>gl.texSubImage2D</code>. If only a sub-rectangle of the texture
+changed, the system can restrict the upload to that specific bounding
+box, minimizing data transfer over the CPU-GPU bus.</p>
+<h3 id="managed-lifecycle-via-texture-garbage-collection">Managed
+Lifecycle via Texture Garbage Collection</h3>
+<p>Constantly destroying and creating textures causes memory
+fragmentation and GPU driver stalls. PixiJS integrates a dedicated
+garbage collector (<code>TextureGCSystem</code>) to manage dynamic
+texture residency.</p>
+<p>Rather than releasing GPU memory immediately when a texture is no
+longer referenced in a single frame, the garbage collector tracks the
+texture's usage frequency and frame count. Textures that are repeatedly
+swapped out and back in are kept in GPU memory across frames until an
+inactivity threshold is reached. By preventing premature eviction,
+PixiJS ensures that frequently oscillating dynamic textures do not
+continually re-trigger upload overhead.</p>
+<h3 id="draw-call-sorting-and-state-deduplication">Draw-Call Sorting and
+State Deduplication</h3>
+<p>Before executing render commands, PixiJS automatically orders
+compatible objects to maintain batch continuity. If thousands of sprites
+reference a rotating pool of dynamic textures, PixiJS flattens the
+display hierarchy to align objects sharing the same base textures. This
+prevents alternating patterns (e.g., Texture A -&gt; Texture B -&gt;
+Texture A -&gt; Texture B) from splitting batches unnecessarily,
+maintaining maximal batch density and preventing redundant state
+thrashing.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

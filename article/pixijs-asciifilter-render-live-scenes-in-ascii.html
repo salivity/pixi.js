@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS AsciiFilter: Render Live Scenes in ASCII - pixi.js</title>
+    <meta name="description" content="This article demonstrates how to transform a real-time PixiJS scene into dynamic ASCII text art using the AsciiFilter from the pixi-filters collection. You will learn how to install the necessary dependencies, configure a PixiJS application, and apply th">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-asciifilter-render-live-scenes-in-ascii">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS AsciiFilter: Render Live Scenes in ASCII - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-asciifilter-render-live-scenes-in-ascii" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article demonstrates how to transform a real-time PixiJS scene into dynamic ASCII text art using the AsciiFilter from the pixi-filters collection. You will learn how to install the necessary dependencies, configure a PixiJS application, and apply th" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-asciifilter-render-live-scenes-in-ascii">PixiJS
+AsciiFilter: Render Live Scenes in ASCII</h1>
+<p>This article demonstrates how to transform a real-time PixiJS scene
+into dynamic ASCII text art using the <code>AsciiFilter</code> from the
+<code>pixi-filters</code> collection. You will learn how to install the
+necessary dependencies, configure a PixiJS application, and apply the
+filter to a live scene containing moving elements or video feeds so that
+the output continuously renders as alphanumeric characters.</p>
+<h3 id="prerequisites-and-installation">Prerequisites and
+Installation</h3>
+<p>To use the ASCII filter, install both <code>pixi.js</code> and the
+community filters package. You can install the complete
+<code>pixi-filters</code> package or just the standalone ASCII filter
+package via npm:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install pixi.js pixi-filters</span></code></pre></div>
+<p>Alternatively, if you only need the ASCII filter to keep bundle sizes
+small:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install pixi.js @pixi/filter-ascii</span></code></pre></div>
+<h3 id="implementing-the-asciifilter">Implementing the AsciiFilter</h3>
+<p>The <code>AsciiFilter</code> works by dividing the screen into a grid
+of character blocks and replacing pixels within each block with a
+typographic character representing that area's average brightness.</p>
+<p>Here is a complete implementation that sets up an animated scene and
+applies the filter:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> <span class="op">*</span> <span class="im">as</span> PIXI <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { AsciiFilter } <span class="im">from</span> <span class="st">&#39;pixi-filters&#39;</span><span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">// 1. Initialize the PixiJS Application</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> app <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Application</span>({</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">height</span><span class="op">:</span> <span class="dv">600</span><span class="op">,</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">backgroundColor</span><span class="op">:</span> <span class="bn">0x000000</span><span class="op">,</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="bu">document</span><span class="op">.</span><span class="at">body</span><span class="op">.</span><span class="fu">appendChild</span>(app<span class="op">.</span><span class="at">view</span>)<span class="op">;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co">// 2. Create a container for your scene</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> sceneContainer <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Container</span>()<span class="op">;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(sceneContainer)<span class="op">;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co">// 3. Add visual content (e.g., rotating shapes or sprites)</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> graphic <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Graphics</span>()<span class="op">;</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>graphic<span class="op">.</span><span class="fu">beginFill</span>(<span class="bn">0xff3366</span>)<span class="op">;</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>graphic<span class="op">.</span><span class="fu">drawRect</span>(<span class="op">-</span><span class="dv">50</span><span class="op">,</span> <span class="op">-</span><span class="dv">50</span><span class="op">,</span> <span class="dv">100</span><span class="op">,</span> <span class="dv">100</span>)<span class="op">;</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>graphic<span class="op">.</span><span class="fu">endFill</span>()<span class="op">;</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>graphic<span class="op">.</span><span class="fu">beginFill</span>(<span class="bn">0x33ccff</span>)<span class="op">;</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>graphic<span class="op">.</span><span class="fu">drawCircle</span>(<span class="dv">60</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">40</span>)<span class="op">;</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>graphic<span class="op">.</span><span class="fu">endFill</span>()<span class="op">;</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>graphic<span class="op">.</span><span class="at">x</span> <span class="op">=</span> app<span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">width</span> <span class="op">/</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>graphic<span class="op">.</span><span class="at">y</span> <span class="op">=</span> app<span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">height</span> <span class="op">/</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>sceneContainer<span class="op">.</span><span class="fu">addChild</span>(graphic)<span class="op">;</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="co">// 4. Instantiate and configure the AsciiFilter</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="co">// The constructor accepts a single number representing character size in pixels (default is 8)</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> asciiFilter <span class="op">=</span> <span class="kw">new</span> <span class="fu">AsciiFilter</span>(<span class="dv">10</span>)<span class="op">;</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="co">// 5. Apply the filter to the container or stage</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>sceneContainer<span class="op">.</span><span class="at">filters</span> <span class="op">=</span> [asciiFilter]<span class="op">;</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="co">// 6. Animate the scene to verify real-time processing</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">ticker</span><span class="op">.</span><span class="fu">add</span>((delta) <span class="kw">=&gt;</span> {</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    graphic<span class="op">.</span><span class="at">rotation</span> <span class="op">+=</span> <span class="fl">0.02</span> <span class="op">*</span> delta<span class="op">;</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h3 id="configuring-filter-properties">Configuring Filter
+Properties</h3>
+<p>The <code>AsciiFilter</code> provides one primary property:</p>
+<ul>
+<li><strong><code>size</code></strong>: Controls the pixel size of the
+individual ASCII characters.
+<ul>
+<li><strong>Smaller values</strong> (e.g., <code>4</code> to
+<code>6</code>) yield higher visual resolution and greater detail, but
+create smaller text that may be harder to distinguish as individual
+characters.</li>
+<li><strong>Larger values</strong> (e.g., <code>12</code> to
+<code>20</code>) make the ASCII letters prominent and stylized, but
+reduce the overall clarity of the underlying image.</li>
+</ul></li>
+</ul>
+<p>You can adjust this value at runtime based on performance or
+aesthetic preference:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Change character size dynamically</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>asciiFilter<span class="op">.</span><span class="at">size</span> <span class="op">=</span> <span class="dv">14</span><span class="op">;</span></span></code></pre></div>
+<h3 id="applying-to-live-video-and-textures">Applying to Live Video and
+Textures</h3>
+<p>Because <code>AsciiFilter</code> operates on the WebGL render
+pipeline, it is not limited to static shapes. You can apply it to HTML5
+<code>&lt;video&gt;</code> textures, animated spritesheets, or dynamic
+particle systems by adding those elements to the filtered container:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Example: Using a video texture</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> videoTexture <span class="op">=</span> PIXI<span class="op">.</span><span class="at">Texture</span><span class="op">.</span><span class="fu">from</span>(<span class="st">&#39;path/to/video.mp4&#39;</span>)<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> videoSprite <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Sprite</span>(videoTexture)<span class="op">;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>videoSprite<span class="op">.</span><span class="at">width</span> <span class="op">=</span> app<span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">width</span><span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>videoSprite<span class="op">.</span><span class="at">height</span> <span class="op">=</span> app<span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">height</span><span class="op">;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>sceneContainer<span class="op">.</span><span class="fu">addChild</span>(videoSprite)<span class="op">;</span></span></code></pre></div>
+<p>As the video plays, PixiJS re-renders the frames through the fragment
+shader on every tick, creating a live ASCII video effect with minimal
+performance overhead.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

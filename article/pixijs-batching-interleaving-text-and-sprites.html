@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS Batching: Interleaving Text and Sprites - pixi.js</title>
+    <meta name="description" content="Interleaving text objects and standard sprites within the Pixi.js scene graph disrupts the engine's internal batching mechanism, leading to batch fragmentation and a spike in WebGL draw calls. Pixi.js relies on batch consolidation to group multiple rende">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-batching-interleaving-text-and-sprites">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS Batching: Interleaving Text and Sprites - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-batching-interleaving-text-and-sprites" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Interleaving text objects and standard sprites within the Pixi.js scene graph disrupts the engine's internal batching mechanism, leading to batch fragmentation and a spike in WebGL draw calls. Pixi.js relies on batch consolidation to group multiple rende" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-batching-interleaving-text-and-sprites">PixiJS Batching:
+Interleaving Text and Sprites</h1>
+<p>Interleaving text objects and standard sprites within the Pixi.js
+scene graph disrupts the engine's internal batching mechanism, leading
+to batch fragmentation and a spike in WebGL draw calls. Pixi.js relies
+on batch consolidation to group multiple renderable objects into a
+single draw call by sharing WebGL states, shaders, and texture units.
+When text objects and sprites alternate in the display list order, this
+pipeline repeatedly flushes incomplete batches, increasing CPU overhead
+and significantly degrading rendering performance.</p>
+<h2 id="how-pixijs-batch-consolidation-works">How Pixi.js Batch
+Consolidation Works</h2>
+<p>Pixi.js optimizes 2D rendering through a unified batch system managed
+by the <code>BatchRenderer</code>. As the engine traverses the display
+hierarchy to render a frame, it accumulates geometry, texture indices,
+tints, and UV coordinates into contiguous vertex buffers.</p>
+<p>A batch can only continue accumulating objects if incoming objects
+share compatible rendering states:</p>
+<ul>
+<li>Compatible shader programs.</li>
+<li>The same blend modes.</li>
+<li>Textures that can fit concurrently within the GPU's maximum
+available texture units (typically 8 to 32 depending on the
+hardware).</li>
+</ul>
+<p>When an object arrives that violates any of these conditions, Pixi.js
+executes a batch flush, issuing a <code>gl.drawElements</code> call to
+the GPU and starting a new batch.</p>
+<h2 id="the-consequence-of-interleaving">The Consequence of
+Interleaving</h2>
+<p>Interleaving occurs when the display list alternates between
+different types of visual objects—such as Sprite, Text, Sprite,
+Text—instead of grouping like objects together. Because rendering order
+strictly dictates draw order for 2D depth and layering, Pixi.js
+processes objects precisely as ordered in their parent containers.</p>
+<h3 id="1-interleaving-with-canvas-pixitext">1. Interleaving with Canvas
+<code>PIXI.Text</code></h3>
+<p>Standard <code>PIXI.Text</code> objects generate dynamic HTML5 canvas
+elements behind the scenes to render text strings. Each distinct
+<code>PIXI.Text</code> instance produces a unique
+<code>BaseTexture</code>.</p>
+<p>When alternating between sprite assets and standard text:</p>
+<ul>
+<li>Each text object introduces a new, un-atlased texture.</li>
+<li>Once the GPU runs out of free texture units to bind textures
+simultaneously within a single draw call, the batch renderer flushes
+immediately.</li>
+<li>If multiple unique canvas textures are interleaved with sprite atlas
+textures, the engine continuously cycles and swaps texture bindings,
+causing draw calls to scale linearly with the number of interleaved
+objects (<span class="math inline">\(O(N)\)</span> draw calls).</li>
+</ul>
+<h3 id="2-interleaving-with-pixibitmaptext">2. Interleaving with
+<code>PIXI.BitmapText</code></h3>
+<p><code>PIXI.BitmapText</code> utilizes pre-rendered glyphs stored on a
+texture atlas, making it significantly faster than canvas text. However,
+interleaving it with sprites can still break batching:</p>
+<ul>
+<li><strong>Texture Swapping:</strong> If the bitmap font atlas and the
+sprite textures are hosted on different image sheets and texture unit
+limits are exceeded, a flush occurs.</li>
+<li><strong>Shader and Material Differences:</strong> Custom styling,
+specialized filters, or differing tint mechanics between bitmap fonts
+and standard sprites often require distinct shader uniforms, which
+forces a batch flush even if texture limits are not exceeded.</li>
+</ul>
+<h2 id="performance-repercussions">Performance Repercussions</h2>
+<p>The primary performance cost of broken batching is the explosion of
+WebGL draw calls:</p>
+<ul>
+<li><strong>Grouped Structure:</strong> Rendering 100 sprites followed
+by 100 text labels typically requires only a few draw calls.</li>
+<li><strong>Interleaved Structure:</strong> Alternating 100 sprites and
+100 text labels can produce up to 200 individual draw calls.</li>
+</ul>
+<p>This fragmentation creates a severe CPU bottleneck. The CPU spends
+excessive cycles calculating matrix updates, preparing WebGL state
+switches, and dispatching commands to the graphics driver, resulting in
+lower frame rates and increased frame time jitter on lower-end
+devices.</p>
+<h2 id="mitigation-strategies">Mitigation Strategies</h2>
+<p>To maintain batch consolidation when working with both text and
+sprites, implement the following architectural patterns:</p>
+<h3 id="separate-display-layers">Separate Display Layers</h3>
+<p>Isolate different render types into dedicated parent containers to
+enforce batch continuity:</p>
+<ul>
+<li>Create a dedicated background/sprite <code>Container</code>.</li>
+<li>Create a dedicated text/UI <code>Container</code> positioned above
+it.</li>
+<li>Allow Pixi.js to completely flush the sprite batch once before
+processing the text batch.</li>
+</ul>
+<h3 id="combined-texture-atlases">Combined Texture Atlases</h3>
+<p>When using <code>PIXI.BitmapText</code>, pack the bitmap font glyphs
+directly into the same texture atlas (spritesheet) containing your
+standard game sprites. Because both objects sample from the exact same
+<code>BaseTexture</code> and use default shaders, Pixi.js can batch them
+sequentially without triggering state changes or texture swaps.</p>
+<h3 id="static-ui-flattening">Static UI Flattening</h3>
+<p>For non-dynamic text layered over sprites, bake the text directly
+into the sprite asset during design time or render the combined
+container into a single <code>RenderTexture</code> at runtime using
+<code>app.renderer.render(container, { renderTexture })</code>. This
+reduces the entire composition to a single texture lookup.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

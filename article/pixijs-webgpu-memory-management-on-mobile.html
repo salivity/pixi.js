@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS WebGPU Memory Management on Mobile - pixi.js</title>
+    <meta name="description" content="This article explores how PixiJS v8 and its WebGPU renderer manage the constrained GPU memory environments typical of mobile devices. Because mobile platforms share unified memory between the CPU and GPU, running out of memory leads directly to context l">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-webgpu-memory-management-on-mobile">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS WebGPU Memory Management on Mobile - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-webgpu-memory-management-on-mobile" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explores how PixiJS v8 and its WebGPU renderer manage the constrained GPU memory environments typical of mobile devices. Because mobile platforms share unified memory between the CPU and GPU, running out of memory leads directly to context l" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-webgpu-memory-management-on-mobile">PixiJS WebGPU Memory
+Management on Mobile</h1>
+<p>This article explores how PixiJS v8 and its WebGPU renderer manage
+the constrained GPU memory environments typical of mobile devices.
+Because mobile platforms share unified memory between the CPU and GPU,
+running out of memory leads directly to context loss and application
+crashes. PixiJS addresses these limitations through automatic texture
+garbage collection, buffer pooling, compressed texture handling, and
+explicit resource destruction protocols designed to keep WebGPU
+allocations within strict mobile hardware thresholds.</p>
+<h3 id="the-challenge-of-unified-memory-on-mobile">The Challenge of
+Unified Memory on Mobile</h3>
+<p>Mobile WebGPU implementations operate on Unified Memory Architecture
+(UMA), where the system RAM is shared dynamically between the operating
+system, the CPU, and the GPU. Unlike desktop environments with dedicated
+VRAM, mobile operating systems impose strict per-tab memory limits. If a
+WebGPU application exceeds these limits or causes rapid memory spikes,
+the browser process kills the WebGPU context via a
+<code>GPUDevice.lost</code> event, crashing the application. PixiJS
+mitigates this by controlling how resources are allocated, reused, and
+purged.</p>
+<h3 id="automatic-texture-garbage-collection">Automatic Texture Garbage
+Collection</h3>
+<p>Textures represent the largest memory footprint in any 2D rendering
+pipeline. PixiJS features an internal texture garbage collector
+(<code>TextureGCSystem</code>) that monitors texture usage across render
+passes:</p>
+<ul>
+<li><strong>Frame-Count Tracking:</strong> PixiJS tracks the last frame
+in which a texture was drawn to the screen.</li>
+<li><strong>Periodic Unloading:</strong> Textures that remain unrendered
+beyond a defined frame threshold or time window are automatically
+unbound from the GPU. Their underlying <code>GPUTexture</code> objects
+are destroyed, freeing VRAM back to the mobile system.</li>
+<li><strong>GC Modes:</strong> Developers can adjust the garbage
+collector's frequency or force manual sweeps
+(<code>renderer.textureGC.run()</code>) during scene transitions to
+proactively clear memory before new assets load.</li>
+</ul>
+<h3 id="buffer-pooling-and-dynamic-batching">Buffer Pooling and Dynamic
+Batching</h3>
+<p>Constantly allocating and deallocating small vertex, index, and
+uniform buffers causes memory fragmentation, which degrades performance
+and triggers premature out-of-memory errors on mobile chipsets.</p>
+<p>PixiJS solves this by pooling its buffers. Instead of creating new
+WebGPU buffer objects for every sprite or geometry update, the engine
+resizes and reuses existing <code>GPUBuffer</code> instances through a
+centralized buffer management system. Dynamic uniform data and batched
+geometry are written into shared staging buffers and transferred using
+<code>GPUQueue.writeBuffer</code>, ensuring that memory allocations
+remain stable across frames rather than expanding uncontrollably.</p>
+<h3 id="compressed-texture-formats">Compressed Texture Formats</h3>
+<p>Uncompressed textures (like standard PNGs and JPEGs decoded into
+32-bit RGBA) consume four bytes per pixel in GPU memory, regardless of
+their file size on disk. A single 2048x2048 uncompressed texture
+occupies 16 MB of VRAM.</p>
+<p>PixiJS provides native asset pipeline support for hardware-compressed
+textures, most notably ASTC (Adaptive Scalable Texture Compression),
+which is universally supported across modern mobile WebGPU hardware.
+ASTC textures remain compressed in GPU memory, reducing memory
+consumption by up to 75% to 85% compared to raw RGBA textures. This
+significantly reduces total memory pressure and bandwidth usage, which
+directly translates to cooler device operation and fewer context
+crashes.</p>
+<h3 id="explicit-resource-cleanup">Explicit Resource Cleanup</h3>
+<p>JavaScript's native garbage collector cannot directly measure or
+promptly clean up underlying GPU memory. A discarded JavaScript sprite
+reference might linger in memory, keeping several megabytes of WebGPU
+resources alive until the next major garbage collection cycle.</p>
+<p>To prevent memory leaks, PixiJS exposes an explicit lifecycle
+management API:</p>
+<ul>
+<li>Calling <code>.destroy(true)</code> on containers, textures, or
+renderers explicitly invokes the native WebGPU <code>.destroy()</code>
+methods on underlying <code>GPUTexture</code> and <code>GPUBuffer</code>
+objects.</li>
+<li>This bypasses the delay of the JavaScript garbage collector,
+immediately returning memory to the mobile operating system and
+preventing memory spikes during asset-heavy scene transitions.</li>
+</ul>
+<h3 id="handling-device-loss">Handling Device Loss</h3>
+<p>When mobile OS-level memory pressure forces the browser to reclaim
+memory, the WebGPU context will fire a device loss event. PixiJS listens
+to the <code>GPUDevice.lost</code> promise, allowing developers to clean
+up existing application states, prevent further render loop executions,
+and prompt users or attempt a clean reinitialization once resources
+become available again.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

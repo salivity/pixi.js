@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Set Anchor Point on a PixiJS Container - pixi.js</title>
+    <meta name="description" content="In PixiJS, PIXI.Sprite includes an anchor property that normalizes origin points between 0 and 1, but PIXI.Container lacks this feature by default. This guide explains how to achieve anchor point functionality on a standard Container using the native piv">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-to-set-anchor-point-on-a-pixijs-container">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Set Anchor Point on a PixiJS Container - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-to-set-anchor-point-on-a-pixijs-container" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In PixiJS, PIXI.Sprite includes an anchor property that normalizes origin points between 0 and 1, but PIXI.Container lacks this feature by default. This guide explains how to achieve anchor point functionality on a standard Container using the native piv" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-to-set-anchor-point-on-a-pixijs-container">How to Set Anchor
+Point on a PixiJS Container</h1>
+<p>In PixiJS, <code>PIXI.Sprite</code> includes an <code>anchor</code>
+property that normalizes origin points between 0 and 1, but
+<code>PIXI.Container</code> lacks this feature by default. This guide
+explains how to achieve anchor point functionality on a standard
+<code>Container</code> using the native <code>pivot</code> property, and
+demonstrates how to implement a custom, normalized <code>anchor</code>
+property directly onto your container instances or via an extended
+class.</p>
+<h2 id="the-difference-between-anchor-and-pivot">The Difference Between
+Anchor and Pivot</h2>
+<p>To simulate an anchor point on a container, you must use the
+<code>pivot</code> property.</p>
+<ul>
+<li><strong>Anchor:</strong> Uses normalized coordinates between
+<code>0.0</code> (top/left) and <code>1.0</code> (bottom/right).</li>
+<li><strong>Pivot:</strong> Uses absolute pixel values to set the origin
+point around which position, rotation, and scaling occur.</li>
+</ul>
+<p>Because <code>pivot</code> operates in pixels, you can calculate the
+pivot values by multiplying the normalized anchor coordinate by the
+container's width and height.</p>
+<h2 id="method-1-manual-calculation-using-pivot">Method 1: Manual
+Calculation Using Pivot</h2>
+<p>The simplest approach is calculating the pivot coordinates directly
+from the container's dimensions once all children have been added:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> container <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Container</span>()<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Add your children first so the container has dimensions</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>container<span class="op">.</span><span class="fu">addChild</span>(child1<span class="op">,</span> child2)<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Target anchor values (0.5 represents the center)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> anchorX <span class="op">=</span> <span class="fl">0.5</span><span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> anchorY <span class="op">=</span> <span class="fl">0.5</span><span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">// Set pivot using pixel values</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>container<span class="op">.</span><span class="at">pivot</span><span class="op">.</span><span class="at">x</span> <span class="op">=</span> container<span class="op">.</span><span class="at">width</span> <span class="op">*</span> anchorX<span class="op">;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>container<span class="op">.</span><span class="at">pivot</span><span class="op">.</span><span class="at">y</span> <span class="op">=</span> container<span class="op">.</span><span class="at">height</span> <span class="op">*</span> anchorY<span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">// Reposition the container to compensate for the shifted origin</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>container<span class="op">.</span><span class="at">position</span><span class="op">.</span><span class="fu">set</span>(<span class="dv">400</span><span class="op">,</span> <span class="dv">300</span>)<span class="op">;</span></span></code></pre></div>
+<h2 id="method-2-creating-an-extensible-container-class">Method 2:
+Creating an Extensible Container Class</h2>
+<p>If you need the behavior across multiple containers or want to set
+normalized values dynamically, extend <code>PIXI.Container</code> with a
+custom getter and setter:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> AnchoredContainer <span class="kw">extends</span> PIXI<span class="op">.</span><span class="at">Container</span> {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">constructor</span>() {</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">super</span>()<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">_anchor</span> <span class="op">=</span> { <span class="dt">x</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="dv">0</span> }<span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">get</span> <span class="fu">anchor</span>() {</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">this</span><span class="op">.</span><span class="at">_anchor</span><span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">setAnchor</span>(x<span class="op">,</span> y <span class="op">=</span> x) {</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">_anchor</span><span class="op">.</span><span class="at">x</span> <span class="op">=</span> x<span class="op">;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">_anchor</span><span class="op">.</span><span class="at">y</span> <span class="op">=</span> y<span class="op">;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="fu">updateAnchor</span>()<span class="op">;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">updateAnchor</span>() {</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Calculate bounds to ensure accurate dimensions</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> bounds <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="fu">getLocalBounds</span>()<span class="op">;</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">pivot</span><span class="op">.</span><span class="at">x</span> <span class="op">=</span> bounds<span class="op">.</span><span class="at">x</span> <span class="op">+</span> bounds<span class="op">.</span><span class="at">width</span> <span class="op">*</span> <span class="kw">this</span><span class="op">.</span><span class="at">_anchor</span><span class="op">.</span><span class="at">x</span><span class="op">;</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">pivot</span><span class="op">.</span><span class="at">y</span> <span class="op">=</span> bounds<span class="op">.</span><span class="at">y</span> <span class="op">+</span> bounds<span class="op">.</span><span class="at">height</span> <span class="op">*</span> <span class="kw">this</span><span class="op">.</span><span class="at">_anchor</span><span class="op">.</span><span class="at">y</span><span class="op">;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="usage">Usage:</h3>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> panel <span class="op">=</span> <span class="kw">new</span> <span class="fu">AnchoredContainer</span>()<span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>panel<span class="op">.</span><span class="fu">addChild</span>(backgroundGraphic)<span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>panel<span class="op">.</span><span class="fu">addChild</span>(buttonGraphic)<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Centers the container&#39;s transform point</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>panel<span class="op">.</span><span class="fu">setAnchor</span>(<span class="fl">0.5</span><span class="op">,</span> <span class="fl">0.5</span>)<span class="op">;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>panel<span class="op">.</span><span class="at">position</span><span class="op">.</span><span class="fu">set</span>(app<span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">width</span> <span class="op">/</span> <span class="dv">2</span><span class="op">,</span> app<span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">height</span> <span class="op">/</span> <span class="dv">2</span>)<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(panel)<span class="op">;</span></span></code></pre></div>
+<h2 id="important-considerations">Important Considerations</h2>
+<ol type="1">
+<li><strong>Calculate After Adding Children:</strong> A
+<code>PIXI.Container</code> has a width and height of <code>0</code>
+until it contains at least one display object with physical dimensions.
+Setting pivot values before adding children will result in a pivot point
+of <code>(0, 0)</code>.</li>
+<li><strong>Dynamic Content Updates:</strong> Unlike a sprite's fixed
+texture size, a container's dimensions change when children are added,
+removed, or repositioned. Whenever the bounds of your container change,
+you must re-calculate the pivot values using the latest dimensions to
+maintain the relative anchor position.</li>
+<li><strong>Use <code>getLocalBounds()</code>:</strong> Instead of
+relying strictly on <code>container.width</code> and
+<code>container.height</code>, using
+<code>container.getLocalBounds()</code> accounts for negative coordinate
+offsets of child objects within the container, preventing misalignment
+issues.</li>
+</ol></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

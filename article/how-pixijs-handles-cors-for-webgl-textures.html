@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How PixiJS Handles CORS for WebGL Textures - pixi.js</title>
+    <meta name="description" content="When rendering external images onto a WebGL canvas, PixiJS must navigate browser security policies that restrict cross-origin data to prevent information leakage. PixiJS automates Cross-Origin Resource Sharing (CORS) negotiation by dynamically applying t">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-pixijs-handles-cors-for-webgl-textures">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How PixiJS Handles CORS for WebGL Textures - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-pixijs-handles-cors-for-webgl-textures" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When rendering external images onto a WebGL canvas, PixiJS must navigate browser security policies that restrict cross-origin data to prevent information leakage. PixiJS automates Cross-Origin Resource Sharing (CORS) negotiation by dynamically applying t" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-pixijs-handles-cors-for-webgl-textures">How PixiJS Handles
+CORS for WebGL Textures</h1>
+<p>When rendering external images onto a WebGL canvas, PixiJS must
+navigate browser security policies that restrict cross-origin data to
+prevent information leakage. PixiJS automates Cross-Origin Resource
+Sharing (CORS) negotiation by dynamically applying the
+<code>crossOrigin</code> attribute to underlying HTML image elements
+whenever it detects an asset from a foreign domain. This article breaks
+down the WebGL security model that necessitates CORS, how PixiJS handles
+cross-origin detection and configuration under the hood, how to manually
+control this behavior in your code, and the server-side requirements
+needed to prevent texture rendering errors.</p>
+<h3 id="the-webgl-cross-origin-security-model">The WebGL Cross-Origin
+Security Model</h3>
+<p>Browsers enforce the Same-Origin Policy to protect sensitive user
+data. When an image from a different domain, protocol, or port is drawn
+onto an HTML <code>&lt;canvas&gt;</code>, the canvas becomes "tainted."
+In standard 2D contexts, a tainted canvas simply restricts reading pixel
+data back via <code>getImageData()</code>.</p>
+<p>However, WebGL enforces a much stricter standard. WebGL requires full
+access to the raw pixel data to bind and upload the image to GPU memory
+as a texture via <code>gl.texImage2D()</code>. If you attempt to upload
+an image from another origin without valid CORS approval, the browser
+throws a <code>SecurityError</code>, and WebGL refuses to create the
+texture, resulting in a broken or invisible sprite.</p>
+<h3 id="automatic-cors-handling-in-pixijs">Automatic CORS Handling in
+PixiJS</h3>
+<p>To prevent WebGL security exceptions, PixiJS handles CORS resolution
+during the asset loading phase. When an image resource is processed—most
+commonly through the <code>Assets</code> package—PixiJS follows these
+steps:</p>
+<ol type="1">
+<li><strong>Origin Verification:</strong> PixiJS parses the URL of the
+image and compares its origin (protocol, host, and port) to the current
+page's origin (<code>window.location</code>).</li>
+<li><strong>Setting the Attribute:</strong> If the image is hosted on an
+external domain, PixiJS automatically sets the <code>crossOrigin</code>
+property of the created <code>HTMLImageElement</code> to
+<code>'anonymous'</code>.</li>
+<li><strong>Triggering the CORS Request:</strong> When
+<code>image.crossOrigin = 'anonymous'</code> is present, the browser
+appends an <code>Origin</code> header to the outgoing HTTP GET request
+for that asset.</li>
+<li><strong>WebGL Upload:</strong> Once the asset loads successfully
+with the appropriate CORS headers from the server, PixiJS binds the
+image to the WebGL context without triggering a security violation.</li>
+</ol>
+<p>If the image originates from the same domain, PixiJS leaves the
+<code>crossOrigin</code> property unset to avoid unnecessary preflight
+requests and cache partitioning issues.</p>
+<h3 id="configuring-cors-in-pixijs-code">Configuring CORS in PixiJS
+Code</h3>
+<p>While PixiJS handles cross-origin detection automatically, you can
+explicitly configure or override CORS behavior using the modern
+<code>Assets</code> API:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { Assets } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Explicitly set crossOrigin in load options</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> texture <span class="op">=</span> <span class="cf">await</span> Assets<span class="op">.</span><span class="fu">load</span>({</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">src</span><span class="op">:</span> <span class="st">&#39;https://cdn.example.com/sprites/character.png&#39;</span><span class="op">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">data</span><span class="op">:</span> {</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">crossOrigin</span><span class="op">:</span> <span class="st">&#39;anonymous&#39;</span><span class="op">,</span> <span class="co">// Options: &#39;anonymous&#39;, &#39;use-credentials&#39;, or boolean</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    }<span class="op">,</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>For applications handling authenticated requests that require cookies
+or authorization headers across origins, set <code>crossOrigin</code> to
+<code>'use-credentials'</code>. Note that this requires the target
+server to explicitly set
+<code>Access-Control-Allow-Credentials: true</code> alongside specific
+origin declarations rather than a wildcard.</p>
+<h3 id="server-side-requirements">Server-Side Requirements</h3>
+<p>PixiJS’s client-side handling is only half of the equation; the
+remote server hosting the images must be configured to respond
+correctly.</p>
+<ol type="1">
+<li><strong>Access-Control-Allow-Origin:</strong> The server or Content
+Delivery Network (CDN) must include the
+<code>Access-Control-Allow-Origin: *</code> header (or specify your
+explicit domain) in the HTTP response.</li>
+<li><strong>Vary: Origin Header:</strong> If you serve images through a
+CDN, ensure the server returns the <code>Vary: Origin</code> header.
+Without this header, a browser might serve a cached version of an image
+that was requested without CORS (for instance, via a standard
+<code>&lt;img&gt;</code> tag in the DOM), causing the subsequent WebGL
+CORS request to fail with a cache collision error.</li>
+</ol></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

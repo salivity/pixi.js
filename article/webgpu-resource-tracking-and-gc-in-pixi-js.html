@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGPU Resource Tracking and GC in Pixi.js - pixi.js</title>
+    <meta name="description" content="WebGPU introduces explicit resource tracking to modern web rendering, fundamentally altering how 2D and 3D frameworks handle assets in memory. In Pixi.js—particularly starting with version 8—the shift from WebGL to WebGPU transforms asset garbage col">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/webgpu-resource-tracking-and-gc-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebGPU Resource Tracking and GC in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/webgpu-resource-tracking-and-gc-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebGPU introduces explicit resource tracking to modern web rendering, fundamentally altering how 2D and 3D frameworks handle assets in memory. In Pixi.js—particularly starting with version 8—the shift from WebGL to WebGPU transforms asset garbage col" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webgpu-resource-tracking-and-gc-in-pixijs">WebGPU Resource
+Tracking and GC in Pixi.js</h1>
+<p>WebGPU introduces explicit resource tracking to modern web rendering,
+fundamentally altering how 2D and 3D frameworks handle assets in memory.
+In Pixi.js—particularly starting with version 8—the shift from WebGL to
+WebGPU transforms asset garbage collection from a passive,
+browser-managed process into a deterministic, programmatic workflow.
+This transition dramatically improves VRAM reclamation and eliminates
+runtime stutter, while simultaneously demanding stricter lifecycle
+management for textures, buffers, and shaders.</p>
+<h3 id="the-shift-from-webgl-to-webgpu-resource-management">The Shift
+from WebGL to WebGPU Resource Management</h3>
+<p>Under WebGL, the underlying browser engine and native graphics
+drivers manage much of the GPU memory state implicitly. JavaScript's
+automatic garbage collection often handles unreferenced WebGL resources
+loosely: when an asset falls out of scope in JavaScript, the browser
+eventually cleans up the associated WebGL handle. However, this relies
+on non-deterministic garbage collection passes, frequently causing
+delayed VRAM deallocation, memory leaks, and unpredictable frame drops
+when the browser performs bulk cleanup.</p>
+<p>WebGPU replaces this implicit model with explicit resource
+lifecycles. Graphics primitives, such as <code>GPUTexture</code> and
+<code>GPUBuffer</code>, are managed with strict validation layers and
+native lifetimes. WebGPU provides native destruction methods (like
+<code>destroy()</code>) that immediately release underlying GPU memory,
+bypassing the need to wait for JavaScript runtime garbage collection
+cycles.</p>
+<h3 id="how-explicit-tracking-impacts-pixijs">How Explicit Tracking
+Impacts Pixi.js</h3>
+<p>Pixi.js features an internal asset management layer
+(<code>Assets</code>) and a modular rendering pipeline designed to
+bridge both WebGL and WebGPU. With WebGPU enabled, Pixi.js can no longer
+rely on lax disposal patterns. The framework must explicitly track every
+bind group, pipeline, buffer, and texture source created during the
+application lifecycle.</p>
+<ol type="1">
+<li><p><strong>Deterministic VRAM Deallocation</strong><br />
+When an asset is unloaded via <code>Assets.unload()</code> or when a
+texture's <code>destroy()</code> method is executed, Pixi.js immediately
+calls <code>destroy()</code> on the corresponding WebGPU resource. This
+releases the native GPU allocation instantly, allowing developers to
+budget memory predictably without waiting for the JavaScript garbage
+collector.</p></li>
+<li><p><strong>Reduction in JavaScript GC Pauses</strong><br />
+Because GPU memory is explicitly decoupled from JavaScript object
+references, the JavaScript engine's garbage collector has fewer heavy
+native bindings to traverse and finalize. This significantly reduces the
+duration and frequency of GC pauses, resulting in smoother frame
+delivery during asset-heavy scene transitions.</p></li>
+<li><p><strong>Bind Group and Render Pipeline Caching</strong><br />
+WebGPU relies heavily on immutable pipeline states and bind groups.
+Pixi.js tracks resource dependencies tightly to ensure that uniform
+buffers and textures bundled into bind groups are not destroyed while
+active command buffers are still referencing them. Asset garbage
+collection in Pixi.js must sync with GPU execution queues, ensuring
+resources are destroyed only after the GPU has finished rendering the
+commands that use them.</p></li>
+</ol>
+<h3 id="developer-implications">Developer Implications</h3>
+<p>While explicit resource tracking yields performance and stability
+improvements, it increases the responsibility placed on application
+developers:</p>
+<ul>
+<li><strong>Mandatory Cleanup:</strong> Failing to invoke
+<code>.destroy()</code> or <code>Assets.unload()</code> on dynamic
+textures and generated buffers guarantees that GPU memory remains
+allocated, resulting in fast VRAM exhaustion.</li>
+<li><strong>Strict Validation Errors:</strong> WebGPU validates state
+aggressively. Destroying a resource that is currently bound to an active
+render pass will trigger fatal WebGPU validation errors that halt
+execution. Developers must allow Pixi.js to manage asset teardown during
+designated tick phases rather than arbitrarily destroying resources
+mid-frame.</li>
+</ul>
+<p>Explicit resource tracking in WebGPU establishes a direct,
+predictable link between asset unloading in Pixi.js and actual hardware
+memory reclamation. By replacing non-deterministic garbage collection
+with immediate hardware-level deallocation, Pixi.js provides higher
+runtime stability and smoother performance across high-throughput
+graphical applications.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

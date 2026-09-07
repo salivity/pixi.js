@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Use BitmapText Over Text in Pixi.js - pixi.js</title>
+    <meta name="description" content="When building a user interface (UI) in Pixi.js, developers must choose between standard Text and BitmapText for rendering written information. While standard Text is easier to set up initially using system fonts, BitmapText is the industry standard for g">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/why-use-bitmaptext-over-text-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Why Use BitmapText Over Text in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/why-use-bitmaptext-over-text-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When building a user interface (UI) in Pixi.js, developers must choose between standard Text and BitmapText for rendering written information. While standard Text is easier to set up initially using system fonts, BitmapText is the industry standard for g" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="why-use-bitmaptext-over-text-in-pixijs">Why Use BitmapText Over
+Text in Pixi.js</h1>
+<p>When building a user interface (UI) in Pixi.js, developers must
+choose between standard <code>Text</code> and <code>BitmapText</code>
+for rendering written information. While standard <code>Text</code> is
+easier to set up initially using system fonts, <code>BitmapText</code>
+is the industry standard for game development due to its superior
+performance, reduced memory overhead, and seamless rendering efficiency.
+This article explains the technical differences between the two
+rendering methods and outlines why <code>BitmapText</code> is almost
+always the better choice for dynamic game UIs.</p>
+<h2 id="how-standard-text-works-the-bottleneck">How Standard Text Works
+(The Bottleneck)</h2>
+<p>To understand why <code>BitmapText</code> is preferred, it helps to
+understand how Pixi.js handles standard <code>Text</code>.</p>
+<p>When you create a standard <code>Text</code> object, Pixi.js does not
+render the text directly in WebGL. Instead, it creates a hidden HTML5
+<code>&lt;canvas&gt;</code> element behind the scenes, draws the text
+onto that canvas using the browser's 2D context, and then uploads that
+canvas as a texture to the GPU.</p>
+<p>While this works well for static text, it introduces a severe
+bottleneck when text changes frequently (such as a timer, score counter,
+or damage numbers). Every time a standard <code>Text</code> string is
+updated, Pixi.js must:</p>
+<ol type="1">
+<li>Clear the hidden canvas.</li>
+<li>Redraw the new text to the canvas.</li>
+<li>Re-upload the newly updated texture to the GPU.</li>
+</ol>
+<p>This cycle causes massive CPU-to-GPU transfer overhead and triggers
+garbage collection spikes, leading to noticeable frame drops
+(stuttering) in your game.</p>
+<h2 id="how-bitmaptext-works-the-solution">How BitmapText Works (The
+Solution)</h2>
+<p><code>BitmapText</code> bypasses the canvas creation and GPU upload
+process entirely by treating text as a collection of sprites.</p>
+<p>Before rendering, a developer generates a font atlas (a single image
+containing all the letters, numbers, and symbols needed) alongside an
+XML or JSON file mapping the coordinates of each character. When you
+render <code>BitmapText</code>, Pixi.js simply draws individual sprites
+from this pre-loaded texture atlas.</p>
+<p>Updating a <code>BitmapText</code> string does not require creating
+new textures. Pixi.js only needs to change the positions and texture
+coordinates of the existing character sprites, which WebGL can process
+almost instantly.</p>
+<h2 id="key-advantages-of-bitmaptext-for-game-uis">Key Advantages of
+BitmapText for Game UIs</h2>
+<h3 id="1-extreme-performance-and-batching">1. Extreme Performance and
+Batching</h3>
+<p>Because <code>BitmapText</code> characters are just sprites
+originating from a single texture atlas, Pixi.js can batch them into a
+single draw call. You can render hundreds of dynamic numbers, player
+names, and UI elements simultaneously on screen at 60 FPS without
+impacting performance.</p>
+<h3 id="2-lower-memory-usage">2. Lower Memory Usage</h3>
+<p>Standard <code>Text</code> requires a unique canvas texture for every
+single text object on the screen. If you have 50 different damage
+numbers floating on screen, you have 50 unique textures taking up GPU
+memory. With <code>BitmapText</code>, those 50 numbers all share the
+exact same font atlas texture, drastically reducing the game's memory
+footprint.</p>
+<h3 id="3-visual-consistency-across-devices">3. Visual Consistency
+Across Devices</h3>
+<p>Standard <code>Text</code> relies on system fonts or web fonts loaded
+by the browser. If a user’s device lacks the font or fails to load it
+properly, the browser will fall back to a default font (like Times New
+Roman or Arial), potentially ruining your UI layout. Because
+<code>BitmapText</code> uses a pre-rendered image asset, your font will
+look identical on every single device, operating system, and
+browser.</p>
+<h3 id="4-support-for-advanced-effects">4. Support for Advanced
+Effects</h3>
+<p>By using tools to generate your bitmap fonts, you can bake complex
+styling—such as multi-colored gradients, inner glows, 3D bevels, and
+custom hand-drawn textures—directly into the font image. Achieving these
+same visual effects dynamically using standard CSS/Canvas text styling
+is either highly resource-intensive or mathematically impossible.</p>
+<h2 id="when-to-use-standard-text-instead">When to Use Standard Text
+Instead</h2>
+<p>While <code>BitmapText</code> is superior for the vast majority of
+game UI elements, standard <code>Text</code> still has a place. You
+might choose standard <code>Text</code> if:</p>
+<ul>
+<li><strong>The text is entirely static:</strong> For main menu titles,
+credits, or static settings labels that never change during gameplay,
+standard <code>Text</code> is acceptable because the GPU upload only
+happens once.</li>
+<li><strong>You require localization in many languages:</strong>
+Generating bitmap fonts for languages with thousands of unique
+characters (like Chinese, Japanese, or Korean) can result in massive
+texture files. In these cases, standard <code>Text</code> or specialized
+font-loading strategies are often easier to manage.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

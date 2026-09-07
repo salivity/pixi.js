@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box2D Physics Simulation with Pixi.js Ticker - pixi.js</title>
+    <meta name="description" content="Integrating a Box2D physics simulation with Pixi.js requires coordinating Pixi's rendering loop with Box2D's numerical integration steps. This guide demonstrates how to synchronize the Box2D physics world inside the PIXI.Ticker lifecycle, handle coordina">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/box2d-physics-simulation-with-pixi-js-ticker">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Box2D Physics Simulation with Pixi.js Ticker - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/box2d-physics-simulation-with-pixi-js-ticker" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Integrating a Box2D physics simulation with Pixi.js requires coordinating Pixi's rendering loop with Box2D's numerical integration steps. This guide demonstrates how to synchronize the Box2D physics world inside the PIXI.Ticker lifecycle, handle coordina" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="box2d-physics-simulation-with-pixijs-ticker">Box2D Physics
+Simulation with Pixi.js Ticker</h1>
+<p>Integrating a Box2D physics simulation with Pixi.js requires
+coordinating Pixi's rendering loop with Box2D's numerical integration
+steps. This guide demonstrates how to synchronize the Box2D physics
+world inside the <code>PIXI.Ticker</code> lifecycle, handle coordinate
+system conversions between physics meters and screen pixels, and apply a
+fixed time-step pattern to ensure deterministic, stable physics behavior
+across variable display refresh rates.</p>
+<h3 id="understanding-the-coordinate-system">Understanding the
+Coordinate System</h3>
+<p>Box2D operates on the metric system (meters, kilograms, seconds),
+optimized for objects sized between 0.1 and 10 meters. Pixi.js, however,
+calculates all transformations in screen pixels.</p>
+<p>To bridge the two systems, establish a constant scale factor, often
+referred to as Pixels Per Meter (PPM):</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> PPM <span class="op">=</span> <span class="dv">30</span><span class="op">;</span> <span class="co">// 30 pixels equal 1 meter in Box2D</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> toMeters <span class="op">=</span> (pixels) <span class="kw">=&gt;</span> pixels <span class="op">/</span> PPM<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> toPixels <span class="op">=</span> (meters) <span class="kw">=&gt;</span> meters <span class="op">*</span> PPM<span class="op">;</span></span></code></pre></div>
+<h3 id="implementing-a-fixed-time-step">Implementing a Fixed Time
+Step</h3>
+<p>Box2D requires a constant time step (typically 1/60th of a second) to
+remain numerically stable. Rendering loops driven by
+<code>PIXI.Ticker</code> run at variable refresh rates depending on user
+hardware and screen frame rates. Coupling the physics step directly to
+the variable frame delta will cause tunneling and erratic physics
+behavior.</p>
+<p>Use an accumulator loop to consume elapsed time in discrete, fixed
+steps:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FIXED_TIMESTEP <span class="op">=</span> <span class="dv">1</span> <span class="op">/</span> <span class="dv">60</span><span class="op">;</span> <span class="co">// 60 Hz physics step</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VELOCITY_ITERATIONS <span class="op">=</span> <span class="dv">8</span><span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> POSITION_ITERATIONS <span class="op">=</span> <span class="dv">3</span><span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> accumulator <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">ticker</span><span class="op">.</span><span class="fu">add</span>((ticker) <span class="kw">=&gt;</span> {</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Convert ticker elapsed MS to seconds</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> deltaSeconds <span class="op">=</span> ticker<span class="op">.</span><span class="at">deltaMS</span> <span class="op">/</span> <span class="dv">1000</span><span class="op">;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Prevent &quot;spiral of death&quot; during lag spikes</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    accumulator <span class="op">+=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">min</span>(deltaSeconds<span class="op">,</span> <span class="fl">0.25</span>)<span class="op">;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> (accumulator <span class="op">&gt;=</span> FIXED_TIMESTEP) {</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        world<span class="op">.</span><span class="fu">Step</span>(FIXED_TIMESTEP<span class="op">,</span> VELOCITY_ITERATIONS<span class="op">,</span> POSITION_ITERATIONS)<span class="op">;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        accumulator <span class="op">-=</span> FIXED_TIMESTEP<span class="op">;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">updateVisuals</span>()<span class="op">;</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h3 id="synchronizing-physics-bodies-to-pixi-sprites">Synchronizing
+Physics Bodies to Pixi Sprites</h3>
+<p>To render the simulation, map the position and rotation of each Box2D
+<code>b2Body</code> to its corresponding Pixi.js
+<code>DisplayObject</code>. Because Box2D calculates positions from the
+center of mass, ensure your Pixi display objects have their anchors
+centered.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Entity structure tracking paired components</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> entities <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">createBox</span>(x<span class="op">,</span> y<span class="op">,</span> width<span class="op">,</span> height) {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 1. Pixi.js visual representation</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> sprite <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Graphics</span>()<span class="op">;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    sprite<span class="op">.</span><span class="fu">beginFill</span>(<span class="bn">0xff0000</span>)<span class="op">;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    sprite<span class="op">.</span><span class="fu">drawRect</span>(<span class="op">-</span>width <span class="op">/</span> <span class="dv">2</span><span class="op">,</span> <span class="op">-</span>height <span class="op">/</span> <span class="dv">2</span><span class="op">,</span> width<span class="op">,</span> height)<span class="op">;</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    sprite<span class="op">.</span><span class="fu">endFill</span>()<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(sprite)<span class="op">;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 2. Box2D rigid body definition</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> bodyDef <span class="op">=</span> <span class="kw">new</span> Box2D<span class="op">.</span><span class="fu">b2BodyDef</span>()<span class="op">;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    bodyDef<span class="op">.</span><span class="fu">set_type</span>(Box2D<span class="op">.</span><span class="at">b2_dynamicBody</span>)<span class="op">;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    bodyDef<span class="op">.</span><span class="fu">set_position</span>(<span class="kw">new</span> Box2D<span class="op">.</span><span class="fu">b2Vec2</span>(<span class="fu">toMeters</span>(x)<span class="op">,</span> <span class="fu">toMeters</span>(y)))<span class="op">;</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> body <span class="op">=</span> world<span class="op">.</span><span class="fu">CreateBody</span>(bodyDef)<span class="op">;</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> shape <span class="op">=</span> <span class="kw">new</span> Box2D<span class="op">.</span><span class="fu">b2PolygonShape</span>()<span class="op">;</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    shape<span class="op">.</span><span class="fu">SetAsBox</span>(<span class="fu">toMeters</span>(width <span class="op">/</span> <span class="dv">2</span>)<span class="op">,</span> <span class="fu">toMeters</span>(height <span class="op">/</span> <span class="dv">2</span>))<span class="op">;</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    body<span class="op">.</span><span class="fu">CreateFixture</span>(shape<span class="op">,</span> <span class="fl">1.0</span>)<span class="op">;</span> <span class="co">// Shape, density</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    entities<span class="op">.</span><span class="fu">push</span>({ sprite<span class="op">,</span> body })<span class="op">;</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="updating-transforms">Updating Transforms</h3>
+<p>After stepping the physics world, iterate through all paired entities
+to update the Pixi visual transformations to match the Box2D simulation
+output:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">updateVisuals</span>() {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> entities<span class="op">.</span><span class="at">length</span><span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> { sprite<span class="op">,</span> body } <span class="op">=</span> entities[i]<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> pos <span class="op">=</span> body<span class="op">.</span><span class="fu">GetPosition</span>()<span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Map meter coordinates back to screen pixels</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        sprite<span class="op">.</span><span class="at">x</span> <span class="op">=</span> <span class="fu">toPixels</span>(pos<span class="op">.</span><span class="fu">get_x</span>())<span class="op">;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        sprite<span class="op">.</span><span class="at">y</span> <span class="op">=</span> <span class="fu">toPixels</span>(pos<span class="op">.</span><span class="fu">get_y</span>())<span class="op">;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Directly map radian rotation</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        sprite<span class="op">.</span><span class="at">rotation</span> <span class="op">=</span> body<span class="op">.</span><span class="fu">GetAngle</span>()<span class="op">;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="optional-transform-interpolation">Optional: Transform
+Interpolation</h3>
+<p>If the display refresh rate (e.g., 144Hz) exceeds the physics
+simulation rate (60Hz), visual stutter can occur. Calculate an
+interpolation alpha using the remaining time in the accumulator to blend
+between the previous and current physics states:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> alpha <span class="op">=</span> accumulator <span class="op">/</span> FIXED_TIMESTEP<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Interpolated position update</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>sprite<span class="op">.</span><span class="at">x</span> <span class="op">=</span> <span class="fu">toPixels</span>(previousX <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> alpha) <span class="op">+</span> currentX <span class="op">*</span> alpha)<span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>sprite<span class="op">.</span><span class="at">y</span> <span class="op">=</span> <span class="fu">toPixels</span>(previousY <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> alpha) <span class="op">+</span> currentY <span class="op">*</span> alpha)<span class="op">;</span></span></code></pre></div>
+<p>This pattern decouples the simulation rate entirely from the
+rendering hardware, providing stable physics calculations while keeping
+motion smooth across any monitor refresh rate.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

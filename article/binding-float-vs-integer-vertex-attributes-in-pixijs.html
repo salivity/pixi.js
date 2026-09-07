@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binding Float vs Integer Vertex Attributes in PixiJS - pixi.js</title>
+    <meta name="description" content="This guide explains how to define and bind floating-point and integer vertex attributes using PixiJS. Custom shaders frequently require diverse data inputs, from position vectors and UV coordinates to discrete texture indices and state flags. Understandi">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/binding-float-vs-integer-vertex-attributes-in-pixijs">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Binding Float vs Integer Vertex Attributes in PixiJS - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/binding-float-vs-integer-vertex-attributes-in-pixijs" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This guide explains how to define and bind floating-point and integer vertex attributes using PixiJS. Custom shaders frequently require diverse data inputs, from position vectors and UV coordinates to discrete texture indices and state flags. Understandi" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="binding-float-vs-integer-vertex-attributes-in-pixijs">Binding
+Float vs Integer Vertex Attributes in PixiJS</h1>
+<p>This guide explains how to define and bind floating-point and integer
+vertex attributes using PixiJS. Custom shaders frequently require
+diverse data inputs, from position vectors and UV coordinates to
+discrete texture indices and state flags. Understanding the
+configuration differences between standard floating-point buffers and
+non-normalized integer buffers in PixiJS ensures that the GPU correctly
+decodes your data without data corruption or shader compilation
+issues.</p>
+<hr />
+<h3 id="floating-point-vertex-attributes">Floating-Point Vertex
+Attributes</h3>
+<p>Floating-point attributes are the standard attribute type in WebGL
+and PixiJS. They are read into shaders as <code>float</code>,
+<code>vec2</code>, <code>vec3</code>, or <code>vec4</code> types and use
+standard floating-point vertex pointers under the hood.</p>
+<h4 id="1-buffer-setup">1. Buffer Setup</h4>
+<p>Create a buffer populated with a typed array of floating-point
+values:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> floatData <span class="op">=</span> <span class="kw">new</span> <span class="bu">Float32Array</span>([</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.0</span><span class="op">,</span>  <span class="fl">0.5</span><span class="op">,</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>   <span class="op">-</span><span class="fl">0.5</span><span class="op">,</span> <span class="op">-</span><span class="fl">0.5</span><span class="op">,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.5</span><span class="op">,</span> <span class="op">-</span><span class="fl">0.5</span><span class="op">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>])<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> positionBuffer <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Buffer</span>(floatData)<span class="op">;</span></span></code></pre></div>
+<h4 id="2-attribute-binding">2. Attribute Binding</h4>
+<p>Add the attribute to a <code>PIXI.Geometry</code> instance using
+<code>PIXI.TYPES.FLOAT</code>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> geometry <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Geometry</span>()<span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>geometry<span class="op">.</span><span class="fu">addAttribute</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;aPosition&#39;</span><span class="op">,</span>           <span class="co">// Attribute name matching the shader variable</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    positionBuffer<span class="op">,</span>        <span class="co">// The source buffer</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2</span><span class="op">,</span>                     <span class="co">// Size: number of components (vec2)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">false</span><span class="op">,</span>                 <span class="co">// Normalized: false (values are raw floats)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    PIXI<span class="op">.</span><span class="at">TYPES</span><span class="op">.</span><span class="at">FLOAT</span>       <span class="co">// Type: explicitly declared as float</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>)<span class="op">;</span></span></code></pre></div>
+<h4 id="3-vertex-shader-implementation">3. Vertex Shader
+Implementation</h4>
+<p>In the vertex shader, declare the input as a floating-point
+vector:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// WebGL 1 (GLSL ES 1.0)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="dt">attribute</span> <span class="dt">vec2</span> aPosition<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">// WebGL 2 (GLSL ES 3.0)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="dt">in</span> <span class="dt">vec2</span> aPosition<span class="op">;</span></span></code></pre></div>
+<hr />
+<h3 id="integer-vertex-attributes">Integer Vertex Attributes</h3>
+<p>When using integer values, such as an object ID, texture array index,
+or bitmask, attributes must be handled based on whether the shader
+expects true integers (<code>int</code>, <code>uint</code>,
+<code>ivec</code>, <code>uvec</code>) or floats derived from
+integers.</p>
+<p>In WebGL 2, true integer attributes must be bound via
+<code>gl.vertexAttribIPointer</code> rather than
+<code>gl.vertexAttribPointer</code>. PixiJS selects the appropriate
+WebGL binding method based on the <code>type</code> and
+<code>normalized</code> parameters assigned to the attribute.</p>
+<h4 id="1-buffer-setup-1">1. Buffer Setup</h4>
+<p>Populate an integer typed array (<code>Int32Array</code>,
+<code>Uint32Array</code>, <code>Int16Array</code>, or
+<code>Uint16Array</code>):</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> idData <span class="op">=</span> <span class="kw">new</span> <span class="bu">Uint32Array</span>([</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2</span><span class="op">,</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>])<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> idBuffer <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Buffer</span>(idData)<span class="op">;</span></span></code></pre></div>
+<h4 id="2-attribute-binding-for-true-integers-webgl-2">2. Attribute
+Binding for True Integers (WebGL 2)</h4>
+<p>To pass discrete integers to a WebGL 2 integer shader input:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>geometry<span class="op">.</span><span class="fu">addAttribute</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;aIndex&#39;</span><span class="op">,</span>                  <span class="co">// Attribute name matching the shader</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    idBuffer<span class="op">,</span>                  <span class="co">// The integer buffer</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="op">,</span>                         <span class="co">// Size: 1 component (scalar int/uint)</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">false</span><span class="op">,</span>                     <span class="co">// Normalized: MUST be false for integer inputs</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    PIXI<span class="op">.</span><span class="at">TYPES</span><span class="op">.</span><span class="at">UNSIGNED_INT</span>    <span class="co">// Type: PIXI.TYPES.INT or PIXI.TYPES.UNSIGNED_INT</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>)<span class="op">;</span></span></code></pre></div>
+<h4 id="3-vertex-shader-implementation-webgl-2">3. Vertex Shader
+Implementation (WebGL 2)</h4>
+<p>Because this uses integer pointer routing, the shader must declare
+the variable using an integer type under GLSL ES 3.0:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#version 300 es</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="dt">in</span> <span class="dt">vec2</span> aPosition<span class="op">;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="dt">in</span> <span class="dt">uint</span> aIndex<span class="op">;</span> <span class="co">// Declared as an integer, not a float</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">main</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// aIndex is preserved as a discrete uint</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">gl_Position</span> <span class="op">=</span> <span class="dt">vec4</span><span class="op">(</span>aPosition<span class="op">,</span> <span class="fl">0.0</span><span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h3 id="integer-data-converted-to-floats-normalized-integers">Integer
+Data Converted to Floats (Normalized Integers)</h3>
+<p>If you are packing color or coordinate data using bytes or shorts to
+save memory, but your shader expects them as standard floats (such as
+<code>vec4(1.0, 0.0, 0.0, 1.0)</code> for RGBA), configure the integer
+type with <code>normalized: true</code>.</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> colorData <span class="op">=</span> <span class="kw">new</span> <span class="bu">Uint8Array</span>([</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="dv">255</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">255</span><span class="op">,</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span> <span class="dv">255</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">255</span><span class="op">,</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">255</span><span class="op">,</span> <span class="dv">255</span><span class="op">,</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>])<span class="op">;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>geometry<span class="op">.</span><span class="fu">addAttribute</span>(</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;aColor&#39;</span><span class="op">,</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Buffer</span>(colorData)<span class="op">,</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="dv">4</span><span class="op">,</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">true</span><span class="op">,</span>                      <span class="co">// Normalized: converts [0, 255] to [0.0, 1.0]</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    PIXI<span class="op">.</span><span class="at">TYPES</span><span class="op">.</span><span class="at">UNSIGNED_BYTE</span>   <span class="co">// Byte storage</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>)<span class="op">;</span></span></code></pre></div>
+<p>In the shader, read this attribute as a floating-point
+<code>vec4</code>:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">attribute</span> <span class="dt">vec4</span> aColor<span class="op">;</span> <span class="co">// Receives normalized floating-point values</span></span></code></pre></div>
+<hr />
+<h3 id="summary-of-differences">Summary of Differences</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Feature</th>
+<th style="text-align: left;">Floating-Point Attribute</th>
+<th style="text-align: left;">True Integer Attribute</th>
+<th style="text-align: left;">Normalized Integer Attribute</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Typed Array</strong></td>
+<td style="text-align: left;"><code>Float32Array</code></td>
+<td style="text-align: left;"><code>Int32Array</code> /
+<code>Uint32Array</code></td>
+<td style="text-align: left;"><code>Uint8Array</code> /
+<code>Int16Array</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>PixiJS Type</strong></td>
+<td style="text-align: left;"><code>PIXI.TYPES.FLOAT</code></td>
+<td style="text-align: left;"><code>PIXI.TYPES.INT</code> or
+<code>UNSIGNED_INT</code></td>
+<td style="text-align: left;"><code>PIXI.TYPES.UNSIGNED_BYTE</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Normalized Flag</strong></td>
+<td style="text-align: left;"><code>false</code></td>
+<td style="text-align: left;"><code>false</code></td>
+<td style="text-align: left;"><code>true</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>GL Pointer Call</strong></td>
+<td style="text-align: left;"><code>vertexAttribPointer</code></td>
+<td style="text-align: left;"><code>vertexAttribIPointer</code></td>
+<td style="text-align: left;"><code>vertexAttribPointer</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Shader Type</strong></td>
+<td style="text-align: left;"><code>float</code>, <code>vec2</code>,
+<code>vec4</code></td>
+<td style="text-align: left;"><code>int</code>, <code>uint</code>,
+<code>ivec*</code>, <code>uvec*</code></td>
+<td style="text-align: left;"><code>float</code>, <code>vec2</code>,
+<code>vec4</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>WebGL Context</strong></td>
+<td style="text-align: left;">WebGL 1 &amp; WebGL 2</td>
+<td style="text-align: left;">WebGL 2 only</td>
+<td style="text-align: left;">WebGL 1 &amp; WebGL 2</td>
+</tr>
+</tbody>
+</table></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

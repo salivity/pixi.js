@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Role of the Program Class in Pixi.js Shaders - pixi.js</title>
+    <meta name="description" content="In Pixi.js, the Program class serves as the core pipeline coordinator responsible for compiling, linking, and managing low-level WebGL shader programs. While higher-level constructs like Shader and Filter manage runtime values and uniform states, the Pro">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/the-role-of-the-program-class-in-pixi-js-shaders">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="The Role of the Program Class in Pixi.js Shaders - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/the-role-of-the-program-class-in-pixi-js-shaders" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In Pixi.js, the Program class serves as the core pipeline coordinator responsible for compiling, linking, and managing low-level WebGL shader programs. While higher-level constructs like Shader and Filter manage runtime values and uniform states, the Pro" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="the-role-of-the-program-class-in-pixijs-shaders">The Role of the
+Program Class in Pixi.js Shaders</h1>
+<p>In Pixi.js, the <code>Program</code> class serves as the core
+pipeline coordinator responsible for compiling, linking, and managing
+low-level WebGL shader programs. While higher-level constructs like
+<code>Shader</code> and <code>Filter</code> manage runtime values and
+uniform states, the <code>Program</code> class directly handles the
+vertex and fragment GLSL source code, handles context-specific
+compilation, introspects shader attributes and uniforms, and optimizes
+GPU performance through built-in caching mechanisms.</p>
+<h3 id="bridging-glsl-and-the-webgl-context">Bridging GLSL and the WebGL
+Context</h3>
+<p>At its foundation, the <code>Program</code> class holds the raw GLSL
+source strings for both the vertex shader and the fragment shader. When
+Pixi.js prepares to draw an object, the renderer passes the
+<code>Program</code> to the internal shader system
+(<code>ShaderSystem</code>). The shader system uses the
+<code>Program</code> instance to interact with the underlying WebGL
+context:</p>
+<ol type="1">
+<li><strong>Compilation</strong>: It creates and compiles individual
+WebGL vertex and fragment shader objects (<code>gl.createShader</code>,
+<code>gl.shaderSource</code>, and <code>gl.compileShader</code>).</li>
+<li><strong>Linking</strong>: It creates a WebGL program object
+(<code>gl.createProgram</code>), attaches the compiled shaders, and
+links them into an executable GPU program
+(<code>gl.linkProgram</code>).</li>
+<li><strong>Context Tracking</strong>: Because WebGL contexts can be
+lost and restored, the <code>Program</code> class maintains a reference
+to compiled WebGL program instances mapped to specific context IDs,
+allowing automatic recompilation when a context is recreated.</li>
+</ol>
+<h3 id="uniform-and-attribute-introspection">Uniform and Attribute
+Introspection</h3>
+<p>Beyond compiling code, the <code>Program</code> class extracts vital
+structural metadata from the linked shaders. During the compilation
+lifecycle, Pixi.js queries WebGL to introspect all active attributes and
+uniforms defined within the GLSL code.</p>
+<p>The <code>Program</code> class maps:</p>
+<ul>
+<li><strong>Uniform Data</strong>: Names, data types, and sizes of
+uniform variables. This allows Pixi.js to generate optimized
+synchronization functions (uniform uploaders) tailored to the specific
+variables used in the shader.</li>
+<li><strong>Attribute Data</strong>: Locations and formats for vertex
+attributes (such as positions, UV coordinates, and colors), ensuring
+that vertex buffer data binds accurately to shader inputs.</li>
+</ul>
+<h3 id="caching-and-performance-optimization">Caching and Performance
+Optimization</h3>
+<p>Compiling and linking shaders on the GPU is an expensive operation
+that can cause frame-rate drops. The <code>Program</code> class
+mitigates this through an internal caching mechanism via the static
+<code>Program.from(vertexSrc, fragmentSrc)</code> method.</p>
+<p>When a shader is created, Pixi.js checks the global program cache for
+an existing program that uses identical vertex and fragment source code.
+If a match exists, Pixi.js reuses the existing <code>Program</code>
+instance rather than re-compiling the GLSL code. Multiple independent
+<code>Shader</code> or <code>Filter</code> instances can share a single
+<code>Program</code>, maintaining their own unique uniform values while
+sharing the same underlying compiled GPU code.</p>
+<h3 id="separation-of-concerns-program-vs-shader">Separation of
+Concerns: Program vs. Shader</h3>
+<p>To maintain an efficient architecture, Pixi.js clearly divides
+responsibilities between <code>Program</code> and
+<code>Shader</code>:</p>
+<ul>
+<li><strong><code>Program</code></strong>: Immutable, low-level
+representation of the compiled GPU pipeline. It holds the GLSL code,
+links the shaders, and maintains the schema of uniforms and
+attributes.</li>
+<li><strong><code>Shader</code></strong>: Mutable, high-level API for
+developers. It wraps a <code>Program</code> and pairs it with uniform
+groups and values that can be updated on a per-frame basis without
+needing to recompile the underlying shader.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

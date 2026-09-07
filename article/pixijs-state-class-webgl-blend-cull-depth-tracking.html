@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS State Class: WebGL Blend, Cull, Depth Tracking - pixi.js</title>
+    <meta name="description" content="In Pixi.js, the State class acts as a performance-critical abstraction layer that tracks and optimizes WebGL rendering configurations, specifically blend modes, polygon culling, and depth testing. By maintaining an internal representation of these GPU pi">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-state-class-webgl-blend-cull-depth-tracking">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS State Class: WebGL Blend, Cull, Depth Tracking - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-state-class-webgl-blend-cull-depth-tracking" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In Pixi.js, the State class acts as a performance-critical abstraction layer that tracks and optimizes WebGL rendering configurations, specifically blend modes, polygon culling, and depth testing. By maintaining an internal representation of these GPU pi" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-state-class-webgl-blend-cull-depth-tracking">PixiJS State
+Class: WebGL Blend, Cull, Depth Tracking</h1>
+<p>In Pixi.js, the <code>State</code> class acts as a
+performance-critical abstraction layer that tracks and optimizes WebGL
+rendering configurations, specifically blend modes, polygon culling, and
+depth testing. By maintaining an internal representation of these GPU
+pipeline properties, Pixi.js compares the desired rendering state of an
+object against the GPU's current state before drawing. This prevents
+redundant, costly WebGL API calls, minimizes CPU-to-GPU overhead, and
+guarantees consistent visual outputs when rendering complex scenes with
+custom geometries or shaders.</p>
+<h3 id="the-purpose-of-state-tracking-in-webgl">The Purpose of State
+Tracking in WebGL</h3>
+<p>Direct WebGL calls such as <code>gl.enable()</code>,
+<code>gl.blendFunc()</code>, <code>gl.cullFace()</code>, and
+<code>gl.depthFunc()</code> are expensive operations. If a rendering
+engine executes these driver commands for every single display object,
+frame rates drop significantly.</p>
+<p>Pixi.js solves this through state tracking. Instead of directly
+executing WebGL instructions when setting up a display object or mesh,
+configurations are stored in an instance of the <code>State</code>
+class. The internal state management system evaluates this object
+immediately before executing a draw call, applying changes to the WebGL
+context only when the new configuration differs from the active one.</p>
+<h3 id="core-properties-tracked-by-the-state-class">Core Properties
+Tracked by the State Class</h3>
+<p>The <code>State</code> class manages several specific rendering
+states:</p>
+<ul>
+<li><strong>Blend Modes (<code>blend</code>):</strong> Controls whether
+blending is enabled (<code>gl.ENABLE(gl.BLEND)</code>) and determines
+the active blend function or equation. This governs how pixels from a
+new draw operation are combined with existing pixels in the framebuffer,
+such as additive, multiply, or normal alpha blending.</li>
+<li><strong>Polygon Culling (<code>cullFace</code> /
+<code>clockwiseFrontFace</code>):</strong> Specifies whether back-facing
+or front-facing polygons are discarded before rasterization. The
+<code>State</code> object tracks whether culling is active and the
+winding order (clockwise or counter-clockwise) defining front faces,
+saving GPU cycles on surfaces invisible to the camera.</li>
+<li><strong>Depth Testing (<code>depthTest</code>):</strong> Governs
+whether the GPU should check and write to the depth (Z) buffer. When
+enabled, Pixi.js ensures fragments behind already-rendered fragments are
+discarded, essential for 3D meshes or layered 2.5D graphics.</li>
+<li><strong>Depth Masking and Polygon Offsets (<code>depthMask</code>,
+<code>polygonOffset</code>):</strong> Determines whether the depth
+buffer is writable and applies an offset factor to avoid Z-fighting when
+drawing co-planar geometry.</li>
+</ul>
+<h3 id="bitmask-representation-and-state-diffing">Bitmask Representation
+and State Diffing</h3>
+<p>To make state comparisons as fast as possible, the <code>State</code>
+class compiles its configuration into an internal numerical bitmask.</p>
+<p>Each tracked feature (blend, cull, depth test, depth mask, etc.)
+occupies a specific bit within an internal integer flag. When the
+Pixi.js <code>StateSystem</code> prepares the GPU for the next
+object:</p>
+<ol type="1">
+<li>It compares the bitmask of the target <code>State</code> with the
+bitmask of the currently applied state.</li>
+<li>If the bitmasks are identical, the system skips all WebGL
+state-setting commands entirely.</li>
+<li>If differences exist, bitwise operations quickly isolate only the
+changed attributes, updating just the necessary WebGL capabilities.</li>
+</ol>
+<h3 id="why-the-state-class-matters-for-developers">Why the State Class
+Matters for Developers</h3>
+<p>For standard 2D sprites, Pixi.js manages <code>State</code> instances
+automatically behind the scenes. However, when working with
+<code>Mesh</code>, <code>SimpleMesh</code>, or custom
+<code>Shader</code> objects, assigning a customized <code>State</code>
+instance becomes necessary.</p>
+<p>By grouping blend modes, depth testing, and culling into a single
+decoupled object, developers can bind the same <code>State</code>
+configuration across multiple visual elements. This modularity ensures
+clean code, prevents state leakage between distinct rendering passes,
+and maximizes rendering throughput across modern browsers.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,3434 @@
+[
+  [
+    572,
+    "Read WebGPU Storage Buffers to CPU in Pixi.js",
+    "Reading simulation results from structured storage buffers back to the CPU in Pixi.js requires leveraging the WebGPU backend introduced in Pixi.js v8. This process entails configuring a storage buffer with transfer capabilities, binding it to a compute p",
+    false
+  ],
+  [
+    571,
+    "Pixi.js WebGPU Texture Samplers and Wrap Modes",
+    "Pixi.js leverages the modern WebGPU API to provide high-performance rendering by mapping its internal texture styles directly to native WebGPU sampler configurations. Through Pixi’s texture styling system, developers can configure UV wrap modes such as",
+    false
+  ],
+  [
+    570,
+    "WebGPU Bind Group Overhead in Pixi.js Explained",
+    "Recreating WebGPU bind groups every frame introduces measurable CPU-side validation costs, increased garbage collection pressure, and driver-level allocation overhead compared to caching and reusing them in Pixi.js. While WebGPU shifts many pipeline and",
+    false
+  ],
+  [
+    569,
+    "Compute Post-Processing in PixiJS WebGPU",
+    "Implementing compute-based image post-processing with storage textures in PixiJS enables high-performance visual effects that leverage modern WebGPU capabilities. While standard PixiJS post-processing uses traditional fragment shaders via the Filter syst",
+    false
+  ],
+  [
+    568,
+    "Configuring WebGPU Color Write Masks in PixiJS",
+    "This article provides an overview of how Pixi.js handles color write masks to isolate specific RGBA channels during a WebGPU render pass. You will learn about the role of the underlying WebGPU GPUColorWrite flags, how Pixi.js maps render states to WebGPU",
+    false
+  ],
+  [
+    567,
+    "WGSL Entry Points in Pixi.js WebGPU Shaders",
+    "In Pixi.js v8 and above, WebGPU Shading Language (WGSL) allows developers to write both vertex and fragment shader stages within a single source file or string. Entry points serve as the designated execution anchors that allow the WebGPU pipeline to dist",
+    false
+  ],
+  [
+    566,
+    "Using GPUExternalTexture in Pixi.js WebGPU Shaders",
+    "This guide explains how to bind external video frames to custom WGSL shaders using WebGPU's GPUExternalTexture within Pixi.js. Traditional video textures can introduce memory overhead and latency through CPU-to-GPU copying. By leveraging GPUExternalTextu",
+    false
+  ],
+  [
+    565,
+    "WebGPU Command Buffer Submission in PixiJS",
+    "PixiJS manages WebGPU command buffer submission boundaries during heavy rendering passes by decoupling CPU-side draw aggregation from GPU queue submissions. Instead of dispatching commands immediately or splitting execution across multiple queue submissi",
+    false
+  ],
+  [
+    564,
+    "Understanding PixiJS WebGpuBatchAdaptor",
+    "In PixiJS, the WebGpuBatchAdaptor acts as the bridge between the engine's generic batch rendering pipeline and the modern WebGPU graphics API. This article breaks down its primary role: translating high-level batched 2D render commands into low-level Web",
+    false
+  ],
+  [
+    563,
+    "Custom Instance Vertex Buffers in Pixi.js WebGPU",
+    "This article explains how to configure custom vertex buffer layouts with instanced step modes in Pixi.js when targeting the WebGPU renderer. You will learn how Pixi.js maps custom geometry attributes to WebGPU vertex buffer layouts, how to set the buffer",
+    false
+  ],
+  [
+    562,
+    "Pixi.js WebGPU Fallbacks for Float32-Filterable",
+    "Modern graphics APIs like WebGPU offer superior performance, but hardware variations mean optional features like float32-filterable are not universally supported. Pixi.js addresses this challenge in its WebGPU pipeline by implementing automatic detection",
+    false
+  ],
+  [
+    561,
+    "PixiJS WebGPU Buffer Staging and Unmapping Guide",
+    "PixiJS manages CPU-to-GPU data transfers in WebGPU by abstracting memory operations through its internal buffer management pipeline. To maintain high rendering throughput, PixiJS balances direct queue writes with dedicated staging buffers, ensuring that",
+    false
+  ],
+  [
+    560,
+    "Multiple Uniform Buffers in Pixi.js WebGPU Shaders",
+    "Pixi.js v8 fully supports binding multiple uniform buffers simultaneously to a single custom WebGPU shader. By organizing separate sets of shader parameters into distinct UniformGroup instances, you can map them to separate bind points and buffer allocat",
+    false
+  ],
+  [
+    559,
+    "WebGPU vs WebGL Stencil Operations in Pixi.js",
+    "PixiJS abstracts hardware rendering across both WebGL and WebGPU, allowing developers to apply masks and stencil clipping without worrying about underlying graphic APIs. However, under the hood, Pixi.js handles stencil operations in vastly different ways",
+    false
+  ],
+  [
+    558,
+    "Pixi.js WebGL vs WebGPU Blend State Descriptors",
+    "Pixi.js v8 introduced a unified rendering architecture capable of driving both WebGL and WebGPU backends through a single abstraction layer. A major architectural divergence between these two APIs lies in how blend states are defined and applied: WebGL r",
+    false
+  ],
+  [
+    557,
+    "WebGPU Swapchain Resize in Pixi.js Explained",
+    "This article explores how Pixi.js manages swapchain reconfiguration under its WebGPU renderer when a browser window resizes. It covers the transition from CSS layout changes to canvas dimension updates, the reconfiguration of the GPUCanvasContext, the re",
+    false
+  ],
+  [
+    556,
+    "Measure Pixi.js Frame Time with WebGPU Timestamps",
+    "This article details how to accurately measure GPU frame execution times in Pixi.js by utilizing WebGPU timestamp queries. Because standard JavaScript timers like performance.now() only measure CPU execution time and do not account for asynchronous GPU c",
+    false
+  ],
+  [
+    555,
+    "Pixi.js WebGPU Compute to Render Synchronization",
+    "This article examines how Pixi.js handles synchronization between WebGPU compute shader dispatches and render shader invocations. Because the WebGPU specification abstracts away low-level GPU synchronization primitives like explicit Vulkan pipeline barri",
+    false
+  ],
+  [
+    554,
+    "Pass 3D Textures in Pixi.js WebGPU Pipeline",
+    "Rendering volumetric data with Pixi.js requires leveraging the modern WebGPU backend introduced in Pixi.js v8. This guide explains how to allocate a 3D texture, populate it with scalar voxel data, bind the texture to a custom WebGPU shader pipeline, and",
+    false
+  ],
+  [
+    553,
+    "PixiJS WebGPU Depth Clipping vs Depth Clamping",
+    "PixiJS v8 leverages the modern WebGPU backend to handle advanced rendering techniques, including precise control over how fragments outside the view frustum are processed. This article breaks down how PixiJS navigates the distinction between depth clippi",
+    false
+  ],
+  [
+    552,
+    "BindGroupLayoutCache in Pixi.js WebGPU Pipelines",
+    "In Pixi.js's WebGPU rendering backend, the BindGroupLayoutCache serves as a critical optimization mechanism designed to prevent the redundant creation of GPUBindGroupLayout objects. WebGPU requires explicit structural contracts between shaders and GPU re",
+    false
+  ],
+  [
+    551,
+    "WebGPU Dynamic Uniform Buffer Offsets in Pixi.js",
+    "Pixi.js manages uniform buffer dynamic offsets under WebGPU by aggregating distinct draw call data into centralized, pre-allocated uniform buffers aligned to GPU memory constraints, allowing multiple objects to share a single bind group while accessing d",
+    false
+  ],
+  [
+    550,
+    "WebGPU Physics Simulations in Pixi.js",
+    "Pixi.js v8 introduces native WebGPU support, allowing developers to execute WebGPU compute passes directly alongside traditional 2D rendering pipelines to calculate real-time physics simulations on the GPU. By accessing the underlying WebGPU device manag",
+    false
+  ],
+  [
+    549,
+    "WebGPU MSAA Resolve Attachments in Pixi.js",
+    "This article explains how Pixi.js configures Multisample Anti-Aliasing (MSAA) resolve attachments when executing WebGPU render passes. Starting with Pixi.js v8, the engine includes a modern WebGPU backend that manages multisampling under the hood. You wi",
+    false
+  ],
+  [
+    548,
+    "GpuProgram.from in PixiJS WebGPU Shaders",
+    "In PixiJS v8, rendering via WebGPU introduces an architecture designed around modern graphics pipelines. The GpuProgram.from() factory method serves as the primary mechanism for constructing, compiling, and deduplicating WebGPU shader programs. This arti",
+    false
+  ],
+  [
+    547,
+    "Debug WebGPU Errors and Validation in Pixi.js",
+    "This article explains how to capture and inspect WebGPU pipeline compilation errors and validation messages within Pixi.js applications. By tapping into the underlying GPUDevice managed by Pixi.js and utilizing native error scopes and event listeners, de",
+    false
+  ],
+  [
+    546,
+    "Pixi.js WebGPU Mesh Primitive Topologies",
+    "This article provides an overview of the WebGPU primitive topologies supported when defining custom mesh geometry in Pixi.js. With the introduction of Pixi.js v8 and its native WebGPU integration, geometry topology configuration now aligns directly with",
+    false
+  ],
+  [
+    545,
+    "WebGPU Bind Group Caching in Pixi.js",
+    "Pixi.js minimizes descriptor set churn in WebGPU by leveraging an internal caching architecture that reuses native GPUBindGroup instances across rendering passes. Rather than allocating new bind groups during every draw call or frame update, Pixi.js gene",
+    false
+  ],
+  [
+    544,
+    "WebGPU Texture View Descriptors in Pixi.js",
+    "This article explores the purpose and function of WebGPU texture view descriptor mappings during texture uploads in Pixi.js. It explains how Pixi.js uses texture view descriptors to interpret underlying GPU memory allocations, manage dimension and format",
+    false
+  ],
+  [
+    543,
+    "WebGPU Ping-Pong Compute Shaders in PixiJS",
+    "This article provides a comprehensive guide to implementing double-buffered ping-pong rendering techniques using WebGPU compute shaders in PixiJS v8. You will learn the mechanics behind alternating buffer states, how to configure WebGPU storage buffers a",
+    false
+  ],
+  [
+    542,
+    "WebGPU Pipeline Caching in PixiJS Explained",
+    "PixiJS mitigates the heavy overhead of creating WebGPU render pipelines at runtime by implementing specialized caching systems centered on deterministic state hashing, module reuse, and pipeline sharing. In WebGPU, creating a pipeline is an expensive syn",
+    false
+  ],
+  [
+    541,
+    "WebGPU Storage Buffers for Particles in PixiJS",
+    "This article examines how PixiJS v8 manages WebGPU storage buffer bindings to process arbitrary particle arrays inside custom compute passes. It details the lifecycle of storage buffers within the PixiJS WebGPU rendering abstraction, covering buffer allo",
+    false
+  ],
+  [
+    540,
+    "PixiJS Namespace Isolation in Third-Party Iframes",
+    "Embedding Pixi.js inside a third-party iframe ensures robust isolation from the host page by leveraging the browser's native browsing context boundaries alongside modular library architecture. This article explains how the execution context of an iframe",
+    false
+  ],
+  [
+    539,
+    "PixiJS CanvasExtract: Reading Visual Canvas Data",
+    "The CanvasExtract system in PixiJS serves as a specialized utility for reading and extracting graphical output from a 2D canvas renderer into standard web-compatible formats. Whether generating downloadable screenshots, retrieving raw pixel buffers for p",
+    false
+  ],
+  [
+    538,
+    "How PixiJS Handles Window Visibility and Ticker Pausing",
+    "PixiJS relies on browser rendering lifecycles and its internal Ticker architecture to manage rendering and computation pauses when a window is minimized or hidden. Rather than continuously querying document state, PixiJS utilizes the native behavior of r",
+    false
+  ],
+  [
+    537,
+    "Pixi.js Custom Render Functions on Containers",
+    "In Pixi.js, overriding a Container's rendering behavior allows developers to execute low-level WebGL commands, alter rendering states, or inject custom logic directly into the display pipeline. This article explains how to intercept the render cycle by o",
+    false
+  ],
+  [
+    536,
+    "PixiJS BufferSystem: Binding WebGL Buffers",
+    "The BufferSystem in PixiJS serves as the low-level manager responsible for creating, uploading, caching, and binding vertex and index buffers within the WebGL state. By abstracting raw WebGL API calls, it ensures that geometry data is transferred efficie",
+    false
+  ],
+  [
+    535,
+    "How PixiJS Propagates Nested Transforms",
+    "PixiJS manages complex hierarchical scenes by propagating parent property changes—such as position, scale, rotation, alpha, and visibility—down to deeply nested leaves through a top-down dirty-flag system and recursive matrix multiplication. Instead",
+    false
+  ],
+  [
+    534,
+    "Pixi.js Z-Index Scenegraph Data Structures",
+    "Pixi.js maintains its scenegraph and z-index ordering primarily through standard JavaScript arrays combined with a deferred dirty-flag sorting mechanism. Rather than employing complex tree structures like AVL trees or dedicated priority queues for depth",
+    false
+  ],
+  [
+    533,
+    "Syncing 2D Canvas Overlays with PixiJS WebGL",
+    "Synchronizing standard HTML5 2D canvas layers with PixiJS WebGL contexts requires a coordinated approach combining DOM composition, unified render loops, and shared transformation matrices. While PixiJS renders complex, hardware-accelerated scenes via We",
+    false
+  ],
+  [
+    532,
+    "Pixi.js Tree-Shaking and Modular Architecture",
+    "Modern web graphics libraries must balance rich feature sets with minimal bundle sizes. This article examines the core architectural designs that allow Pixi.js to maintain robust tree-shaking capabilities, focusing on the transition to modular subpackage",
+    false
+  ],
+  [
+    531,
+    "Subscribe to Pixi.js Renderer GPU Draw Events",
+    "This article demonstrates how to intercept and monitor GPU rendering operations in Pixi.js by leveraging the EventEmitter interface built into the Renderer. By subscribing to lifecycle and draw-related events, developers can track draw calls, execute cus",
+    false
+  ],
+  [
+    530,
+    "Pixi.js BackgroundSystem Root Viewport Explained",
+    "This article explores the role of the BackgroundSystem in Pixi.js, detailing how it manages clearing operations, background color, and alpha transparency on the root viewport. By understanding how this system coordinates with the renderer's lifecycle, de",
+    false
+  ],
+  [
+    529,
+    "How PixiJS Uses Bitwise Flags for Dirty States",
+    "PixiJS relies on bitwise flags to maintain high-performance rendering across complex, deeply nested scene graphs. Instead of evaluating matrix math and hierarchy states on every frame, PixiJS uses single integers as bitmasks to track changes to container",
+    false
+  ],
+  [
+    528,
+    "Replace Pixi.js Math with Custom SIMD Routines",
+    "This article provides a technical guide on substituting Pixi.js's native JavaScript transformation math with WebAssembly-powered Single Instruction, Multiple Data (SIMD) routines. By compiling vectorized C or Rust code to WebAssembly SIMD (wasm32-simd),",
+    false
+  ],
+  [
+    527,
+    "Extending Pixi.js Display Objects with Components",
+    "Modern Pixi.js relies on component-based paradigms to solve the architectural limits of traditional object-oriented inheritance. By decoupling state, logic, and rendering, a component architecture allows developers to dynamically attach modular features",
+    false
+  ],
+  [
+    526,
+    "Pixi.js Tree Mutation During Active Render Pass",
+    "This article explores how Pixi.js processes scene graph modifications executed during an active render pass, detailing the internal traversal mechanics, the risks of mid-render mutations, and how modern versions manage rendering state. Pixi.js prioritize",
+    false
+  ],
+  [
+    525,
+    "PixiJS Container.children vs Internal Render Tree",
+    "In Pixi.js, Container.children represents the developer-facing logical scene graph, while the internal render tree is an optimized, hardware-oriented pipeline designed to minimize GPU draw calls and CPU overhead. While Container.children organizes displa",
+    false
+  ],
+  [
+    524,
+    "Prevent Pixi.js Memory Leaks with Destroy Parameters",
+    "Managing nested display trees in Pixi.js requires deliberate deallocation because JavaScript’s garbage collector cannot automatically reclaim GPU-allocated memory or detached event listeners. Pixi.js addresses this challenge through its destroy() metho",
+    false
+  ],
+  [
+    523,
+    "PixiJS GenerateTextureSystem and WebGL Framebuffers",
+    "The GenerateTextureSystem in Pixi.js provides a utility to convert any display object into a static RenderTexture, enabling developers to bake complex vector graphics, text, or nested display hierarchies into reusable raster textures. By interacting dire",
+    false
+  ],
+  [
+    522,
+    "How Pixi.js RenderGroup Manages Rendering Order",
+    "Pixi.js manages rendering order in modern architectures through the RenderGroup system by isolating scene graph branches into dedicated rendering pipelines while preserving global draw sequences. This article examines how Pixi.js balances spatial hierarc",
+    false
+  ],
+  [
+    521,
+    "PixiJS autoDensity: How It Works Internally",
+    "When configured in a PixiJS application, the autoDensity: true setting automatically synchronizes the canvas element's CSS dimensions with its internal rendering resolution. By bridging the gap between physical device pixels and CSS display pixels, this",
+    false
+  ],
+  [
+    520,
+    "Customize PixiJS TextureGCSystem Cleanup Intervals",
+    "Managing GPU memory effectively in PixiJS requires fine-tuning how and when unused textures are purged from the system. The TextureGCSystem handles garbage collection by automatically unloading textures that have not been rendered for a set period. This",
+    false
+  ],
+  [
+    519,
+    "PixiJS TextureGCSystem: Sweeping Unused Textures",
+    "The TextureGCSystem in PixiJS is a core rendering subsystem responsible for automatically managing VRAM by identifying and removing unused GPU texture memory. As 2D rendering applications load, swap, and discard visual assets, texture data can quickly sa",
+    false
+  ],
+  [
+    518,
+    "Pixi.js ObjectPool: Reducing Heap Allocations",
+    "In performance-critical WebGL rendering with Pixi.js, frequent calculations involving transient mathematical structures like matrices, vectors, and points can cause severe memory churn. This article explains how the Pixi.js ObjectPool class mitigates per",
+    false
+  ],
+  [
+    517,
+    "Pixi.js Headless Browser Detection in Testing",
+    "Pixi.js relies on a combination of WebGL context evaluation, graphics hardware introspection, browser global inspections, and modular DOM adapters to determine whether it is running in a headless browser or automated server-side testing environment. Beca",
+    false
+  ],
+  [
+    516,
+    "Synchronizing Multiple Pixi.js Applications",
+    "Running multiple independent Pixi.js Application instances on a single web page allows you to render rich graphics across distinct <canvas> elements, but running them simultaneously can cause frame desynchronization and performance degradation. While Pix",
+    false
+  ],
+  [
+    515,
+    "Pixi.js Ticker Priority Execution Order Explained",
+    "This article breaks down the exact execution order of Pixi.js Ticker priorities, outlining how the internal queue arranges update tasks from start to finish. In Pixi.js, the Ticker system controls the main update loop, invoking registered listener callba",
+    false
+  ],
+  [
+    514,
+    "How PixiJS Prevents Stack Overflow in Deep Hierarchies",
+    "This article examines how the PixiJS scenegraph traversal avoids JavaScript call stack limits when handling deeply nested object hierarchies. When rendering thousands of nested display objects, conventional recursive algorithms quickly exceed the maximum",
+    false
+  ],
+  [
+    513,
+    "Custom Pixi.js Asset Parsers with ExtensionType.Asset",
+    "This guide explains how to extend Pixi.js's asset management system by creating and injecting custom asset parsers using ExtensionType.Asset. Modern Pixi.js versions utilize an extensible asset loading pipeline that allows developers to intercept, downlo",
+    false
+  ],
+  [
+    512,
+    "PixiJS ContextSystem and WebGL Rendering Context",
+    "The ContextSystem in PixiJS is the core subsystem responsible for creating, configuring, and managing the lifecycle of the underlying WebGLRenderingContext or WebGL2RenderingContext. It acts as the foundational bridge between the HTML5 canvas element and",
+    false
+  ],
+  [
+    511,
+    "PixiJS Renderer.destroy Context Destruction",
+    "When manually invoking Renderer.destroy() in PixiJS, the engine executes a comprehensive teardown sequence designed to release GPU resources, purge WebGL state caches, and decouple JavaScript references to prevent memory leaks. This article explores the",
+    false
+  ],
+  [
+    510,
+    "Pixi.js ViewSystem Canvas and CSS Sizing",
+    "This article examines the internal responsibilities of the ViewSystem in Pixi.js, focusing on how it reconciles raw canvas buffer dimensions with CSS layout sizing. You will learn how the system manages the canvas lifecycle, translates logical screen uni",
+    false
+  ],
+  [
+    509,
+    "How PixiJS Selects WebGPU, WebGL2, and WebGL1",
+    "PixiJS handles modern cross-platform graphics by dynamically determining the best available rendering API on the host system. Through an asynchronous initialization pipeline, PixiJS checks hardware and browser capabilities sequentially—prioritizing Web",
+    false
+  ],
+  [
+    508,
+    "GlProgram vs GpuProgram in Pixi.js",
+    "Pixi.js v8 introduces a reactive multi-backend architecture capable of running on both WebGL and WebGPU through a unified rendering interface. Central to this design are the GlProgram and GpuProgram classes, which encapsulate GPU shader logic tailored to",
+    false
+  ],
+  [
+    507,
+    "Extend Pixi.js Application Options in TypeScript",
+    "Extending Pixi.js Application options allows you to pass custom configuration properties directly into your application constructor or init() method without triggering TypeScript compilation errors. This guide demonstrates how to use TypeScript's declara",
+    false
+  ],
+  [
+    506,
+    "PixiJS Prerender and Postrender Execution Order",
+    "Pixi.js uses a recursive, depth-first traversal to draw its scene graph, which directly dictates the sequence in which prerender and postrender events are dispatched. Understanding this execution order is critical for synchronizing custom WebGL/WebGPU ca",
+    false
+  ],
+  [
+    505,
+    "Pixi.js Renderer Internal System Dependencies",
+    "This article examines how Pixi.js manages dependencies and communication between internal systems within the Renderer class. By leveraging a modular architecture, Pixi.js uses dynamic property exposure, a custom lifecycle runner pattern, and an extension",
+    false
+  ],
+  [
+    504,
+    "Pixi.js StartupSystem Role in Bootstrapping",
+    "The StartupSystem in Pixi.js serves as the foundational coordinator during the renderer's initialization lifecycle, translating user-provided configuration options into active runtime parameters. This article explores how the StartupSystem handles applic",
+    false
+  ],
+  [
+    503,
+    "How to Use ExtensionType.RendererPlugin in PixiJS",
+    "PixiJS relies on a modular architecture powered by its Extensions API, allowing developers to seamlessly integrate custom functionality into the core engine. This article provides a focused guide on how PixiJS handles plugin registration using ExtensionT",
+    false
+  ],
+  [
+    502,
+    "PixiJS System Lifecycle Hooks Explained",
+    "Pixi.js utilizes a modular architecture where the main Renderer delegates tasks such as texture management, batching, and projection to specialized components known as Systems. When a System is registered and initialized within the Renderer, Pixi.js orch",
+    false
+  ],
+  [
+    501,
+    "How Pixi.js Runner Eliminates GC Overhead",
+    "In high-performance WebGL applications built with Pixi.js, standard event dispatchers can introduce frequent garbage collection (GC) pauses that cause noticeable frame drops. The Pixi.js Runner class solves this performance bottleneck by replacing the tr",
+    false
+  ],
+  [
+    500,
+    "Serialize PixiJS Display Tree to JSON for Saves",
+    "Serializing a PixiJS display hierarchy into JSON requires traversing the scene tree, extracting essential transform and visual properties, and mapping them to lightweight data structures while ignoring internal engine objects like WebGL contexts and circ",
+    false
+  ],
+  [
+    499,
+    "Detect Memory Leaks in PixiJS Textures and Listeners",
+    "Unreleased GPU textures and dangling event listeners are the two most common causes of performance degradation and memory bloat in Pixi.js applications. This guide details how to identify, track, and isolate these memory leaks using Chrome DevTools, inte",
+    false
+  ],
+  [
+    498,
+    "Debug Pixi.js Scenegraph and Draw Calls with Devtools",
+    "PixiJS Devtools is an essential browser extension for inspecting, debugging, and optimizing 2D WebGL applications built with Pixi.js. This guide explains how to install the extension, connect it to your application, inspect and manipulate the scenegraph",
+    false
+  ],
+  [
+    497,
+    "Using Pixi.js in Next.js and Nuxt Without Window Errors",
+    "Integrating Pixi.js into server-side rendering (SSR) frameworks like Next.js and Nuxt often triggers the dreaded ReferenceError: window is not defined. This article explains why this error occurs when evaluating Pixi.js on the server and provides direct,",
+    false
+  ],
+  [
+    496,
+    "How to Use PIXI Extensions for Custom Plugins",
+    "The PixiJS extensions system provides a standardized, modular architecture that allows third-party developers to inject custom plugins, loaders, and rendering systems directly into the engine's core. Introduced to replace ad-hoc monkey-patching, this sys",
+    false
+  ],
+  [
+    495,
+    "How to Test Pixi.js Scenegraph in Jest or Vitest",
+    "Testing Pixi.js scenegraph logic in headless environments allows you to verify node hierarchies, coordinate transformations, and display object states without running a browser or compiling WebGL shaders. By pairing Node-based test runners like Jest or V",
+    false
+  ],
+  [
+    494,
+    "Handle Input Events in OffscreenCanvas with Pixi.js",
+    "Running Pixi.js in a Web Worker using OffscreenCanvas significantly improves rendering performance by isolating WebGL operations from main thread UI bottlenecks. However, because Web Workers have no direct access to the Document Object Model (DOM), Pixi.",
+    false
+  ],
+  [
+    493,
+    "Run Pixi.js in a Web Worker with OffscreenCanvas",
+    "Running Pixi.js inside a Web Worker via the OffscreenCanvas API offloads rendering pipelines and heavy visual computations from the browser's main execution thread. By decoupling rendering from the DOM, your application maintains a smooth 60 or 120 FPS f",
+    false
+  ],
+  [
+    492,
+    "PixiJS @pixi/ui Button Visual States Guide",
+    "This article provides an overview of how the Button component in @pixi/ui manages hover, down, and disabled visual states in Pixi.js applications. It covers the underlying interaction model, how event hooks trigger visual transitions, the role of the ena",
+    false
+  ],
+  [
+    491,
+    "Responsive Anchor UI Layouts in Pixi.js",
+    "Building responsive, anchor-based user interfaces in Pixi.js requires decoupling your UI logic from fixed coordinate spaces and recalculating positions relative to screen boundaries whenever the canvas dimensions change. This guide explains how to set up",
+    false
+  ],
+  [
+    490,
+    "Managing Clipped Lists with @pixi/ui ScrollBox",
+    "This article provides an overview of how the ScrollBox component from @pixi/ui implements clipped scrolling lists within PixiJS applications. It examines the internal display hierarchy, the use of hardware-accelerated masking for visual clipping, interac",
+    false
+  ],
+  [
+    489,
+    "Build Interactive Sliders with @pixi/ui in Pixi.js",
+    "This guide demonstrates how to construct interactive, draggable sliders in Pixi.js using the @pixi/ui component library. You will learn how to set up the necessary dependencies, generate graphical components for the slider's track and thumb, instantiate",
+    false
+  ],
+  [
+    488,
+    "How to Fix Pixi.js Tilemap Bleeding and Seams",
+    "Tile edge bleeding and visible seams during camera movement in Pixi.js are common rendering artifacts caused by sub-pixel rendering and texture interpolation sampling neighboring texels on a spritesheet. This article breaks down the technical reasons why",
+    false
+  ],
+  [
+    487,
+    "Chunking Large Tilemaps in Pixi.js for Performance",
+    "Rendering massive tilemaps in Pixi.js can quickly degrade performance and consume excessive memory if handled as a single, monolithic structure. This guide explains how to divide large tilemaps into a grid of manageable chunks, dynamically load and unloa",
+    false
+  ],
+  [
+    486,
+    "Orthogonal vs Isometric Tilemap Math in Pixi.js",
+    "This article explains the fundamental differences between orthogonal and isometric tilemap rendering mathematics in Pixi.js. You will learn the coordinate transformation formulas used to convert grid coordinates into screen coordinates, the inverse formu",
+    false
+  ],
+  [
+    485,
+    "Render Tiled JSON Tilemaps in Pixi.js",
+    "Rendering Tiled maps in Pixi.js involves exporting your project as a JSON file, loading the map data and tileset images via the Pixi.js asset loader, and mapping individual tile IDs to textures. This guide covers the complete process of reading layer dat",
+    false
+  ],
+  [
+    484,
+    "How PixiJS Tilemap Achieves Minimal Draw Calls",
+    "This article provides an in-depth breakdown of how the @pixi/tilemap plugin optimizes 2D grid rendering in PixiJS. Rendering large tile-based environments traditionally creates performance bottlenecks due to excessive CPU overhead and draw calls. By expl",
+    false
+  ],
+  [
+    483,
+    "Render Physics Wireframes Over Pixi.js Sprites",
+    "Rendering physics debug wireframes over visual sprites in Pixi.js is critical for diagnosing alignment issues between collision boundaries and visual assets. This guide explains how to construct a dedicated debug rendering layer using Pixi's Graphics API",
+    false
+  ],
+  [
+    482,
+    "Fixed Timesteps and Sub-Stepping in Pixi.js",
+    "Coupling a deterministic physics simulation with Pixi.js requires decoupling the variable rendering loop from the physics update cycle. While Pixi.js renders frames at fluctuating refresh rates via requestAnimationFrame, physics engines demand constant d",
+    false
+  ],
+  [
+    481,
+    "Quadtree Collision Detection in Pixi.js",
+    "Rendering thousands of interactive sprites at 60 frames per second is standard for Pixi.js, but computing collisions between them can instantly cripple performance due to exponential computational overhead. A quadtree data structure solves this bottlenec",
+    false
+  ],
+  [
+    480,
+    "Pixi.js Spatial Hash Grid for Collision Detection",
+    "This article explains how to build and integrate a 2D spatial hash grid in Pixi.js to accelerate broad-phase collision detection. By partitioning a 2D game world into a uniform grid of cells, you can map display objects to spatial keys, reducing collisio",
+    false
+  ],
+  [
+    479,
+    "Polygon Collision in Pixi.js Using SAT",
+    "This article provides an overview of the Separating Axis Theorem (SAT) and explains how to implement it for precise convex polygon collision detection in Pixi.js applications. You will learn the core mathematical principles behind SAT, how to calculate p",
+    false
+  ],
+  [
+    478,
+    "Box2D Physics Simulation with Pixi.js Ticker",
+    "Integrating a Box2D physics simulation with Pixi.js requires coordinating Pixi's rendering loop with Box2D's numerical integration steps. This guide demonstrates how to synchronize the Box2D physics world inside the PIXI.Ticker lifecycle, handle coordina",
+    false
+  ],
+  [
+    477,
+    "Integrating Rapier 2D Physics with Pixi.js",
+    "This article provides a technical overview of coupling the Rapier.js 2D WebAssembly physics engine with the Pixi.js rendering pipeline. It covers fundamental setup, the synchronization of Pixi’s ticker with Rapier’s simulation step, coordinate and un",
+    false
+  ],
+  [
+    476,
+    "Sync Matter.js Physics with Pixi.js Sprites",
+    "Synchronizing Matter.js rigid bodies with Pixi.js sprites allows you to decouple complex 2D physics simulations from high-performance WebGL rendering. Because Matter.js operates strictly as a physics engine without built-in visuals and Pixi.js functions",
+    false
+  ],
+  [
+    475,
+    "Preload Audio with Pixi.js Assets Manifest",
+    "Managing game assets in modern Pixi.js applications is streamlined through the unified Assets manager. By integrating the @pixi/sound library, developers can define, bundle, and preload audio files alongside visual resources using a single, centralized m",
+    false
+  ],
+  [
+    474,
+    "Record PixiJS Canvas and Audio to WebM or MP4",
+    "You can record PixiJS canvas output alongside an audio stream directly to an MP4 or WebM video file using standard modern browser APIs. PixiJS renders its graphics onto an HTML <canvas> element, which can be captured as a video stream using HTMLCanvasEle",
+    false
+  ],
+  [
+    473,
+    "PixiJS 4K Video Texture Upload Performance",
+    "Rendering 4K video textures in PixiJS requires continuous streaming of large amounts of visual data from the browser’s media pipeline to the GPU. PixiJS manages this process by wrapping the native HTML5 <video> element inside a specialized VideoResourc",
+    false
+  ],
+  [
+    472,
+    "Pause PixiJS Ticker and Audio Concurrently",
+    "Pausing an interactive application in PixiJS requires halting both the visual update loop and any active audio playback at the exact same moment. This article demonstrates how to synchronize the PixiJS rendering ticker with your audio state—using eithe",
+    false
+  ],
+  [
+    471,
+    "PixiJS Video Texture Stalling and Buffering",
+    "When a video texture stalls due to network buffering in PixiJS, playback freezes on the last rendered frame while the underlying HTML5 video element waits for more data. PixiJS does not crash or break the main render loop; instead, it continues rendering",
+    false
+  ],
+  [
+    470,
+    "Render Transparent WebM Video in Pixi.js",
+    "Rendering an alpha-channel transparent WebM video over a 2D scene in Pixi.js allows you to incorporate complex pre-rendered animations with low performance overhead. This guide explains how to properly encode your media, load an HTML5 video element into",
+    false
+  ],
+  [
+    469,
+    "How to Mute All Sounds in Pixi.js Using @pixi/sound",
+    "This article provides a quick guide on how to globally silence audio when pausing a game in Pixi.js using the @pixi/sound library. You will learn the core global methods required to mute and unmute all active audio channels, understand the difference bet",
+    false
+  ],
+  [
+    468,
+    "Volume Fading and Crossfades with @pixi/sound in PixiJS",
+    "Managing smooth audio transitions in PixiJS games is essential for maintaining immersion, and the @pixi/sound package provides the tools necessary to control volume programmatically. While the library handles Web Audio API node creation and playback mana",
+    false
+  ],
+  [
+    467,
+    "How to Seek Video Textures Dynamically in PixiJS",
+    "Seeking to a specific timestamp in a video texture dynamically is fully supported in Pixi.js. Because Pixi.js relies on standard HTML5 <video> elements under the hood to drive its video textures, dynamic seeking is accomplished by directly manipulating t",
+    false
+  ],
+  [
+    466,
+    "Destroy Video Textures in Pixi.js Without Leaks",
+    "Managing video memory in Pixi.js requires disposing of both WebGL GPU resources and the underlying HTML5 DOM element. Failing to clean up both sides results in persistent memory leaks, dangling network connections, or audio continuing to play in the back",
+    false
+  ],
+  [
+    465,
+    "Create a Pixi.js Audio Visualizer with AnalyserNode",
+    "This guide demonstrates how to capture real-time audio frequency data using the Web Audio API's AnalyserNode and render dynamic visual graphics with Pixi.js. By connecting an audio source to an analyzer and feeding its output buffer into a Pixi.js render",
+    false
+  ],
+  [
+    464,
+    "Why PixiJS Audio Desyncs in Background Tabs",
+    "Audio desynchronization in backgrounded Pixi.js applications occurs because web browsers drastically throttle visual rendering loops while allowing underlying audio subsystems to continue running. When a user switches to another tab or minimizes the brow",
+    false
+  ],
+  [
+    463,
+    "Adjust Pitch and Playback Rate with @pixi/sound",
+    "This guide explains how to dynamically adjust the playback rate and pitch of audio clips in PixiJS using the @pixi/sound library. You will learn how the library controls audio speed, how changing playback speed inherently alters audio pitch via the Web A",
+    false
+  ],
+  [
+    462,
+    "Sync Audio Timestamp with PixiJS AnimatedSprite",
+    "Synchronizing an AnimatedSprite to an audio track in PixiJS requires binding the animation frame directly to the playback time of the audio source rather than relying on the internal PixiJS ticker. This article explains how to disable automatic sprite pl",
+    false
+  ],
+  [
+    461,
+    "Applying WebGL Filters to Video Textures in PixiJS",
+    "Yes, PixiJS fully supports applying WebGL filters like blur, color matrices, and custom fragment shaders to a playing video texture. Because PixiJS treats a video texture as a dynamic GPU texture wrapped inside a standard sprite or mesh, you can apply an",
+    false
+  ],
+  [
+    460,
+    "How to Seamlessly Loop Video in Pixi.js Sprites",
+    "Seamlessly looping a video texture in Pixi.js requires proper configuration of the underlying HTML5 video element and optimal video encoding. This guide demonstrates how to configure an HTML5 video for background playback, import it as a PIXI.Texture, ma",
+    false
+  ],
+  [
+    459,
+    "PixiJS Video Textures and Mobile Autoplay Policies",
+    "Using video textures in PixiJS on mobile devices often results in blank or frozen textures due to strict browser autoplay policies on iOS Safari and Android Chrome. Modern mobile browsers block programmatic media playback with audio to conserve user band",
+    false
+  ],
+  [
+    458,
+    "How PixiJS Updates Video Textures Every Frame",
+    "PixiJS delivers smooth video playback by wrapping the native HTML5 <video> element inside a specialized VideoResource that synchronizes with the browser's rendering pipeline. By leveraging modern frame-timing APIs, maintaining a dirty-flagging mechanism,",
+    false
+  ],
+  [
+    457,
+    "How to Use HTML5 Video as a Texture in Pixi.js",
+    "This article explains how to bind an HTML5 <video> element to a dynamic texture in Pixi.js. By integrating native video elements into the Pixi.js rendering pipeline, you can project video content onto sprites and meshes for interactive WebGL backgrounds,",
+    false
+  ],
+  [
+    456,
+    "Streaming Music vs Preloading SFX in Pixi.js",
+    "Efficient audio management in Pixi.js requires distinct strategies for short sound effects and extended musical tracks. While short sound effects require immediate, low-latency playback achieved by preloading and decoding them fully into system memory vi",
+    false
+  ],
+  [
+    455,
+    "Apply Sound Filters with Pixi Sound in PixiJS",
+    "This guide explains how to implement and manipulate real-time audio filters—such as low-pass filters and distortion—using the @pixi/sound package in PixiJS. You will learn how to use the built-in filter classes, integrate native Web Audio API nodes f",
+    false
+  ],
+  [
+    454,
+    "Pixi Sound Web Audio Context Unlock on iOS",
+    "Modern mobile browsers, particularly Safari on iOS, enforce strict autoplay policies that initialize the Web Audio API in a suspended state until an explicit user interaction occurs. The @pixi/sound library automatically circumvents this limitation by mo",
+    false
+  ],
+  [
+    453,
+    "Implement 2D Spatial Audio and Panning in Pixi.js",
+    "This article demonstrates how to implement realistic 2D spatial audio in Pixi.js by integrating the native Web Audio API with sprite coordinates. You will learn how to calculate the distance and horizontal offset between an audio listener sprite and an e",
+    false
+  ],
+  [
+    452,
+    "Play Audio Sprites with Markers in PixiJS Sound",
+    "Audio sprites bundle multiple sound effects into a single audio file to reduce HTTP requests, optimize asset loading, and improve playback performance in web games. This guide explains how to define sound markers, load a composite audio file, and trigger",
+    false
+  ],
+  [
+    451,
+    "How Pixi Sound Manages Audio in the PixiJS Loop",
+    "The @pixi/sound library combines the high-performance Web Audio API with PixiJS's Ticker system to synchronize audio playback with visual rendering. While the browser's audio engine processes sound buffers on a separate background thread to ensure uninte",
+    false
+  ],
+  [
+    450,
+    "Simulate 3D Camera Tilt and Roll in Pixi.js",
+    "Simulating 3D camera roll and perspective tilt in a top-down Pixi.js game requires transforming 2D plane coordinates to mimic a 3D camera frustum. While Pixi.js is natively a 2D rendering engine, you can achieve convincing pseudo-3D effects using contain",
+    false
+  ],
+  [
+    449,
+    "PixiJS Scissor Masks and Camera Rotation",
+    "In PixiJS, scissor masks offer a high-performance solution for rectangular clipping by leveraging native WebGL scissor testing. However, because the underlying hardware scissor test is strictly bound to screen-space coordinates, camera or container rotat",
+    false
+  ],
+  [
+    448,
+    "How to Create Cinematic Camera Paths in Pixi.js",
+    "This guide explains how to implement smooth, follow-path cinematic camera tracks across a 2D world using Pixi.js. By anchoring your game scene within a parent container, defining curved trajectories with splines, and interpolating camera properties like",
+    false
+  ],
+  [
+    447,
+    "PixiJS Camera Zoom Limits for Sub-Pixel Rendering",
+    "This article explains how to implement camera zoom constraints in PixiJS to eliminate sub-pixel rendering degradation, blurring, and visual jitter. You will learn the mechanics behind sub-pixel artifacts caused by fractional scaling, how to apply boundar",
+    false
+  ],
+  [
+    446,
+    "Prevent Drag and Click Conflicts in Pixi-Viewport",
+    "In PixiJS applications, panning a large canvas often clashes with selecting interactive UI elements or child sprites, causing unintended clicks when a user simply intends to pan the camera. The pixi-viewport plugin resolves this conflict seamlessly using",
+    false
+  ],
+  [
+    445,
+    "Pixi.js Mini-Map Radar with Scaled RenderTexture",
+    "Creating a mini-map radar in Pixi.js provides players with top-down situational awareness without requiring complex secondary rendering pipelines. This guide explains how to render an entire dynamic game world into a scaled RenderTexture and project it o",
+    false
+  ],
+  [
+    444,
+    "PixiJS Precision Jitter at Large Coordinates",
+    "Floating-point precision jitter occurs in PixiJS when rendering objects at vast distances from the world origin due to the limitations of 32-bit floating-point math in WebGL shaders. PixiJS processes scene graphs using 64-bit numbers on the CPU, but it f",
+    false
+  ],
+  [
+    443,
+    "How to Project Isometric Coordinates in Pixi.js",
+    "Projecting 3D isometric coordinates into 2D screen coordinates is essential for building isometric tilemaps, strategy games, and virtual worlds. This guide explains the core mathematical formula behind isometric projection, demonstrates how to implement",
+    false
+  ],
+  [
+    442,
+    "Elastic Camera Bounce Math in Pixi.js",
+    "Creating an elastic camera boundary bounce in Pixi.js requires simulating a damped harmonic oscillator, a classic physics model governed by Hooke's Law combined with velocity damping. When the camera moves beyond the defined world boundaries, mathematica",
+    false
+  ],
+  [
+    441,
+    "How to Cull Off-Screen Objects in Pixi.js",
+    "This article provides a comprehensive guide on implementing off-screen culling in Pixi.js to boost rendering performance and achieve stable frame rates. By determining which display objects reside outside the current camera viewport and disabling their r",
+    false
+  ],
+  [
+    440,
+    "Smooth Pixi.js Camera Rotation Around an Anchor Point",
+    "Rotating the camera around an arbitrary anchor point in Pixi.js requires treating a main container as your world view, updating its pivot and position to align with the target point, and interpolating the rotation property frame-by-frame. This guide demo",
+    false
+  ],
+  [
+    439,
+    "Split-Screen Multiplayer in PixiJS",
+    "Setting up split-screen multiplayer in PixiJS is entirely possible by creating two distinct viewport containers, applying rectangular masks to divide the canvas, and dynamically shifting each container's position or pivot to follow individual players. Be",
+    false
+  ],
+  [
+    438,
+    "How to Zoom Pixi.js Camera to Mouse Position",
+    "Zooming a canvas towards the mouse pointer rather than the top-left origin requires shifting the world container to compensate for the change in scale. This guide explains the coordinate math behind mouse-centered zooming in Pixi.js and provides a comple",
+    false
+  ],
+  [
+    437,
+    "How to Create a Fixed UI HUD in Pixi.js",
+    "Creating a Heads-Up Display (HUD) that remains static while the game camera scrolls or zooms requires separating your visual elements into distinct layers. In Pixi.js, the standard and most efficient approach is using multiple PIXI.Container instances: o",
+    false
+  ],
+  [
+    436,
+    "How to Implement a Deadzone Camera in Pixi.js",
+    "Deadzone camera tracking keeps the viewport stationary while the player moves within an invisible central boundary, only shifting the view when the player attempts to cross its edges. This article explains how to implement this mechanic in Pixi.js by est",
+    false
+  ],
+  [
+    435,
+    "Smooth Camera Follow with Lerp in Pixi.js",
+    "This article explains how to implement a smooth camera follow system in Pixi.js using linear interpolation (lerp). By continuously shifting a parent world container toward the player's coordinates by a fractional amount each frame, you can create fluid,",
+    false
+  ],
+  [
+    434,
+    "Multi-Layer Parallax Scrolling in Pixi.js",
+    "Implementing multi-layer parallax scrolling in Pixi.js creates an illusion of depth in 2D environments by moving background layers at different speeds relative to a camera's movement. This guide explains how to establish a virtual camera coordinate syste",
+    false
+  ],
+  [
+    433,
+    "Pixi.js: Convert Screen to World Coordinates When Zoomed",
+    "When implementing a custom camera or zoom system in Pixi.js, screen touch coordinates will diverge from your stage's actual object positions. This article explains how to translate raw screen-space touch coordinates into accurate world-space coordinates",
+    false
+  ],
+  [
+    432,
+    "Screen Shake Decay Formula for Pixi.js Cameras",
+    "Implementing natural screen shake in a Pixi.js application requires a mathematical decay function to smoothly return the camera container to its resting position after an impact. Rather than relying on simple linear subtraction, the most effective method",
+    false
+  ],
+  [
+    431,
+    "Clamping Pixi.js Camera Coordinates to World Bounds",
+    "This guide explains how to restrict camera movement in Pixi.js to prevent the viewport from showing empty space beyond the edges of your game world. By calculating boundaries based on the world dimensions and screen resolution, you can clamp the position",
+    false
+  ],
+  [
+    430,
+    "Smooth Pan, Zoom, and Bounds with Pixi-Viewport in Pixi.js",
+    "Implementing a responsive 2D camera in Pixi.js is most efficiently achieved using the pixi-viewport library. This article provides a direct guide to configuring a camera system that supports smooth user panning, mouse-wheel and pinch zooming, momentum-ba",
+    false
+  ],
+  [
+    429,
+    "Pixi.js accessibleTitle and accessibleHint Guide",
+    "Pixi.js renders graphics directly inside an HTML <canvas> element, making visual content inherently invisible to screen readers without an underlying accessibility layer. To bridge this gap, Pixi.js provides built-in accessibility tools that generate inv",
+    false
+  ],
+  [
+    428,
+    "How Pixi.js Maps Accessible Divs Over Canvas",
+    "Pixi.js makes interactive canvas content accessible to screen readers by dynamically generating an HTML overlay of standard DOM elements that mirror the visual scene graph. Because the HTML5 <canvas> element functions as an opaque bitmap to assistive tec",
+    false
+  ],
+  [
+    427,
+    "Make PixiJS DisplayObjects Keyboard Focusable",
+    "This guide explains how to make PixiJS DisplayObject instances accessible and navigable using the keyboard Tab key. By leveraging the built-in PixiJS AccessibilityManager, you can automatically create an HTML DOM overlay over your WebGL or Canvas element",
+    false
+  ],
+  [
+    426,
+    "Pixi.js AccessibilityManager for Screen Readers",
+    "HTML5 canvas rendering engines like Pixi.js present unique accessibility hurdles because standard screen readers cannot interpret individual pixels drawn inside a <canvas> element. Pixi.js resolves this limitation through its built-in AccessibilityManage",
+    false
+  ],
+  [
+    425,
+    "PixiJS Double and Triple Click Detection",
+    "While PixiJS provides a robust event system for handling standard pointer interactions, it lacks built-in listeners for multi-click interactions such as double-clicks and triple-clicks. This article demonstrates how to cleanly implement reliable double-c",
+    false
+  ],
+  [
+    424,
+    "Forward HTML Pointer Events to Pixi.js Canvas",
+    "When building web applications with Pixi.js, layering standard HTML/DOM elements on top of the WebGL canvas often intercepts clicks, touches, and mouse movements intended for the underlying scene. This guide explains how to forward these pointer interact",
+    false
+  ],
+  [
+    423,
+    "Understanding rootBoundary in Pixi.js EventSystem",
+    "This article provides a concise guide to the rootBoundary property within the Pixi.js EventSystem, explaining its function, how it processes input, and its significance in scene graph event dispatching. You will learn how rootBoundary bridges native brow",
+    false
+  ],
+  [
+    422,
+    "How Pixi.js hitTest Finds Frontmost Target",
+    "This article provides an overview of how Pixi.js determines which interactive display object lies directly beneath a pointer coordinate. It covers the depth-first, reverse-order traversal algorithm implemented by Pixi.js's event boundary system, the cond",
+    false
+  ],
+  [
+    421,
+    "How to Disable Global Interaction in Pixi.js",
+    "Disabling user input during cutscenes, transitions, or loading screens is essential for preventing accidental inputs and maintaining state integrity in Pixi.js applications. This guide explains how to disable interactions globally across your entire scen",
+    false
+  ],
+  [
+    420,
+    "Capture Stylus Pressure and Tilt in Pixi.js",
+    "Modern tablets and digital styluses can transmit pressure, tilt, and twist data directly into Pixi.js applications. By leveraging the browser's native W3C Pointer Events API, Pixi.js exposes hardware-level stylus properties through its modern event syste",
+    false
+  ],
+  [
+    419,
+    "PixiJS Event Priority for Overlapping Elements",
+    "When multiple interactive display objects overlap in Pixi.js and share an identical zIndex, Pixi.js resolves event priority using the scene graph’s display list order. By default, the hit-testing system evaluates elements from front to back according t",
+    false
+  ],
+  [
+    418,
+    "Pixi.js Pointer Events on Removed Display Objects",
+    "When a DisplayObject is removed from the stage in Pixi.js, its attached pointer listeners remain intact in memory, but they immediately stop receiving interaction events because the object is no longer part of the active scene graph. Pixi.js relies on to",
+    false
+  ],
+  [
+    417,
+    "Pixel-Perfect Hit Testing for PNGs in Pixi.js",
+    "This article explains how to implement pixel-perfect hit testing on irregular, transparent PNG sprites in Pixi.js. By default, Pixi.js evaluates interactions using rectangular bounding boxes, which mistakenly triggers pointer events on transparent sectio",
+    false
+  ],
+  [
+    416,
+    "Disable Pixi.js Right-Click Context Menu",
+    "When building interactive applications or games with Pixi.js, the browser's default right-click context menu can interrupt custom pointer controls, preventing events like rightdown, rightclick, or secondary button detection from functioning correctly. Th",
+    false
+  ],
+  [
+    415,
+    "How to Track Drag Velocity in Pixi.js",
+    "Tracking the global movement velocity of a dragged sprite in Pixi.js requires monitoring the change in global pointer coordinates over time across drag events. By recording the pointer's previous and current global positions alongside timestamps, you can",
+    false
+  ],
+  [
+    414,
+    "Understanding FederatedPointerEvent in Pixi.js",
+    "This article provides a comprehensive overview of the FederatedPointerEvent class in Pixi.js, highlighting its architectural purpose, core capabilities, and how it unifies input handling across interactive 2D scene graphs. By translating standard web pla",
+    false
+  ],
+  [
+    413,
+    "Trigger Synthetic Pointer Events in Pixi.js",
+    "This article explains how to programmatically trigger synthetic pointer events on a Pixi.js display object. Depending on your use case—such as automated testing, custom input integration, or remote control systems—you can trigger events either direct",
+    false
+  ],
+  [
+    412,
+    "Measuring Hit Test Performance in Pixi.js",
+    "Measuring the performance overhead of running hit tests across thousands of display objects in Pixi.js requires isolating interaction logic from the rendering pipeline and capturing precise execution times. When scenes scale up, recursive point-checking",
+    false
+  ],
+  [
+    411,
+    "PixiJS Events Blocked by Invisible Container",
+    "When an invisible container overlays the stage in Pixi.js, it frequently intercepts and terminates pointer interactions meant for underlying display objects. This issue stems from Pixi.js's top-down hit-testing pipeline, where invisible or fully transpar",
+    false
+  ],
+  [
+    410,
+    "Pixi.js Mouse Wheel Scrolling with EventSystem",
+    "Pixi.js handles mouse wheel scrolling through its modern EventSystem, a core plugin introduced in Pixi.js v7 to replace the legacy InteractionManager. The system captures native browser wheel events on the canvas, translates them into cross-platform Pixi",
+    false
+  ],
+  [
+    409,
+    "Pinch to Zoom in Pixi.js with Pointer Events",
+    "This article explains how to implement multi-finger pinch-to-zoom gestures in Pixi.js using modern Pointer Events. By tracking multiple active pointers via their unique identifiers, calculating the Euclidean distance between touch points, and applying th",
+    false
+  ],
+  [
+    408,
+    "PixiJS eventMode: passive, auto, static, dynamic",
+    "In PixiJS v7 and later, the EventSystem replaces the legacy boolean interactive property with eventMode, providing granular control over how display objects participate in hit-testing and event bubbling. Choosing the correct mode between 'passive', 'auto",
+    false
+  ],
+  [
+    407,
+    "PixiJS eventMode: Replacing the interactive Flag",
+    "In PixiJS v7, the eventMode property was introduced to replace the legacy interactive boolean flag, transitioning the framework to a modern, DOM-compliant event system known as the Federated Events API. This article covers what eventMode is, why it repla",
+    false
+  ],
+  [
+    406,
+    "Custom Circle and Polygon hitArea in Pixi.js",
+    "PixiJS defaults to rectangular bounding boxes for input interactions, which can cause unwanted pointer events when dealing with irregular or circular graphics. By assigning a PIXI.Circle or PIXI.Polygon instance to a display object's hitArea property, yo",
+    false
+  ],
+  [
+    405,
+    "How to Use Custom CSS Cursors in Pixi.js",
+    "This guide explains what the cursor property is in Pixi.js and demonstrates how to implement both standard and custom CSS cursor styles on interactive display objects. You will learn how the Pixi.js event system manages cursor states, how to assign built",
+    false
+  ],
+  [
+    404,
+    "Track Drag Events Outside Canvas in Pixi.js",
+    "Tracking pointer events beyond the boundaries of a <canvas> element is essential for creating smooth drag-and-drop interactions in Pixi.js. By default, moving the cursor outside the canvas halts event dispatching, causing dragged elements to stick or stu",
+    false
+  ],
+  [
+    403,
+    "How to Stop Event Propagation in Pixi.js",
+    "This guide explains how to prevent event bubbling in Pixi.js using the stopPropagation method. By default, interactive pointer events in a Pixi.js scene graph bubble up from the target child object to its ancestors. Calling stopPropagation() within an ac",
+    false
+  ],
+  [
+    402,
+    "Pixi.js pointertap vs click vs tap Explained",
+    "Understanding the distinction between pointertap, click, and tap events in the Pixi.js EventSystem is essential for building responsive, cross-platform interactive applications. While all three events trigger after an interaction completes on a display o",
+    false
+  ],
+  [
+    401,
+    "EventBoundary Hit Testing and Events in Pixi.js",
+    "Pixi.js utilizes the EventBoundary class as the core engine for translating native DOM pointer inputs into its internal scene graph events. This article explores how EventBoundary performs recursive spatial hit testing against display objects, constructs",
+    false
+  ],
+  [
+    400,
+    "Pixi.js Font Fallbacks for Missing Glyphs Explained",
+    "Pixi.js handles font fallback cascades differently depending on the text implementation used: standard Text (Canvas-based), HTMLText, or BitmapText. While Canvas and HTML text implementations defer character-level fallback directly to the browser's under",
+    false
+  ],
+  [
+    399,
+    "PixiJS Text vs BitmapText Memory Footprint",
+    "In PixiJS, choosing between standard Text and BitmapText drastically affects application memory and performance. When rendering 1,000 text elements, standard Text generates individual rasterized canvas textures for each instance, resulting in massive VRA",
+    false
+  ],
+  [
+    398,
+    "How to Render Text Along a Curve in Pixi.js",
+    "Rendering text along a curved path or circle in Pixi.js requires a programmatic approach, as the engine does not include a native curved text component. This guide demonstrates how to break a string into individual character sprites, calculate their coor",
+    false
+  ],
+  [
+    397,
+    "Tint Individual Characters in Pixi.js BitmapText",
+    "This article explores whether you can tint individual characters differently inside a single Pixi.js BitmapText object. While Pixi.js does not provide an out-of-the-box property or markup system for per-character tinting within standard BitmapText, devel",
+    false
+  ],
+  [
+    396,
+    "How Pixi.js Checks If a Font Is Loaded Before Drawing",
+    "Rendering custom web fonts accurately in Pixi.js requires verifying that the font glyphs are fully parsed and ready before drawing text to an internal canvas. Pixi.js coordinates between the browser's native CSS Font Loading API, its internal Asset Loade",
+    false
+  ],
+  [
+    395,
+    "Best MSDF Font Generators for Pixi.js",
+    "Multi-channel Signed Distance Field (MSDF) fonts allow Pixi.js applications to render sharp, high-performance typography that scales seamlessly across display resolutions without raster blur. This guide covers the most effective command-line utilities, w",
+    false
+  ],
+  [
+    394,
+    "How Pixi.js Handles RTL Text: Arabic and Hebrew",
+    "Pixi.js does not provide native, out-of-the-box support for right-to-left (RTL) languages like Arabic and Hebrew, primarily because standard canvas-based text rendering struggles with bidirectional text (BiDi) and complex character shaping. While basic R",
+    false
+  ],
+  [
+    393,
+    "Efficient Pixi.js Typewriter Effect Implementation",
+    "Creating a smooth typewriter effect in Pixi.js requires revealing text character-by-character without triggering heavy CPU-to-GPU texture re-uploads on every frame. This article demonstrates how to build an efficient, frame-rate independent typewriter te",
+    false
+  ],
+  [
+    392,
+    "How Pixi.js TextStyle Trim Removes Whitespace",
+    "Rendering text in Pixi.js often introduces extra, transparent padding around characters due to standard font metric calculations, making pixel-perfect alignment difficult. This article explains why this unwanted spacing occurs within HTML Canvas text gen",
+    false
+  ],
+  [
+    391,
+    "Update PixiJS BitmapText Without Garbage Collection",
+    "Updating a PixiJS BitmapText instance dynamically without triggering garbage collection is possible, but not through the standard .text property assignment. In high-frequency rendering loops—such as HUD counters, damage numbers, or timers—setting bit",
+    false
+  ],
+  [
+    390,
+    "Bake Static UI Text into Pixi.js Spritesheets",
+    "Rendering text dynamically using standard text objects forces the browser to create temporary HTML5 canvas elements and rasterize font glyphs at runtime, which can cause CPU spikes, garbage collection pressure, and texture memory bloat. Baking static UI",
+    false
+  ],
+  [
+    389,
+    "Why Canvas Text Gets Blurry When Zooming in Pixi.js",
+    "When zooming into a Pixi.js scene using camera scaling or container transforms, standard text elements frequently become blurry or pixelated. This article covers the technical mechanics behind why PIXI.Text loses sharpness under camera magnification, how",
+    false
+  ],
+  [
+    388,
+    "Pixi.js Text Stroke Alignment Explained",
+    "Pixi.js renders standard typography using the HTML5 Canvas 2D API, which does not provide native parameters for inner, outer, or centered stroke alignment. Instead, Pixi.js manages stroke appearance by controlling the draw order of the fill and stroke pa",
+    false
+  ],
+  [
+    387,
+    "Sharing a PixiJS BitmapFont Without Texture Overhead",
+    "Rendering hundreds of dynamic text labels in Pixi.js can severely degrade performance if each label creates its own texture. By generating or loading a single BitmapFont and referencing it across multiple BitmapText instances, you can display hundreds of",
+    false
+  ],
+  [
+    386,
+    "How to Align Multiline Text in Pixi.js",
+    "Aligning multiline text in Pixi.js is handled directly through the PIXI.TextStyle configuration object using the align property. This guide explains how to properly configure text alignment for 'left', 'center', 'right', and 'justify' modes, as well as h",
+    false
+  ],
+  [
+    385,
+    "Render Full Color Emojis in Pixi.js Text",
+    "Rendering native, full-color emojis in Pixi.js is entirely possible using both the Text and HTMLText classes. Because Pixi.js relies on standard browser rendering engines under the hood—HTML5 Canvas 2D for Text and SVG/DOM rasterization for HTMLText—",
+    false
+  ],
+  [
+    384,
+    "How PixiJS Letter Spacing Affects Kerning",
+    "The letterSpacing property in PixiJS modifies the horizontal distance between text characters, but its effect on font kerning calculations depends entirely on whether you are rendering standard PIXI.Text or PIXI.BitmapText. While kerning adjusts the vari",
+    false
+  ],
+  [
+    383,
+    "How to Apply Gradients to Multiline Text in Pixi.js",
+    "Applying gradient fills across multiline text strings in Pixi.js can be achieved either by using the built-in gradient options in PIXI.TextStyle or by applying a custom gradient sprite masked by the text object. This guide covers how to configure native",
+    false
+  ],
+  [
+    382,
+    "Pixi.js Web Font Jitter and Baseline Misalignment",
+    "Font metrics jitter and baseline misalignment in Pixi.js occur when custom web fonts are rendered with inconsistent baseline measurements, unresolved font-loading states, or subpixel rounding discrepancies. Because Pixi.js relies on an offscreen HTML5 2D",
+    false
+  ],
+  [
+    381,
+    "How Pixi.js Measures Text with Off-Screen Canvas",
+    "This article explains how Pixi.js calculates text dimensions prior to rendering by utilizing an off-screen HTML5 canvas and its 2D rendering context. Pixi.js evaluates font metrics, line breaks, and exact bounding boxes through internal measurement utili",
+    false
+  ],
+  [
+    380,
+    "Parse XML and JSON Bitmap Fonts in Pixi.js",
+    "Bitmap fonts provide an optimized way to render text in Pixi.js by utilizing pre-rendered glyph textures rather than dynamically rasterizing vector typefaces at runtime. This guide explains how to parse both XML and JSON bitmap font descriptor files and",
+    false
+  ],
+  [
+    379,
+    "Understanding MSDF Font Rendering in Pixi.js",
+    "Multi-channel Signed Distance Field (MSDF) font rendering is an advanced technique that allows graphics engines to render razor-sharp vector-quality text at any scale using lightweight texture maps. This article explains how MSDF works, contrasts it with",
+    false
+  ],
+  [
+    378,
+    "How Pixi.js Renders SDF Fonts at Extreme Zoom",
+    "This article explores how Pixi.js leverages Signed Distance Field (SDF) and Multi-channel Signed Distance Field (MSDF) techniques to render text with infinite sharpness. Rather than rasterizing traditional glyph bitmaps that blur or pixelate under magnif",
+    false
+  ],
+  [
+    377,
+    "Pixi.js HTMLText vs Text Performance Overheads",
+    "In Pixi.js, rendering text involves rasterizing strings into textures for the GPU, but HTMLText and standard Text accomplish this through fundamentally different pipelines. While HTMLText allows for rich HTML and CSS formatting, updating its content freq",
+    false
+  ],
+  [
+    376,
+    "PixiJS HTMLText: Rendering HTML Tags on Canvas",
+    "The HTMLText class in PixiJS provides a solution for rendering styled, rich text directly onto an HTML5 canvas by parsing standard HTML and CSS. This article explains the purpose of HTMLText, breaks down the technical mechanism behind how it converts mar",
+    false
+  ],
+  [
+    375,
+    "How to Benchmark Shader Filter Passes in Pixi.js",
+    "Measuring the execution time of individual shader filter passes in Pixi.js requires profiling the GPU directly rather than relying on standard CPU timestamps like console.time or performance.now(). Because WebGL commands are queued and executed asynchron",
+    false
+  ],
+  [
+    374,
+    "Pixi.js Filter Memory Cost for Multiple Entities",
+    "Applying distinct filter instances to hundreds of individual display objects in Pixi.js drastically increases both CPU and GPU memory consumption while crippling rendering performance. While filters provide powerful post-processing effects, instantiating",
+    false
+  ],
+  [
+    373,
+    "Pixi.js: Apply a Filter to Half the Screen",
+    "Applying a filter to only half the screen in Pixi.js requires combining a RenderTexture, two separate display sprites, and a Graphics mask. Because applying a mask directly to a filtered container will hide the rest of the container's content rather than",
+    false
+  ],
+  [
+    372,
+    "PixiJS Damage Flash: ColorOverlayFilter and Tint",
+    "In Pixi.js, visual damage feedback significantly improves combat feel, but relying solely on a sprite's native tint property limits visual impact because tinting operates multiplicatively and cannot turn dark pixels pure white. This article covers how to",
+    false
+  ],
+  [
+    371,
+    "DropShadowFilter vs Canvas Drop Shadow in PixiJS",
+    "When developing applications with PixiJS, adding depth to elements through drop shadows can be achieved either through built-in canvas drop shadow text styling or via the DropShadowFilter from the pixi-filters package. This article breaks down the fundam",
+    false
+  ],
+  [
+    370,
+    "Animate EmbossFilter Light Angle in Pixi.js",
+    "Animating the light source angle in Pixi.js allows you to create realistic, dynamic 3D surface shading effects across your sprites. While the default EmbossFilter provided by the @pixi/filter-emboss package only exposes a static diagonal light direction",
+    false
+  ],
+  [
+    369,
+    "How to Create a Rainbow Cycling Filter in PixiJS",
+    "This guide demonstrates how to build and animate a rainbow color cycling filter in Pixi.js using a custom GLSL fragment shader. By converting a display object’s RGB pixel values into the HSV color space, altering the hue value based on elapsed time and",
+    false
+  ],
+  [
+    368,
+    "Pixi.js Blur Filter Performance Issues Explained",
+    "Using heavy blur radii in Pixi.js filters often leads to severe frame rate drops and performance bottlenecks. This degradation primarily stems from the mathematical complexity of Gaussian blurs, excessive texture sampling in the GPU's fragment shader, me",
+    false
+  ],
+  [
+    367,
+    "Create Heat Haze Distortion in Pixi.js",
+    "Creating a realistic heat haze distortion above a fire in Pixi.js involves applying a DisplacementFilter driven by an animated noise texture to simulate rising turbulent air. This guide covers setting up the displacement map, constraining the effect to t",
+    false
+  ],
+  [
+    366,
+    "Pixi.js BevelFilter: Adding 3D Beveled Edges",
+    "The BevelFilter in PixiJS simulates three-dimensional depth on flat 2D display objects by generating directional highlights and shadows along the edges of their alpha masks. Through a custom fragment shader, the filter evaluates the boundaries of a shape",
+    false
+  ],
+  [
+    365,
+    "Pixi.js TiltShiftFilter Depth of Field Guide",
+    "This guide explains how to create depth-of-field and miniature \"diorama\" visual effects using the TiltShiftFilter in Pixi.js. You will learn how to set up the filter, apply it to display containers, and fine-tune focal points, blur intensity, and orienta",
+    false
+  ],
+  [
+    364,
+    "PixiJS DotFilter Halftone Comic Effect Explained",
+    "PixiJS enables developers to convert smooth, continuous-tone digital graphics into vintage halftone comic book prints using the DotFilter. This article explains the underlying mechanism of the filter, covering how it subdivides textures into coordinate g",
+    false
+  ],
+  [
+    363,
+    "Simulate Film Grain and Scratches in Pixi.js",
+    "This guide demonstrates how to simulate vintage film grain, noise, and scratch-like scanlines in Pixi.js using the FilmFilter from the PixiJS community filters collection. You will learn how to install the filter, configure its noise and scanline propert",
+    false
+  ],
+  [
+    362,
+    "Pixi.js CrossHatchFilter Parameters Explained",
+    "This article provides an overview of the parameters and inner workings of the CrossHatchFilter in PixiJS. It explains the default implementation within the PixiJS filters repository, highlights why the stock filter does not expose direct configuration pr",
+    false
+  ],
+  [
+    361,
+    "Pixi.js RadialBlurFilter Speed Zoom Visual Effects",
+    "The RadialBlurFilter in Pixi.js generates dynamic speed zoom effects by blurring an object's pixels along rays projecting outward from a defined center point. This article explains the underlying shader mechanics of radial blurring, breaks down the core",
+    false
+  ],
+  [
+    360,
+    "PixiJS BulgePinchFilter Magnifying Glass Effect",
+    "Creating a magnifying lens effect in PixiJS is straightforward using the BulgePinchFilter from the PixiJS community filters package. This guide explains how to install the filter, configure its core properties (radius, strength, and center) to replicate",
+    false
+  ],
+  [
+    359,
+    "Pixi.js GlitchFilter: Simulating Signal Corruption",
+    "The GlitchFilter in Pixi.js simulates digital video signal corruption by running a specialized WebGL fragment shader that programmatically degrades an object's rendered texture. Through a combination of horizontal slice displacement, RGB channel separati",
+    false
+  ],
+  [
+    358,
+    "Animate a Twist Distortion Using PixiJS TwistFilter",
+    "Animating a twist or swirl distortion in Pixi.js involves applying the TwistFilter from the Pixi.js filter library to a display object and continuously updating its properties within the render loop. This guide provides a straightforward implementation s",
+    false
+  ],
+  [
+    357,
+    "PixiJS AdjustmentFilter: Gamma, Contrast, Saturation",
+    "The AdjustmentFilter in PixiJS provides a lightweight, all-in-one post-processing solution to modify the color balance, tonal distribution, and luminance of display objects. Instead of chaining multiple individual filters, it allows developers to adjust",
+    false
+  ],
+  [
+    356,
+    "PixiJS AsciiFilter: Render Live Scenes in ASCII",
+    "This article demonstrates how to transform a real-time PixiJS scene into dynamic ASCII text art using the AsciiFilter from the pixi-filters collection. You will learn how to install the necessary dependencies, configure a PixiJS application, and apply th",
+    false
+  ],
+  [
+    355,
+    "How PixiJS GodrayFilter Simulates Volumetric Light",
+    "This article explains the underlying rendering techniques used by the GodrayFilter in PixiJS to generate dynamic volumetric lighting effects, commonly known as crepuscular rays. By breaking down its screen-space shader mechanics, texture sampling passes,",
+    false
+  ],
+  [
+    354,
+    "Pixi.js OutlineFilter for Transparent Sprites",
+    "This guide explains how to add a clean, dynamic outline around a transparent sprite using Pixi.js and the pixi-filters library. You will learn how to install the required filter package, instantiate the OutlineFilter, assign it to a sprite, and adjust se",
+    false
+  ],
+  [
+    353,
+    "How CRTFilter Simulates Retro Scanlines in PixiJS",
+    "The CRTFilter in the pixi-filters library provides developers with an easy-to-use shader effect to replicate the distinct aesthetic of vintage cathode-ray tube displays within a PixiJS application. This article covers what the CRTFilter is, how its under",
+    false
+  ],
+  [
+    352,
+    "PixiJS ShockwaveFilter: How Shock Ripples Work",
+    "The ShockwaveFilter in PixiJS generates expanding ripple effects by utilizing a custom GLSL fragment shader to dynamically displace texture coordinates based on a radial wave equation. This article breaks down the internal mechanics of the filter, coveri",
+    false
+  ],
+  [
+    351,
+    "How to Add a Bloom Glow Effect in PixiJS",
+    "This guide provides a direct walkthrough on creating a luminous bloom glow effect in PixiJS using the external pixi-filters library. You will learn how to install the required packages, set up a basic PixiJS stage, instantiate the bloom filter, and fine-",
+    false
+  ],
+  [
+    350,
+    "How to Create Motion Trails in PixiJS Using Filters",
+    "Creating motion trails in Pixi.js involves persisting past visual data and blending it with the current frame using a custom shader. This article explains how to achieve this effect using a technique called \"ping-pong\" buffering with two render textures,",
+    false
+  ],
+  [
+    349,
+    "Pixi.js Displacement Map Edge Stretching Explained",
+    "Edge stretching artifacts when using displacement maps in Pixi.js occur primarily because the displacement shader samples texture coordinates beyond the boundaries of the target sprite or filter area, triggering WebGL's default edge-clamping behavior. Wh",
+    false
+  ],
+  [
+    348,
+    "Pixi.js Filter autoFit: Control Bounding Box",
+    "In Pixi.js, visual filters can sometimes clip extended effects or cause unintended coordinate shifts when rendering custom shaders. This article explains how to configure the autoFit property on Pixi.js filters to control bounding box expansion, maintain",
+    false
+  ],
+  [
+    347,
+    "Multi-Pass Bloom Filter in Pixi.js",
+    "This article explains how to build a high-performance multi-pass bloom filter in Pixi.js utilizing progressive downsampling and upsampling chains. By extracting high-luminance areas, downsampling them through successive mip levels with a box filter, and",
+    false
+  ],
+  [
+    346,
+    "How Pixi.js Reuses Pooled Framebuffers in Filters",
+    "Pixi.js utilizes an internal render texture and framebuffer pooling mechanism to eliminate the performance overhead associated with continuous GPU memory allocation during filter rendering. When applying graphical filters—such as blurs, color adjustmen",
+    false
+  ],
+  [
+    345,
+    "Create a Retro Pixelation Filter in Pixi.js",
+    "This article explains how to build a custom retro pixelation post-processing filter in Pixi.js with fully adjustable pixel block dimensions. By leveraging a custom fragment shader through the Pixi.js Filter class, you can control horizontal and vertical",
+    false
+  ],
+  [
+    344,
+    "Difference Between inputClamp and inputSize in PixiJS",
+    "When developing custom fragment filters in Pixi.js, inputSize and inputClamp are two built-in vec4 uniform vectors that handle texture coordinate calculations and render boundary management. The primary difference is that inputSize provides dimension met",
+    false
+  ],
+  [
+    343,
+    "PixiJS Filter Fragment Shader Coordinate Normalization",
+    "This article explains how Pixi.js handles coordinate normalization inside custom filter fragment shaders. Pixi.js processes visual filters by rendering objects to intermediate textures, which requires transforming standard screen-space pixels into normal",
+    false
+  ],
+  [
+    342,
+    "How to Dispose of Pixi.js Filters Properly",
+    "Properly disposing of filter instances in Pixi.js is essential to prevent GPU memory leaks and maintain steady frame rates in WebGL applications. This article covers the exact steps needed to detach a filter from a display object, invoke its built-in des",
+    false
+  ],
+  [
+    341,
+    "Pixi.js Full Stage Filters at 60 FPS",
+    "Applying a Pixi.js filter directly to an entire stage while maintaining a solid 60 frames per second (FPS) is technically achievable, but it depends heavily on the device's GPU, screen resolution, and filter complexity. This article explains how Pixi.js",
+    false
+  ],
+  [
+    340,
+    "How to Apply Motion Blur to Objects in Pixi.js",
+    "Applying a motion blur effect to fast-moving objects in Pixi.js enhances visual realism and prevents visual stuttering during high-speed animations. This guide covers how to set up the necessary Pixi.js filter extension, attach the motion blur filter to",
+    false
+  ],
+  [
+    339,
+    "Pixi.js Kawase Blur vs Gaussian Blur Performance",
+    "In Pixi.js, applying blur effects in real time presents an ongoing trade-off between rendering speed and visual fidelity. While the standard GaussianBlurFilter offers mathematically accurate, ultra-smooth blurs, its heavy computational cost can rapidly c",
+    false
+  ],
+  [
+    338,
+    "Prevent PixiJS Filter Texture GC Pauses",
+    "In PixiJS, applying filters to visual elements can cause severe frame drops and stuttering due to frequent Garbage Collection (GC) pauses triggered by transient render texture allocations. When filters are rendered, PixiJS dynamically creates and discard",
+    false
+  ],
+  [
+    337,
+    "PixiJS Filter.defaultVertexSrc vs Custom Vertex Shaders",
+    "In PixiJS, filters rely on WebGL shaders to process display objects, utilizing either the built-in Filter.defaultVertexSrc or user-defined custom vertex logic. While Filter.defaultVertexSrc serves as a standard boilerplate for pass-through transformation",
+    false
+  ],
+  [
+    336,
+    "Implementing Custom Blend Modes in Pixi.js Filters",
+    "This article explains how to build and integrate custom blend modes into Pixi.js using custom fragment shaders and the PIXI.Filter class. While Pixi.js includes several standard WebGL blend modes out of the box, complex or non-standard blend operations",
+    false
+  ],
+  [
+    335,
+    "How to Use Half Resolution Filters in Pixi.js",
+    "Rendering filter passes at half-resolution is an effective optimization technique in Pixi.js to improve rendering speed, especially on mobile devices or hardware-constrained environments. Pixi.js provides built-in support for downscaling filter passes vi",
+    false
+  ],
+  [
+    334,
+    "PixiJS Mobile GPU Throttling with Chained Filters",
+    "Chaining multiple full-screen filters in Pixi.js often leads to aggressive mobile GPU thermal throttling, resulting in sudden frame rate drops. This performance cliff is primarily driven by how mobile GPU architectures handle offscreen render targets, th",
+    false
+  ],
+  [
+    333,
+    "Pixi.js Filter Chaining Across Render Targets",
+    "Pixi.js processes sequential filters through an automated rendering pipeline managed by its internal filter system. Rather than attempting to combine distinct shader programs into a single execution pass, Pixi.js isolates each filter, passing intermediat",
+    false
+  ],
+  [
+    332,
+    "Passing Custom Uniform Matrices to PixiJS Filters",
+    "This article provides a direct guide on how to pass custom uniform matrices, such as 3x3 and 4x4 matrices, into a custom filter in Pixi.js. You will learn how to declare the matrix inside your GLSL shader code, initialize the filter with the matrix unifo",
+    false
+  ],
+  [
+    331,
+    "How Pixi.js FilterSystem Manages WebGL Framebuffers",
+    "In Pixi.js, the FilterSystem is a core rendering component responsible for managing the lifecycle, allocation, and reuse of temporary WebGL framebuffers during post-processing effects. Instead of continually creating and destroying expensive GPU resource",
+    false
+  ],
+  [
+    330,
+    "PixiJS Filter Resolution on High-DPI Displays",
+    "PixiJS renders visual effects on high-DPI displays by decoupling global canvas scaling from individual post-processing passes through a dedicated resolution property. When rendering on Retina or 4K screens, PixiJS utilizes off-screen framebuffers to comp",
+    false
+  ],
+  [
+    329,
+    "PixiJS Underwater Refraction with DisplacementFilter",
+    "Simulating an underwater refraction effect in PixiJS is achieved by using a DisplacementFilter paired with an animated displacement map. This article explains how the filter works, how to configure a repeating noise texture, apply the filter to your visu",
+    false
+  ],
+  [
+    328,
+    "Pixi.js ColorMatrixFilter: Grayscale, Sepia, and Negative",
+    "This article explains how the ColorMatrixFilter in Pixi.js manipulates pixel data on the GPU to produce visual color transformations, focusing specifically on grayscale, sepia, and negative effects. By understanding how 5x4 transformation matrices operat",
+    false
+  ],
+  [
+    327,
+    "Fix Pixi.js Blur Filter Border Clipping with Padding",
+    "When applying a blur filter to display objects in Pixi.js, developers frequently encounter harsh, rectangular edges where the soft blur suddenly cuts off. This article explains the technical cause behind this visual border clipping—rooted in how Pixi.j",
+    false
+  ],
+  [
+    326,
+    "How to Optimize Pixi.js Filters Using filterArea",
+    "In Pixi.js, applying visual filters can introduce significant performance bottlenecks when processing complex display hierarchies or full-screen effects. The filterArea property optimizes filter rendering by allowing developers to manually define the exa",
+    false
+  ],
+  [
+    325,
+    "How to Debug Pixi.js WebGL Stencil Masks",
+    "Debugging WebGL stencil buffer issues in Pixi.js requires inspecting both WebGL state and Pixi’s internal masking pipeline, as failed masks often stem from context initialization, stack depth limits, or malformed vector geometries. When graphics masks",
+    false
+  ],
+  [
+    324,
+    "Pixi.js: Mask a Container with an Active Filter",
+    "In Pixi.js, you can apply a mask to a container that also has an active filter applied. While assigning both properties directly to the same container is supported, the visual result depends on whether you want the mask to cut off the post-filter visual",
+    false
+  ],
+  [
+    323,
+    "How Pixi.js Handles Rotated Object Masking",
+    "This article explores how Pixi.js manages masking when target objects or mask shapes are rotated at arbitrary angles. It breaks down the internal rendering pipeline, covering the automatic fallback from hardware scissoring to stencil buffering, matrix co",
+    false
+  ],
+  [
+    322,
+    "PixiJS: Ignore Clicks Outside Masked Areas",
+    "In Pixi.js, applying a visual mask to a display object hides its rendering outside the designated shape, but it does not inherently constrain the object's interaction boundaries. Consequently, pointer events and hit tests continue to trigger across the o",
+    false
+  ],
+  [
+    321,
+    "Create an Interactive Spotlight Mask in Pixi.js",
+    "This article demonstrates how to build an interactive spotlight effect in Pixi.js that dynamically illuminates dark regions of a scene based on pointer movement. By combining layered display objects with Pixi.js masking and event listeners, you will lear",
+    false
+  ],
+  [
+    320,
+    "How PixiJS Renders Masks with RenderTexture",
+    "When rendering a Pixi.js scene to a RenderTexture, masks are processed through the renderer’s internal batching and framebuffer pipeline using either WebGL stencil buffers, scissor rects, or shader-based filter passes. Pixi.js dynamically binds the tar",
+    false
+  ],
+  [
+    319,
+    "Pixi.js High-Vertex Mesh Masking Performance",
+    "Masking high-vertex meshes in Pixi.js requires a careful balance between rendering fidelity and hardware performance. While masks allow developers to create sophisticated visual cuts, transitions, and dynamic geometric boundaries, applying them to comple",
+    false
+  ],
+  [
+    318,
+    "How to Mask Text with an Image in Pixi.js",
+    "Masking text with an image texture in Pixi.js is an effective way to create visually striking typography filled with photographs, patterns, or gradients. This guide provides a straightforward walkthrough on creating a text object, loading an image textur",
+    false
+  ],
+  [
+    317,
+    "Masking ParticleContainer with Graphics in PixiJS",
+    "You cannot directly assign a Graphics mask to a ParticleContainer in PixiJS, but you can achieve this effect by wrapping the ParticleContainer inside a standard Container. This article explains why this limitation exists and provides a straightforward co",
+    false
+  ],
+  [
+    316,
+    "How PixiJS Chooses Scissor or Stencil Masking",
+    "PixiJS dynamically optimizes render performance by automatically selecting between scissor masking and stencil masking based on the geometry and transform properties of the masking object. Scissor masking leverages hardware-level viewport clipping to res",
+    false
+  ],
+  [
+    315,
+    "Fix PixiJS Stencil Buffer Leaks by Destroying Masks",
+    "In PixiJS, complex masking operations rely on the WebGL stencil buffer to restrict rendering to specific geometric bounds. When masked objects are removed from the display list without explicitly detaching and destroying their associated mask instances,",
+    false
+  ],
+  [
+    314,
+    "PixiJS Mask Clipping Errors on Scaled Containers",
+    "In Pixi.js, applying extreme scale transformations to containers with attached masks often results in visual artifacts, jagged edges, or premature clipping. This issue primarily stems from floating-point precision limits in WebGL matrix operations, autom",
+    false
+  ],
+  [
+    313,
+    "Using a Video Texture as a Real-Time Mask in PixiJS",
+    "Yes, you can use a video texture as a real-time mask on any display object in PixiJS. By converting an HTML5 video element into a dynamic PixiJS texture and assigning it to a sprite, that sprite can be applied directly to another display object's mask pr",
+    false
+  ],
+  [
+    312,
+    "How Pixi.js Mask Affects getBounds Calculations",
+    "In Pixi.js, managing spatial dimensions through bounding boxes is a core requirement for collision detection, UI layout, and viewport culling. However, using the mask property alongside getBounds() frequently produces unexpected results for developers. T",
+    false
+  ],
+  [
+    311,
+    "Feathered Cutouts Using Blur Filter in PixiJS",
+    "Creating a feathered cutout in PixiJS allows you to smoothly blend edges rather than using sharp geometric cuts. This article covers how to pair a BlurFilter with an alpha mask by applying the filter to a Graphics shape or sprite, adding it to the displa",
+    false
+  ],
+  [
+    310,
+    "Why Pixi.js Stencil Masks Lose Antialiased Edges",
+    "When using basic stencil masks in Pixi.js, previously smooth, antialiased edges frequently turn jagged and pixelated. This article explains the technical reasons behind this behavior, focusing on how the WebGL stencil buffer functions compared to alpha b",
+    false
+  ],
+  [
+    309,
+    "How to Mask a PixiJS Container Without Affecting Siblings",
+    "This article explains how to apply a mask to a single PIXI.Container in Pixi.js so that only its contents are clipped, leaving adjacent sibling containers completely untouched. By properly isolating the mask assignment to the target container's .mask pro",
+    false
+  ],
+  [
+    308,
+    "Fragment Shader vs Stencil Buffer Masking in Pixi.js",
+    "Masking in Pixi.js can be achieved through two primary techniques: hardware-level stencil buffer masking and custom fragment shader masking (often utilized via filter masks). While stencil masking relies on the GPU's fixed-function pipeline to perform bi",
+    false
+  ],
+  [
+    307,
+    "Using AnimatedSprite as Alpha Mask in Pixi.js",
+    "Pixi.js allows you to use an AnimatedSprite as a dynamic, moving alpha mask. By assigning an active AnimatedSprite to the mask property of any display object or container, Pixi.js continuously samples the alpha channel of the current animation frame duri",
+    false
+  ],
+  [
+    306,
+    "Stencil Mask Clearing GPU Overhead in Pixi.js",
+    "Using stencil masks in Pixi.js introduces measurable GPU overhead primarily caused by broken draw-call batching, WebGL state pipeline stalls, and memory bandwidth consumption during buffer clear operations. While stencil masks allow arbitrary vector shap",
+    false
+  ],
+  [
+    305,
+    "How pushMask and popMask Work in PixiJS MaskSystem",
+    "This article provides an in-depth look at the internal mechanics of the MaskSystem in PixiJS, focusing on the pushMask and popMask lifecycle. In PixiJS, masking isolates render regions to define visible boundaries for display objects. Internally, the Mas",
+    false
+  ],
+  [
+    304,
+    "How Nested Stencil Masks Work in Pixi.js",
+    "Nesting multiple stencil masks in Pixi.js causes the renderer to compute the geometric intersection of all active masks, restricting visible pixels strictly to the overlapping region of every mask in the hierarchy. This article covers the internal mechan",
+    false
+  ],
+  [
+    303,
+    "How to Create an Inverted Mask in Pixi.js",
+    "This article explains how to implement an inverted mask in Pixi.js so that content renders exclusively outside of a designated shape. You will learn how to configure MaskData to flip the default masking behavior, along with a complete code example demons",
+    false
+  ],
+  [
+    302,
+    "How PixiJS Uses Scissor Testing for Fast Masks",
+    "Scissor testing is a hardware-accelerated WebGL feature that restricts rendering strictly within a defined, axis-aligned rectangular region of the screen. Instead of using complex and performance-intensive stencil buffers or custom shader passes to clip",
+    false
+  ],
+  [
+    301,
+    "How PixiJS Uses WebGL Stencil Buffer for Masking",
+    "Pixi.js utilizes the WebGL stencil buffer to execute high-performance vector masking by treating the buffer as a hardware-level pixel filter. Instead of relying on expensive render-to-texture passes or fragment shader sampling, Pixi.js taps directly into",
+    false
+  ],
+  [
+    300,
+    "Prioritizing UI Assets Over Audio in PixiJS",
+    "Optimizing the initial load time of a PixiJS application requires prioritizing essential visual elements over heavy media files. By deferring non-essential assets such as background music (BGM), you ensure that the user interface renders immediately, imp",
+    false
+  ],
+  [
+    299,
+    "Pixi.js Assets and Concurrent HTTP Request Limits",
+    "Pixi.js manages asset delivery through its modern Assets module by coordinating asynchronous loading pipelines, bundle manifests, and background queues. When downloading large asset packs, Pixi.js delegates the low-level HTTP concurrency limits directly",
+    false
+  ],
+  [
+    298,
+    "How to Create a Custom Cache Parser in PixiJS",
+    "This guide covers how to implement a custom cache parser extension in PixiJS to manage proprietary and non-standard asset formats. You will learn the structure of the PixiJS CacheParser interface, how to register the extension into the global pipeline, a",
+    false
+  ],
+  [
+    297,
+    "PixiJS Assets.load vs Assets.backgroundLoad",
+    "Managing assets efficiently is essential for building performant web applications and games using Pixi.js. Pixi's Assets manager provides two distinct functions for retrieving resources: Assets.load and Assets.backgroundLoad. While both methods fetch, pr",
+    false
+  ],
+  [
+    296,
+    "Configure Pixi.js Asset Bundles for Game Levels",
+    "Pixi.js provides a robust asset management system through its Assets module, allowing developers to group resources into bundles to load content incrementally. Instead of forcing players to download an entire game's assets upfront, you can declare specif",
+    false
+  ],
+  [
+    295,
+    "Pixi.js Compressed Texture Mipmap Generation",
+    "This article explains the behavior, limitations, and requirements of mipmap generation for hardware-compressed block textures in Pixi.js. Unlike standard uncompressed image formats like PNG or JPEG, hardware-compressed textures (such as BCn, ETC, ASTC, a",
+    false
+  ],
+  [
+    294,
+    "Create a PixiJS Spritesheet at Runtime",
+    "Creating a Pixi.js spritesheet dynamically at runtime from an array of images is entirely possible and often necessary when dealing with user-generated content, dynamic skins, or procedurally loaded assets. This process involves drawing loaded source ima",
+    false
+  ],
+  [
+    293,
+    "Pixi.js: Linking Spritesheets to AnimatedSprite",
+    "In Pixi.js, the Spritesheet class bridges the gap between raw texture atlases and playable animations by parsing metadata and organizing individual frames into ordered texture arrays. This article explains how a spritesheet's JSON data structure is proce",
+    false
+  ],
+  [
+    292,
+    "Unload Compressed Texture Atlas in Pixi.js",
+    "Managing GPU memory effectively is critical for maintaining high performance in WebGL applications. This article explains how to unload a specific compressed texture atlas from Video RAM (VRAM) in Pixi.js to prevent memory leaks and optimize resource con",
+    false
+  ],
+  [
+    291,
+    "Best Sprite Sheet Tools for Pixi.js Metadata",
+    "Optimizing rendering performance in Pixi.js requires packing individual assets into texture atlases to minimize draw calls and GPU memory overhead. This article evaluates the top sprite sheet toolchains—including TexturePacker, ShoeBox, Free-Tex-Packer",
+    false
+  ],
+  [
+    290,
+    "PixiJS: Extract Animations from Complex Spritesheets",
+    "Extracting individual animated sequences from a complex spritesheet in Pixi.js involves slicing a master texture into specific frame coordinates and assigning those frames to an AnimatedSprite. This guide covers how to achieve this using both JSON-based",
+    false
+  ],
+  [
+    289,
+    "Preload Fallback PNG Textures in PixiJS",
+    "Compressed textures such as KTX2, Basis, or DDS significantly reduce GPU memory usage and improve rendering performance, but older hardware and unsupported browsers may fail to parse them. PixiJS handles asset management through its robust Assets pipelin",
+    false
+  ],
+  [
+    288,
+    "Pixi.js Texture Compression: UI Graphics vs Photos",
+    "Pixi.js relies heavily on efficient texture memory management to maintain optimal WebGL performance, but compressing user interface (UI) assets produces vastly different visual outcomes compared to compressing realistic photos. While photographic texture",
+    false
+  ],
+  [
+    287,
+    "How Pixi.js Detects BC7 Texture Support on Desktop",
+    "Pixi.js optimizes desktop rendering performance by leveraging modern GPU-friendly compressed texture formats like BC7. This article explains how Pixi.js detects BC7 support through the underlying WebGL context, the specific WebGL extensions it queries, a",
+    false
+  ],
+  [
+    286,
+    "Transcode Basis Universal in Web Worker for PixiJS",
+    "Offloading Basis Universal texture transcoding to a Web Worker prevents main-thread frame drops and ensures smooth rendering in PixiJS applications. This guide explains how to detect GPU format capabilities, initialize the Basis transcoder inside a dedic",
+    false
+  ],
+  [
+    285,
+    "Pixi.js JSON Texture Atlas Parsing Performance",
+    "Parsing large JSON texture atlas manifests in Pixi.js introduces measurable performance bottlenecks primarily driven by main-thread blocking, native JSON deserialization, and the internal generation of individual frame textures. While downloading the JSO",
+    false
+  ],
+  [
+    284,
+    "Add Dynamic Frames to a Pixi.js Spritesheet",
+    "This article explains how to dynamically inject additional sprite frames into an existing Pixi.js spritesheet at runtime. By creating new sub-textures from the spritesheet’s underlying base texture and registering them directly into the spritesheet ins",
+    false
+  ],
+  [
+    283,
+    "How Pixi.js Parses 9-Slice Spritesheet Data",
+    "Pixi.js streamlines UI development by allowing developers to bundle 9-slice (scale-9 grid) definitions directly into spritesheet metadata, eliminating the need to hardcode slice dimensions in application code. This article explains the underlying mechani",
+    false
+  ],
+  [
+    282,
+    "How to Fix Spritesheet Texture Bleeding in PixiJS",
+    "Texture bleeding in PixiJS manifests as thin, flickering lines or ghost edges around sprites rendered from a shared spritesheet or texture atlas. This article covers the core causes of texture bleeding—namely bilinear filtering, subpixel positioning, a",
+    false
+  ],
+  [
+    281,
+    "Load Multi-Pack Spritesheets in Pixi.js",
+    "Loading multi-pack spritesheets that span across multiple image files in Pixi.js is a streamlined process thanks to the built-in Assets manager. This guide explains how to properly configure your exported asset data, load the master JSON manifest using m",
+    false
+  ],
+  [
+    280,
+    "PixiJS JSON Hash vs JSON Array Spritesheet",
+    "When working with spritesheets in PixiJS, texture packing tools like TexturePacker typically export data in either JSON Hash or JSON Array format. The primary difference between these two formats lies in how frame definitions are structured within the JS",
+    false
+  ],
+  [
+    279,
+    "Configure PixiJS Assets for Compressed Formats",
+    "This guide explains how to configure the Pixi.js Assets manager to detect hardware capabilities and serve GPU-compressed texture formats like ASTC, BCn, ETC, or modern web formats like WebP and AVIF. By configuring detection parsers and structured asset",
+    false
+  ],
+  [
+    278,
+    "How Pixi.js Handles Compressed Textures: ASTC, ETC2, BCn",
+    "Pixi.js handles platform-specific compressed textures by leveraging modern WebGL extensions through its internal asset loading pipeline. By detecting the target device's hardware capabilities at runtime, Pixi.js selects the most efficient texture format",
+    false
+  ],
+  [
+    277,
+    "Basis Universal Texture Memory Savings in Pixi.js",
+    "Using Basis Universal compressed textures in Pixi.js provides substantial memory optimizations, predominantly reducing GPU video memory (VRAM) consumption by 75% to 85% compared to standard image formats like PNG and JPEG. While standard images are store",
+    false
+  ],
+  [
+    276,
+    "How Pixi.js Parses and Renders KTX2 Textures",
+    "Pixi.js processes KTX2 (Khronos Texture 2.0) containers through a dedicated asset loader pipeline that extracts compressed image metadata, transcodes the payload into a GPU-supported format via WebAssembly, and binds the raw data directly to the graphics",
+    false
+  ],
+  [
+    275,
+    "How PixiJS Avoids Dynamic Texture Thrashing",
+    "In high-performance WebGL applications, swapping thousands of dynamic textures each frame can overwhelm the GPU pipeline with excessive state changes and data uploads, a bottleneck known as texture thrashing. PixiJS avoids this performance degradation th",
+    false
+  ],
+  [
+    274,
+    "Set Anisotropic Filtering in PixiJS Textures",
+    "This guide explains how to enable and configure anisotropic filtering in PixiJS to prevent texture blurriness and artifacts on surfaces rendered at oblique, high angles. By leveraging WebGL's anisotropic extension through PixiJS texture settings, you can",
+    false
+  ],
+  [
+    273,
+    "Pixi.js Texture Loading: Loader and Resource Systems",
+    "In Pixi.js, efficient texture rendering relies on a clear separation of concerns between acquiring media files and preparing them for the GPU. The loading mechanism (such as defaultLoader or the modern Assets system) handles the asynchronous retrieval, p",
+    false
+  ],
+  [
+    272,
+    "Handling Dynamic Canvas Resizing in Pixi.js",
+    "Using an HTML canvas as an active TextureSource in Pixi.js allows developers to project procedural graphics, video frames, or secondary 2D contexts directly into a WebGL scene. When the underlying source canvas dynamically changes its dimensions, Pixi.js",
+    false
+  ],
+  [
+    271,
+    "Flipping UV Coordinates on a Pixi.js Texture",
+    "This article explains how to flip texture UV coordinates horizontally or vertically in Pixi.js without changing the scale property of a Sprite. You will learn how UV coordinates are structured within Pixi.js textures, how to clone a texture to prevent si",
+    false
+  ],
+  [
+    270,
+    "Extract RGBA Pixels from Pixi.js Texture",
+    "Extracting raw RGBA pixel data from a rendered Pixi.js Texture is essential for tasks such as computer vision, pixel-perfect collision detection, and procedural image processing. Pixi.js provides a dedicated extraction utility within its rendering pipeli",
+    false
+  ],
+  [
+    269,
+    "Pixi.js Texture orig and trim Rectangles Explained",
+    "In Pixi.js, the orig and trim properties on a Texture define how a sprite's visual data relates to its original, uncropped dimensions. When creating texture atlases or sprite sheets, packing tools often trim away empty transparent pixels to save GPU memo",
+    false
+  ],
+  [
+    268,
+    "Pixi.js Textures Exceeding MAX_TEXTURE_SIZE Limit",
+    "Pixi.js does not automatically downscale, split, or virtualize textures that exceed the GPU's MAXTEXTURESIZE limit. Instead, it delegates texture creation directly to the underlying WebGL context, meaning any texture surpassing hardware constraints will",
+    false
+  ],
+  [
+    267,
+    "Bind Native WebGLTexture to Pixi.js Texture",
+    "Integrating externally generated WebGL textures into Pixi.js allows you to render content from raw WebGL pipelines, external frameworks, or video decoders directly inside the Pixi scene graph without costly CPU readbacks. This guide explains how to wrap",
+    false
+  ],
+  [
+    266,
+    "Check Pixi.js Texture GPU Upload Status",
+    "In Pixi.js, textures are lazily uploaded to the GPU during their first render pass, which can cause noticeable frame drops or stuttering. This article covers how to force textures to upload ahead of time and how to reliably detect when the GPU upload is",
+    false
+  ],
+  [
+    265,
+    "Pixi.js Texture.EMPTY vs Texture.WHITE",
+    "In Pixi.js, Texture.EMPTY and Texture.WHITE are built-in static textures designed for different utility roles within a rendering pipeline. While Texture.EMPTY acts as a transparent, non-rendering placeholder to represent the absence of visual data, Textu",
+    false
+  ],
+  [
+    264,
+    "Create White Texture Placeholders in Pixi.js",
+    "Creating placeholder sprites is an essential step during game development and UI prototyping when final art assets are not yet available. In Pixi.js, the most efficient way to generate an empty white texture placeholder is by utilizing the built-in PIXI.",
+    false
+  ],
+  [
+    263,
+    "How PixiJS Handles CORS for WebGL Textures",
+    "When rendering external images onto a WebGL canvas, PixiJS must navigate browser security policies that restrict cross-origin data to prevent information leakage. PixiJS automates Cross-Origin Resource Sharing (CORS) negotiation by dynamically applying t",
+    false
+  ],
+  [
+    262,
+    "Update Texture Sub-Regions in Pixi.js",
+    "Updating a specific pixel region of an existing GPU texture without re-uploading the entire asset is possible in Pixi.js, though it is not the default behavior. Standard methods like texture.update() trigger a full CPU-to-GPU re-upload of the underlying",
+    false
+  ],
+  [
+    261,
+    "Pixi.js Destroy Texture Without BaseTexture",
+    "In Pixi.js, managing memory efficiently requires understanding the separation between display-frame references and actual GPU memory allocations. Pixi.js decouples image frames from underlying image data using Texture and BaseTexture objects. This archit",
+    false
+  ],
+  [
+    260,
+    "PixiJS Trim Property Explained for Cropped Textures",
+    "In Pixi.js, rendering tightly cropped textures efficiently without sacrificing animation alignment relies heavily on the trim property. When spritesheets are packed, transparent pixels around individual frames are often stripped away to save valuable GPU",
+    false
+  ],
+  [
+    259,
+    "Define Custom Texture Sub-Regions in Pixi.js",
+    "This guide explains how to crop and define custom sub-region frames from a larger master texture in Pixi.js. By using the Rectangle geometry class alongside the core Texture and BaseTexture classes, you can extract and display specific visual segments fr",
+    false
+  ],
+  [
+    258,
+    "Dynamic Canvas 2D Textures in Pixi.js",
+    "Creating dynamic procedural textures in Pixi.js using the HTML5 Canvas 2D context allows developers to leverage familiar 2D drawing methods to generate graphics on the fly. This article explains how to initialize an offscreen canvas, wrap it in a Pixi.js",
+    false
+  ],
+  [
+    257,
+    "How PixiJS Handles Premultiplied Alpha on GPU Upload",
+    "PixiJS relies heavily on premultiplied alpha (PMA) to ensure accurate color blending, prevent dark halo artifacts during bilinear texture filtering, and maintain high performance across rendering pipelines. When uploading image resources to the GPU, Pixi",
+    false
+  ],
+  [
+    256,
+    "PixiJS: SCALE_MODES.LINEAR vs SCALE_MODES.NEAREST",
+    "This article provides a concise comparison between SCALEMODES.LINEAR and SCALEMODES.NEAREST in PixiJS, examining how each texture filtering method works, how they alter the visual presentation of scaled sprites, and when to choose one over the other for",
+    false
+  ],
+  [
+    255,
+    "Nearest-Neighbor Scaling for Pixel Art in Pixi.js",
+    "Rendering pixel art in Pixi.js requires disabling default bilinear filtering so scaled sprites retain their crisp, sharp edges instead of becoming blurry. This article demonstrates how to configure nearest-neighbor filtering using Pixi.js's scaleMode set",
+    false
+  ],
+  [
+    254,
+    "PixiJS NPOT Texture Mipmapping Visual Artifacts",
+    "Older versions of Pixi.js utilizing WebGL 1.0 backends encounter strict hardware limitations when handling non-power-of-two (NPOT) textures alongside mipmapping. In WebGL 1.0, generating mipmaps on textures whose dimensions are not powers of two (such as",
+    false
+  ],
+  [
+    253,
+    "How to Enable and Generate Mipmaps in Pixi.js",
+    "Mipmaps are pre-calculated, progressively downscaled sequences of an image texture that optimize rendering performance and eliminate aliasing or shimmering when textures are scaled down on screen. This guide explains how to enable and configure mipmap ge",
+    false
+  ],
+  [
+    252,
+    "Pixi.js CLAMP_TO_EDGE vs REPEAT Texture Wrapping",
+    "Texture wrapping modes in Pixi.js determine how UV coordinates outside the standard 0.0 to 1.0 range are sampled, which is essential when rendering repeating patterns or preventing visual artifacts. This guide covers the functional differences between CL",
+    false
+  ],
+  [
+    251,
+    "Purpose of the PixiJS TextureSource Class",
+    "This article provides an overview of the TextureSource class introduced in PixiJS v8, explaining its architectural role in modern 2D rendering. You will learn why PixiJS transitioned away from the legacy BaseTexture system, how TextureSource decouples ra",
+    false
+  ],
+  [
+    250,
+    "How to Set Anchor Point on a PixiJS Container",
+    "In PixiJS, PIXI.Sprite includes an anchor property that normalizes origin points between 0 and 1, but PIXI.Container lacks this feature by default. This guide explains how to achieve anchor point functionality on a standard Container using the native piv",
+    false
+  ],
+  [
+    249,
+    "Understanding PixiJS Transform _worldID Property",
+    "In PixiJS, the Transform class handles position, rotation, scale, and skew calculations for scene graph elements, relying on the internal worldID property as a cache invalidation mechanism. This article explains the exact purpose of worldID, how it opera",
+    false
+  ],
+  [
+    248,
+    "Freeze a Container Transform in PixiJS",
+    "In PixiJS, child display objects automatically inherit position, rotation, and scale from their parent containers through the scene graph hierarchy. This article demonstrates how to decouple a child Container from this inheritance pipeline by overriding",
+    false
+  ],
+  [
+    247,
+    "Fixing Pixi.js Jitter Far From the Origin",
+    "When display objects in Pixi.js travel far from the canvas coordinate origin (0, 0), they often exhibit visible stuttering, shaking, or jittering during movement. This article explains the technical mechanics behind this issue—primarily floating-point",
+    false
+  ],
+  [
+    246,
+    "Non-Uniform Scale in PixiJS Scenegraphs",
+    "PixiJS handles hierarchical transformations through a chain of 2D affine transformation matrices, propagating non-uniform scaling down deeply nested scenegraphs via recursive matrix multiplication. When a parent container has unequal scaling along its X",
+    false
+  ],
+  [
+    245,
+    "PixiJS Distance Between Objects in Different Containers",
+    "Calculating the distance between two DisplayObject instances residing in different containers in Pixi.js requires converting their local coordinates into a shared coordinate space. Because an object’s x and y properties are relative to its immediate pa",
+    false
+  ],
+  [
+    244,
+    "PixiJS cacheAsBitmap and Transform Calculations",
+    "Setting cacheAsBitmap to true fundamentally alters how Pixi.js processes matrix transformations by decoupling a container's children from the scene graph’s continuous transform pipeline. Instead of recursively multiplying local transformation matrices",
+    false
+  ],
+  [
+    243,
+    "3D Perspective Projection in Pixi.js Using Matrices",
+    "This article provides a direct guide on projecting a 2D Pixi.js stage or container into simulated 3D perspective using matrix transformations. While Pixi.js is built primarily as a 2D rendering engine using affine transforms, you can simulate depth and p",
+    false
+  ],
+  [
+    242,
+    "Pixi.js Transform Caching Performance Impact",
+    "Updating a container’s position every frame in Pixi.js directly bypasses the engine's transform caching optimizations, causing significant CPU overhead. Pixi.js relies on a caching system using dirty flags to avoid redundant matrix math across the scen",
+    false
+  ],
+  [
+    241,
+    "How to Invert a PixiJS Matrix for Coordinates",
+    "Inverting a 2D affine Matrix in PixiJS allows developers to reverse coordinate mapping, transforming points from a global or parent coordinate space back into a local coordinate space. PixiJS provides built-in methods on its Matrix class to perform this",
+    false
+  ],
+  [
+    240,
+    "Alpha Blending in Nested Pixi.js Containers",
+    "In Pixi.js, hierarchical alpha blending in nested containers is resolved by default through a cumulative calculation known as worldAlpha, where local alphas are multiplied down the scene graph. While this approach avoids expensive graphics pipeline state",
+    false
+  ],
+  [
+    239,
+    "Stop PixiJS Container Child Transform Updates",
+    "In Pixi.js, the scene graph recursively recalculates local and world transformation matrices on every frame during the render cycle. When dealing with complex, completely stationary containers that house hundreds or thousands of static children, these re",
+    false
+  ],
+  [
+    238,
+    "Pixi.js: getLocalBounds vs getBounds Explained",
+    "In Pixi.js, both getBounds() and getLocalBounds() are used to measure the rectangular dimensions of a display object, but they evaluate that space differently. The fundamental difference lies in the coordinate system used: getBounds() calculates the axis",
+    false
+  ],
+  [
+    237,
+    "Pixi.js getBounds in Nested Containers",
+    "In Pixi.js, the getBounds method calculates the total axis-aligned bounding box (AABB) of a display object and all of its descendants relative to the world coordinate space. This article explores the underlying mechanics of this calculation, detailing ho",
+    false
+  ],
+  [
+    236,
+    "PixiJS Container enableSort Explained",
+    "This article explains the purpose and mechanics of the enableSort property on a Pixi.js Container. Readers will learn how this property manages child display ordering, how it interacts with the zIndex property, and the performance considerations involved",
+    false
+  ],
+  [
+    235,
+    "Override DisplayObject Transform Matrix in PixiJS",
+    "PixiJS automatically computes transformation matrices for every DisplayObject using high-level properties like position, scale, rotation, skew, and pivot. However, when integrating physics engines, custom affine transformations, or 3D projection systems,",
+    false
+  ],
+  [
+    234,
+    "How ObservablePoint Notifies Transforms in Pixi.js",
+    "In Pixi.js, the ObservablePoint class plays a critical role in scene graph management by alerting parent transforms whenever coordinate or dimension properties change. Instead of relying on expensive per-frame polling to detect spatial mutations, Observa",
+    false
+  ],
+  [
+    233,
+    "Get Global Rotation of Nested Child in Pixi.js",
+    "Extracting the global (world) rotation of a nested child object in Pixi.js requires reading the object's transformation matrix rather than its local rotation property. Because Pixi.js calculates rendering coordinates through a hierarchical matrix system,",
+    false
+  ],
+  [
+    232,
+    "Pixi.js Matrix Decomposition with Negative Scales",
+    "In Pixi.js, decomposing a transformation matrix back into human-readable properties—such as position, scale, rotation, and skew—encounters mathematical ambiguity when negative scale values are involved. Because Pixi.js calculates scale magnitudes usi",
+    false
+  ],
+  [
+    231,
+    "Skew Transformations Along X and Y in Pixi.js",
+    "Skewing an object in Pixi.js allows you to slant its shape along the horizontal or vertical axes to create pseudo-3D effects, depth, or stylized distortions. This article explains how to use Pixi.js's built-in skew property on display objects, work with",
+    false
+  ],
+  [
+    230,
+    "Pixi.js Pivot vs Anchor: Mathematical Differences",
+    "In Pixi.js, both pivot and anchor determine the point around which a display object rotates, scales, and positions itself, but they operate on fundamentally different mathematical foundations. While anchor uses normalized ratios to shift the geometry of",
+    false
+  ],
+  [
+    229,
+    "Pixi.js toLocal Method Coordinate Transform Guide",
+    "The toLocal method in Pixi.js is an essential tool for converting coordinates between different reference frames within a hierarchical 2D scene graph. Because nested display containers inherit transformations such as translation, rotation, scaling, and s",
+    false
+  ],
+  [
+    228,
+    "Convert Local Coordinates to Global in Pixi.js",
+    "Converting coordinates between nested display hierarchies and the global screen space is a fundamental task in Pixi.js development. This article explains how to use Pixi.js's built-in toGlobal() method to translate a local coordinate inside any container",
+    false
+  ],
+  [
+    227,
+    "Pixi.js: worldTransform vs. localTransform",
+    "In Pixi.js, rendering objects accurately depends on understanding coordinate spaces and transformation matrices. Every DisplayObject contains both a localTransform and a worldTransform, which represent 3x3 affine transformation matrices. The fundamental",
+    false
+  ],
+  [
+    226,
+    "PixiJS updateTransform Mathematical Operations Explained",
+    "The updateTransform method in PixiJS is the engine behind hierarchical scene graph positioning, converting local spatial properties like position, scale, rotation, and pivot into a final 2D affine transformation matrix for rendering. This article details",
+    false
+  ],
+  [
+    225,
+    "Set Default Uniform Values in Pixi.js Shaders",
+    "In Pixi.js, setting default uniform values for a custom shader is accomplished during the shader's instantiation by passing a uniforms object or a UniformGroup. This article demonstrates how to define default uniforms directly within PIXI.Shader.from(),",
+    false
+  ],
+  [
+    224,
+    "Pixi.js Dissolve Effect with Noise Textures",
+    "This article explains how to build a custom dissolve and burn-away visual effect in Pixi.js using a custom GLSL fragment shader and a noise texture. You will learn the mechanics behind noise-based thresholding, how to write the fragment shader with an il",
+    false
+  ],
+  [
+    223,
+    "Mobile GPU Shader Precision Artifacts in Pixi.js",
+    "Rendering procedural noise in Pixi.js often yields crisp, detailed visuals on desktop systems but breaks down into blocky, banded, or jittery artifacts on mobile devices. This discrepancy stems primarily from hardware-enforced floating-point precision di",
+    false
+  ],
+  [
+    222,
+    "Sync Shader Uniforms with External Clocks in Pixi.js",
+    "Synchronizing Pixi.js shader uniforms with external animation clocks allows you to coordinate complex WebGL visual effects with outside timing sources like GSAP, the Web Audio API, or global physics engines. Rather than relying on Pixi.js's internal tick",
+    false
+  ],
+  [
+    221,
+    "Pass Structured Buffers to Pixi.js WGSL Shaders",
+    "Passing structured data buffers to WebGPU shaders in Pixi.js v8 allows you to send complex data models—such as particle arrays, lighting parameters, or matrix collections—directly to WGSL compute and fragment shaders. This article provides a direct g",
+    false
+  ],
+  [
+    220,
+    "Single-Pass Outline and Glow Shaders in PixiJS",
+    "This article provides a direct guide on building an outline and glow effect in PixiJS using a single-pass custom fragment shader. You will learn the GLSL logic needed to sample adjacent pixels in a single execution, how to calculate distances for crisp o",
+    false
+  ],
+  [
+    219,
+    "Pixi.js Shader Conditional Compilation Macros",
+    "Pixi.js fully supports conditional compilation preprocessor macros within its shaders through native WebGL GLSL directives. This article explains how WebGL processes directives like #ifdef, #if, and #define, and demonstrates how to dynamically inject the",
+    false
+  ],
+  [
+    218,
+    "How PixiJS Binds Sampler Uniforms in WebGL",
+    "This article explains how PixiJS manages the binding of WebGL texture units to sampler uniforms within its rendering pipeline. By decoupling texture allocation through specialized sub-systems—specifically the TextureSystem, ShaderSystem, and BatchRende",
+    false
+  ],
+  [
+    217,
+    "Pass a Dynamic LUT Texture to Pixi.js Fragment Shader",
+    "This guide explains how to supply and dynamically update a lookup table (LUT) texture within a Pixi.js fragment shader. You will learn how to generate data-driven color maps using typed arrays and raw buffer resources, bind them to a custom filter as a t",
+    false
+  ],
+  [
+    216,
+    "Handling Time Uniforms in Pixi.js Without Overflow",
+    "Managing time-based uniforms in Pixi.js shaders can lead to visual stuttering and precision artifacts when elapsed time values grow too large for WebGL's standard 32-bit floating-point precision. This article explains why floating-point overflow occurs i",
+    false
+  ],
+  [
+    215,
+    "Custom 2D Lighting and Shadows Shader in Pixi.js",
+    "Creating realistic 2D lighting and shadows in Pixi.js involves writing a custom fragment shader using the PIXI.Filter class. This article explains how to build a dynamic 2D point light system from scratch, complete with distance attenuation and raymarche",
+    false
+  ],
+  [
+    214,
+    "How PixiJS Optimizes Uniforms Using Dirty Flags",
+    "In WebGL-based rendering, sending uniform data from the CPU to the GPU can quickly become a significant performance bottleneck. PixiJS addresses this by caching uniform values and using dirty flags within its shader system. By monitoring state changes wi",
+    false
+  ],
+  [
+    213,
+    "Pass Integer Boolean Flags to Pixi.js Shaders",
+    "Passing multiple individual boolean uniforms to GPU shaders leads to redundant draw-call overhead and wastes precious uniform register space. This article explains how to efficiently pack multiple boolean states into a single integer uniform using bitmas",
+    false
+  ],
+  [
+    212,
+    "PixiJS Filter vs Material: Key Differences",
+    "In PixiJS, both Filter programs and Material programs utilize custom WebGL/WebGPU shaders to render visual effects, but they serve fundamentally different purposes within the rendering pipeline. A Filter program is a post-processing tool applied to any D",
+    false
+  ],
+  [
+    211,
+    "Chromatic Aberration Shader in Pixi.js",
+    "Chromatic aberration is a popular optical distortion effect that mimics lens imperfection by separating a visual's red, green, and blue color channels. In Pixi.js, you can achieve this post-processing effect using a custom fragment shader wrapped within",
+    false
+  ],
+  [
+    210,
+    "How to Get Pixi.js Shader Compilation Error Logs",
+    "When developing custom shaders in Pixi.js, syntax mistakes or driver incompatibilities will cause the underlying WebGL program to fail during compilation. While Pixi.js surfaces these issues in the developer console by default, extracting compilation err",
+    false
+  ],
+  [
+    209,
+    "PixiJS Shader Recompilation and Uniform Changes",
+    "PixiJS manages shader recompilation and uniform synchronization by decoupling GLSL program compilation from dynamic uniform data updates. While changing runtime uniform values simply updates data buffers via cached sync functions, altering a uniform's si",
+    false
+  ],
+  [
+    208,
+    "Handling GLSL Precision Specifiers in Pixi.js",
+    "Precision specifiers in WebGL—namely highp, mediump, and lowp—dictate the bit-depth and accuracy of floating-point calculations within your graphics pipeline. In Pixi.js, managing these specifiers properly is vital for balancing visual accuracy again",
+    false
+  ],
+  [
+    207,
+    "Passing Float Uniform Arrays in PixiJS",
+    "Passing floating-point arrays as uniform arrays in PixiJS allows developers to stream complex numerical datasets—such as point coordinates, weight tables, or color palettes—directly into custom vertex and fragment shaders. This article covers the end",
+    false
+  ],
+  [
+    206,
+    "Multi-Texture Uniforms in Pixi.js Fragment Shaders",
+    "This guide demonstrates how to bind and sample multiple texture uniforms within a custom Pixi.js fragment shader. By configuring custom uniforms with PIXI.Texture objects and declaring corresponding sampler2D uniforms in GLSL, you can blend, mask, or man",
+    false
+  ],
+  [
+    205,
+    "Built-in Uniforms in Pixi.js Shaders",
+    "When writing custom shaders in Pixi.js, the rendering engine automatically provides several built-in uniforms to streamline rendering without requiring manual binding. This article outlines the default uniforms injected into both standard mesh shaders an",
+    false
+  ],
+  [
+    204,
+    "Pass a 2D Matrix Uniform in PixiJS Shaders",
+    "Passing a 2D matrix uniform into a custom vertex shader in Pixi.js involves declaring the matrix in GLSL, converting your 2D transformation data into a WebGL-compatible flat array, and attaching it to a PIXI.Shader or PIXI.Filter uniform group. This guid",
+    false
+  ],
+  [
+    203,
+    "Sharing PixiJS Uniforms Across Multiple Shaders",
+    "In Pixi.js, sharing uniform values across multiple distinct shader instances is primarily achieved using uniform groups (UniformGroup) and Uniform Buffer Objects (UBOs). By decoupling the uniform storage from individual shader programs, Pixi.js allows mu",
+    false
+  ],
+  [
+    202,
+    "How to Pass a UniformGroup to Pixi.js Shaders",
+    "In Pixi.js, a UniformGroup allows you to bundle related shader uniforms into a single reusable object, enabling more efficient GPU uploads and easier state management across multiple shaders. This article explains how to instantiate a UniformGroup, bind",
+    false
+  ],
+  [
+    201,
+    "The Role of the Program Class in Pixi.js Shaders",
+    "In Pixi.js, the Program class serves as the core pipeline coordinator responsible for compiling, linking, and managing low-level WebGL shader programs. While higher-level constructs like Shader and Filter manage runtime values and uniform states, the Pro",
+    false
+  ],
+  [
+    200,
+    "Slicing a Pixi.js Mesh Dynamically Along a Plane",
+    "Dynamically slicing a Pixi.js mesh involves intersecting the geometry's triangles with an arbitrary cutting line, interpolating vertex data along the cut, and rebuilding two separate PIXI.Mesh instances from the resulting polygons. This article explains",
+    false
+  ],
+  [
+    199,
+    "Cylindrical Texture Mapping on Pixi.js Mesh",
+    "Mapping panoramic cylindrical textures onto a curved surface in Pixi.js requires building a custom PIXI.Mesh with geometry that mimics cylindrical curvature. By subdividing a rectangular plane into multiple vertical slices and applying trigonometric func",
+    false
+  ],
+  [
+    198,
+    "Extrude 2D Shapes with Depth Bevels in Pixi.js Mesh",
+    "This article explores whether you can render extruded 2D shapes with depth bevels using the Pixi.js Mesh class, detailing how Pixi's low-level geometry pipeline can handle 3D extruded data, what limitations exist natively within the engine, and the steps",
+    false
+  ],
+  [
+    197,
+    "Mesh Culling and Dynamic Vertex Bounds in Pixi.js",
+    "In Pixi.js, culling relies on CPU-side Axis-Aligned Bounding Boxes (AABB) to determine whether a display object is inside the visible viewport. When a Mesh has vertices that animate or displace outside their initial bounds, Pixi.js does not automatically",
+    false
+  ],
+  [
+    196,
+    "How to Apply Skinning Weights to a Pixi.js Mesh",
+    "Applying skinning weights across multiple bone joints on a Pixi.js Mesh requires extending standard 2D geometry with custom vertex attributes for joint indices and weights, passing bone transformation matrices to a custom shader as uniforms, and calculat",
+    false
+  ],
+  [
+    195,
+    "Causes of Triangle Edge Tearing in Pixi.js Meshes",
+    "Visual tearing, seams, and edge artifacts in deformed Pixi.js meshes typically stem from a combination of GPU rasterization limitations, floating-point rounding errors, and texture filtering mechanics. When meshes undergo dynamic transformations—such a",
+    false
+  ],
+  [
+    194,
+    "Draw a Pie Chart Using Pixi.js Mesh Triangles",
+    "Rendering a circular pie chart in Pixi.js using custom mesh triangles provides high rendering performance and complete control over geometry. This technique relies on constructing a triangle fan, where every slice is built by connecting a shared central",
+    false
+  ],
+  [
+    193,
+    "How PixiJS SimpleMesh autoUpdate Affects Vertex Buffers",
+    "This article explains how the autoUpdate property in Pixi.js controls vertex buffer uploads for SimpleMesh instances. You will learn the internal mechanics behind this flag, how it determines when vertex data transfers from system memory to the GPU, and",
+    false
+  ],
+  [
+    192,
+    "PixiJS SimplePlane Non-Uniform Grid Subdivisions",
+    "This article examines whether the SimplePlane class in Pixi.js can be configured with non-uniform grid subdivisions. It details the default grid generation behavior, explains why native configuration parameters do not support irregular spacing out of the",
+    false
+  ],
+  [
+    191,
+    "Get Mesh Vertex World Coordinates in Pixi.js",
+    "This guide explains how to extract the transformed world coordinates of a specific mesh vertex in Pixi.js. To get the global position of a vertex, you must retrieve its local coordinates from the mesh's geometry buffer and transform them using the mesh",
+    false
+  ],
+  [
+    190,
+    "Updating PixiJS Mesh Vertices Per Frame",
+    "Updating hundreds of mesh vertices dynamically each frame in Pixi.js can introduce significant CPU and GPU overhead, primarily through frequent buffer uploads, garbage collection pressure, and WebGL state changes. This article examines the core performan",
+    false
+  ],
+  [
+    189,
+    "How to Create a Snake Animation with Pixi.js SimpleRope",
+    "This article demonstrates how to build a dynamic worm or snake animation in Pixi.js using the SimpleRope mesh object. By chaining an array of control points to a continuous texture and updating those points sequentially toward a target, you can simulate",
+    false
+  ],
+  [
+    188,
+    "Pixi.js SimpleRope Texture Wrapping Beyond UV Limits",
+    "This article examines how Pixi.js manages texture wrapping on a SimpleRope when vertex coordinates push UV mapping outside the standard 0.0 to 1.0 bounds. It covers how SimpleRope generates UV coordinates across its segments, the role of WRAPMODES in dic",
+    false
+  ],
+  [
+    187,
+    "Detecting Clicks on Mesh Triangles in PixiJS",
+    "Detecting which individual triangle of a Mesh a user clicked in PixiJS requires converting screen coordinates into the mesh's local coordinate space, accessing the underlying vertex and index buffers, and testing the point against each triangle using a p",
+    false
+  ],
+  [
+    186,
+    "Create Mesh Vertex Color Gradients in Pixi.js",
+    "This guide explains how to generate multi-colored gradients across a 2D mesh in Pixi.js using custom vertex colors. By configuring a custom Geometry with vertex positions and color attributes, and pairing it with a simple WebGL shader, you can leverage t",
+    false
+  ],
+  [
+    185,
+    "PixiJS SimpleMesh vs Mesh Explained",
+    "In Pixi.js, rendering custom geometry is primarily handled through the Mesh family of classes, with Mesh acting as the flexible, low-level foundation and SimpleMesh serving as a streamlined, high-level convenience wrapper. While Mesh gives developers com",
+    false
+  ],
+  [
+    184,
+    "How to Change Pixi.js SimpleRope Segment Count",
+    "In Pixi.js, you cannot dynamically change the segment count of an existing SimpleRope instance simply by adding or removing coordinates from its points array. Because SimpleRope generates static WebGL mesh buffers during initialization, any change to the",
+    false
+  ],
+  [
+    183,
+    "Customize UV Coordinates in a Pixi.js Mesh",
+    "Customizing the UV coordinates of individual vertices in a Pixi.js Mesh allows developers to achieve advanced texture mapping, custom sprite deformation, and selective texture wrapping. This article explains how to access a mesh's geometry attributes, al",
+    false
+  ],
+  [
+    182,
+    "Hit Testing a Deformed SimpleRope in PixiJS",
+    "This article explains how to implement accurate, pixel-level hit testing on a deformed PIXI.SimpleRope in PixiJS. By default, PixiJS uses axis-aligned bounding boxes (AABBs) for basic interaction checks, which causes false-positive hits when a rope bends",
+    false
+  ],
+  [
+    181,
+    "PixiJS MeshMaterial vs Sprite: Key Differences",
+    "In Pixi.js, visual assets are commonly displayed using either standard Sprites or Meshes paired with MeshMaterials. While Sprites are designed for standard, rectangular 2D images with optimized automatic batching, MeshMaterial allows developers to render",
+    false
+  ],
+  [
+    180,
+    "Create a Waving Flag in Pixi.js Using SimplePlane",
+    "Animating a realistic waving flag in Pixi.js can be achieved efficiently using the SimplePlane mesh class. This article covers how to project a 2D texture onto a customizable vertex grid and manipulate those vertex points in real time using a sine wave f",
+    false
+  ],
+  [
+    179,
+    "PixiJS NineSlicePlane vs SimplePlane Geometry",
+    "In PixiJS, both NineSlicePlane and SimplePlane inherit from Mesh, yet their underlying vertex geometries serve fundamentally different rendering purposes. While a SimplePlane constructs an arbitrary, uniformly distributed grid of vertices designed for me",
+    false
+  ],
+  [
+    178,
+    "SimpleRope PixiJS: Math for Dynamic Control Points",
+    "In Pixi.js, the SimpleRope class renders a texture strip mapped onto a deformable strip of vertices governed by an array of control points (PIXI.Point[]). Animating a rope dynamically requires updating the positions of these control points per frame. The",
+    false
+  ],
+  [
+    177,
+    "Water Ripple Effects with Pixi.js SimplePlane",
+    "Simulating water ripples in Pixi.js can be achieved efficiently without writing complex GLSL shaders by utilizing the SimplePlane class. This guide explains how to generate realistic ripple dynamics by creating a subdivided vertex grid and dynamically ma",
+    false
+  ],
+  [
+    176,
+    "How Pixi.js SimpleRope Creates Flexible Curved Shapes",
+    "The SimpleRope class in Pixi.js renders flexible, dynamic, and curved textures mapped along a continuous sequence of points. By using the provided points as a central skeletal spine, SimpleRope dynamically calculates and constructs a 2D triangle mesh tha",
+    false
+  ],
+  [
+    175,
+    "Read Vertex Data from GPU Buffers in PixiJS",
+    "This article explores whether you can read vertex data back from GPU memory into JavaScript using PixiJS. It covers the architectural limitations of WebGL and WebGPU that restrict GPU-to-CPU data transfers, explains why PixiJS does not provide a built-in",
+    false
+  ],
+  [
+    174,
+    "Pixi.js GPU Memory Mapping for Dynamic Buffers",
+    "This article provides an overview of how Pixi.js coordinates CPU-to-GPU dynamic data transfers, examining its batching systems, memory allocation strategies, and buffer mapping implementations across both WebGL and WebGPU pipelines. You will learn how Pi",
+    false
+  ],
+  [
+    173,
+    "Wireframe Custom Polygons in Pixi.js Geometry",
+    "Rendering a wireframe representation of a custom polygon in Pixi.js requires building a custom PIXI.Geometry and rendering it through a PIXI.Mesh configured with a line-based draw mode. This guide outlines how to extract polygon vertices, build vertex an",
+    false
+  ],
+  [
+    172,
+    "Pixi.js Geometry addAttribute and addIndex Explained",
+    "In Pixi.js, the Geometry class serves as the bridge between raw vertex data and GPU shader programs, allowing developers to create custom meshes and shapes. This article provides a focused explanation of the addAttribute and addIndex methods on a Pixi.js",
+    false
+  ],
+  [
+    171,
+    "Bind Vertex Colors in Pixi.js Geometry",
+    "Binding custom color attributes per vertex in Pixi.js allows you to pass unique RGB or RGBA values directly into your shaders to create gradients, debug geometry, or produce complex visual effects without multiple draw calls. This guide explains how to d",
+    false
+  ],
+  [
+    170,
+    "Create Dynamic Ribbon Trails in PixiJS",
+    "Creating dynamic ribbons or trail effects in PixiJS is fully achievable and performant by manipulating vertex buffer data inside a render loop. By recording a historical path of positions, computing perpendicular offsets to define thickness, and updating",
+    false
+  ],
+  [
+    169,
+    "Pixi.js Vertex Buffer Memory Reclamation Explained",
+    "This article provides an overview of how Pixi.js manages and reclaims vertex buffer memory when clearing scenes or removing display objects. It explores Pixi's dual approach to GPU memory: the pooling and reuse of pre-allocated buffers within its batch r",
+    false
+  ],
+  [
+    168,
+    "Pixi.js Morph Target Animation with Vertex Buffers",
+    "Morph target animation—also known as blend shapes—allows meshes to smoothly deform between different shapes by interpolating between sets of vertex positions. While Pixi.js does not include a dedicated morph target API out of the box, you can achieve",
+    false
+  ],
+  [
+    167,
+    "Pixi.js Geometry and Shader Attribute Mismatch",
+    "When vertex attributes configured in a Pixi.js Geometry instance do not match the input attributes declared in the active shader, WebGL encounters a binding mismatch. Depending on whether attributes are missing, surplus, or misconfigured in their data ty",
+    false
+  ],
+  [
+    166,
+    "Build a Segmented Circular Mesh in Pixi.js",
+    "This article explains how to programmatically generate and update a segmented circular 2D mesh using Pixi.js's low-level Geometry API. By manually computing vertices, texture coordinates (UVs), and triangle indices, you can render customizable circular s",
+    false
+  ],
+  [
+    165,
+    "Binding Float vs Integer Vertex Attributes in PixiJS",
+    "This guide explains how to define and bind floating-point and integer vertex attributes using PixiJS. Custom shaders frequently require diverse data inputs, from position vectors and UV coordinates to discrete texture indices and state flags. Understandi",
+    false
+  ],
+  [
+    164,
+    "How Pixi.js Detects Buffer Updates for GPU Uploads",
+    "This article explores the internal mechanisms Pixi.js uses to synchronize CPU-side geometry data with GPU memory. Pixi.js utilizes an internal versioning system powered by unique update identifiers, allowing its rendering pipeline to compare the state of",
+    false
+  ],
+  [
+    163,
+    "Pixi.js Geometry Index Buffer: Purpose and Use",
+    "This article explores the role of the index buffer in Pixi.js Geometry, detailing how it optimizes memory and GPU performance by reusing vertex data. It breaks down the core purpose of index buffers in WebGL rendering pipelines, explains how they manage",
+    false
+  ],
+  [
+    162,
+    "How to Share Geometry Across Meshes in Pixi.js",
+    "This article explains how to instantiate a single Geometry instance and share it across multiple distinct Mesh objects in Pixi.js. By decoupling buffer definitions from display objects, you can significantly reduce GPU memory usage and optimize rendering",
+    false
+  ],
+  [
+    161,
+    "Calculate Vertex Bounding Boxes in Pixi.js",
+    "Calculating vertex bounding boxes for custom geometries in Pixi.js is essential for accurate frustum culling, interaction hit-testing, and container size calculations. This guide explains how Pixi.js processes vertex positions to generate bounds automati",
+    false
+  ],
+  [
+    160,
+    "PixiJS Geometry Dispose and WebGL Buffer Cleanup",
+    "In PixiJS, calling the dispose method on a Geometry object initiates a targeted cleanup process that releases associated WebGL resources from GPU memory. Rather than immediately and aggressively deleting shared assets, dispose detaches the geometry's int",
+    false
+  ],
+  [
+    159,
+    "Compute Normal Vectors on Custom Pixi.js Geometry",
+    "Computing normal vectors on custom geometry in Pixi.js is essential for dynamic lighting, displacement effects, and realistic 3D surface shading. This guide demonstrates how to calculate vertex normals mathematically using the cross product of triangle e",
+    false
+  ],
+  [
+    158,
+    "Rendering 3D Vertices in Pixi.js Custom Geometry",
+    "Pixi.js is engineered primarily as a 2D rendering engine, but it fully supports rendering 3D vertex positions $(X, Y, Z)$ using its low-level mesh API. By defining a custom PIXI.Geometry with a 3-component attribute buffer and attaching a custom PIXI.Sha",
+    false
+  ],
+  [
+    157,
+    "Pixi.js Attribute Byte Offsets, Strides, and Normalization",
+    "In Pixi.js, managing complex vertex data efficiently often requires using interleaved buffers where multiple attributes share a single data stream. You can configure custom attribute layouts, byte offsets, strides, and normalized flags directly through t",
+    false
+  ],
+  [
+    156,
+    "PixiJS Geometry: TRIANGLES vs TRIANGLE_STRIP vs LINES",
+    "In Pixi.js, rendering custom shapes with PIXI.Geometry and PIXI.Mesh relies on WebGL drawing modes to instruct the GPU on how to connect raw vertex positions. The three primary topology types—gl.TRIANGLES, gl.TRIANGLESTRIP, and gl.LINES—control wheth",
+    false
+  ],
+  [
+    155,
+    "Updating Vertex Buffer Subsets in Pixi.js",
+    "Updating only a subset of a vertex buffer in Pixi.js allows you to stream vertex modifications—such as particle positions, procedural mesh morphs, or dynamic skeletal tweaks—to the GPU without the performance penalty of re-uploading an entire dataset",
+    false
+  ],
+  [
+    154,
+    "How to Use Interleaved Vertex Buffers in Pixi.js",
+    "This article explains how Pixi.js supports interleaved vertex data structures inside a single Buffer instance to improve GPU memory layout and rendering performance. By combining multiple vertex attributes—such as positions, texture coordinates, and co",
+    false
+  ],
+  [
+    153,
+    "Pixi.js Instanced Attributes for Repeating Patterns",
+    "Rendering thousands of repeating geometric patterns efficiently in Pixi.js requires instanced rendering to minimize draw calls. By attaching instanced buffer attributes to a custom Geometry object, you can pass unique transformation and styling data—su",
+    false
+  ],
+  [
+    152,
+    "Pixi.js Buffer Class: Managing TypedArrays",
+    "The Buffer class in Pixi.js acts as an essential abstraction layer between CPU-side JavaScript TypedArray objects and GPU-bound WebGL buffers. It handles the lifecycle, synchronization, and uploading of raw binary data—such as vertex positions, texture",
+    false
+  ],
+  [
+    151,
+    "Pixi.js Custom Geometry with Position and UVs",
+    "Creating custom geometry in Pixi.js allows developers to build arbitrary 2D meshes, render complex polygonal shapes, and map textures precisely using low-level vertex attributes. This article explains how to instantiate a custom Geometry instance, config",
+    false
+  ],
+  [
+    150,
+    "How Pixi.js Avoids Redundant Uniform Uploads",
+    "Pixi.js maintains high rendering performance in WebGL by minimizing expensive CPU-to-GPU data transfers, particularly uniform updates. In WebGL applications, invoking functions like gl.uniformMatrix4fv or gl.uniform1f redundantly every frame introduces s",
+    false
+  ],
+  [
+    149,
+    "PixiJS drawElements vs drawArrays Rendering",
+    "PixiJS relies on WebGL to render 2D and 3D graphics on the GPU, abstracting low-level commands into intuitive geometry and mesh objects. At the WebGL level, the engine submits geometry to the screen using either drawElements or drawArrays. This article o",
+    false
+  ],
+  [
+    148,
+    "BatchPluginFactory in PixiJS Custom Batch Pipelines",
+    "In Pixi.js, batch rendering minimizes WebGL draw calls by grouping similar objects into a single geometry buffer, but implementing custom shaders or attributes typically requires writing extensive rendering boilerplate. The BatchPluginFactory solves this",
+    false
+  ],
+  [
+    147,
+    "PixiJS roundPixels: Sub-Pixel Snapping and Batching",
+    "In PixiJS, enabling roundPixels forces display objects to align strictly to integer screen coordinates, eliminating the blurriness caused by sub-pixel rendering while keeping sprite batching fully intact. This setting is particularly valuable for retro p",
+    false
+  ],
+  [
+    146,
+    "How PixiJS Recycles Vertex Arrays in Sprite Transformations",
+    "PixiJS achieves high-performance 2D rendering by avoiding garbage collection overhead during frequent sprite transformations. Instead of allocating new arrays every time a sprite moves, rotates, or scales, PixiJS relies on persistent instance-level typed",
+    false
+  ],
+  [
+    145,
+    "PixiJS Sprite Batching and Custom Uniform Performance",
+    "In Pixi.js, high-performance 2D rendering relies heavily on sprite batching, a technique that aggregates multiple display objects into a single WebGL draw call. When you introduce custom uniforms to individual sprites, you inherently disrupt this pipelin",
+    false
+  ],
+  [
+    144,
+    "How PixiJS Manages GPU Texture Units",
+    "This article explores the internal architecture PixiJS uses to handle large volumes of distinct textures within GPU hardware limitations. It covers how PixiJS queries device capabilities, bundles draw operations through multi-texture batching, dynamicall",
+    false
+  ],
+  [
+    143,
+    "PixiJS State Class: WebGL Blend, Cull, Depth Tracking",
+    "In Pixi.js, the State class acts as a performance-critical abstraction layer that tracks and optimizes WebGL rendering configurations, specifically blend modes, polygon culling, and depth testing. By maintaining an internal representation of these GPU pi",
+    false
+  ],
+  [
+    142,
+    "Optimizing Sprite Ordering for Batching in Pixi.js",
+    "Pixi.js achieves its high rendering performance primarily through sprite batching, a technique that aggregates multiple display objects into a single WebGL draw call. However, when sprites within a Container alternate between different base textures, ble",
+    false
+  ],
+  [
+    141,
+    "How PixiJS Handles VAOs Without Full WebGL2",
+    "PixiJS delivers high-performance 2D rendering across varied client hardware by abstracting low-level WebGL differences, particularly regarding Vertex Array Objects (VAOs). While WebGL 2 includes VAOs as a standard core feature, environments restricted to",
+    false
+  ],
+  [
+    140,
+    "PixiJS ObjectRenderer in the WebGL Pipeline",
+    "The ObjectRenderer base class in PixiJS serves as the foundational abstraction for translating scene graph display objects into low-level WebGL draw commands. This article explores how ObjectRenderer integrates into PixiJS's rendering architecture, manag",
+    false
+  ],
+  [
+    139,
+    "PixiJS Batching: Interleaving Text and Sprites",
+    "Interleaving text objects and standard sprites within the Pixi.js scene graph disrupts the engine's internal batching mechanism, leading to batch fragmentation and a spike in WebGL draw calls. Pixi.js relies on batch consolidation to group multiple rende",
+    false
+  ],
+  [
+    138,
+    "How Pixi.js Prevents WebGL Buffer Thrashing",
+    "Rendering rapidly updating vertex data in real-time WebGL applications often introduces buffer thrashing, which causes severe GPU pipeline stalls and memory allocation overhead. Pixi.js circumvents this performance bottleneck through an aggressive geomet",
+    false
+  ],
+  [
+    137,
+    "Pixi.js Static vs Dynamic Buffer Usage Hints",
+    "In Pixi.js, the distinction between static and dynamic buffer usage hints determines how the underlying WebGL context allocates graphics memory and handles data transfers between the CPU and GPU. This article outlines the architectural differences betwee",
+    false
+  ],
+  [
+    136,
+    "How Pixi.js Packs Vertex Color and Alpha",
+    "Pixi.js optimizes 2D rendering performance by packing vertex color and alpha components into the memory footprint of a single 32-bit float. Instead of passing four separate 32-bit floating-point numbers for Red, Green, Blue, and Alpha (which would consum",
+    false
+  ],
+  [
+    135,
+    "Why Shader Changes Break Batching in Pixi.js",
+    "In Pixi.js, high rendering performance is achieved through automatic batching, which groups multiple display objects into a single WebGL draw call to minimize CPU-to-GPU communication. However, every WebGL draw call is strictly bound to a single active s",
+    false
+  ],
+  [
+    134,
+    "How to Count Draw Calls in Pixi.js",
+    "Optimizing rendering performance in Pixi.js requires monitoring how many WebGL draw calls are executed per frame to avoid CPU-to-GPU bottlenecks. This guide covers how to retrieve the exact count of draw calls per frame by intercepting native WebGL conte",
+    false
+  ],
+  [
+    133,
+    "PixiJS 16-Bit vs 32-Bit Dynamic Index Buffers",
+    "PixiJS relies on dynamic vertex and index buffers to batch and render 2D primitives, sprites, and meshes efficiently. To maximize rendering throughput and minimize memory overhead, PixiJS chooses between 16-bit (Uint16Array) and 32-bit (Uint32Array) inde",
+    false
+  ],
+  [
+    132,
+    "Pixi.js Sprite Tint Overhead in Default Batch Shader",
+    "In Pixi.js, modifying sprite tints while using the default batch shader introduces negligible GPU overhead because tints are handled as vertex attributes rather than uniform variables. Because tinting does not interrupt WebGL draw calls, thousands of dif",
+    false
+  ],
+  [
+    131,
+    "Custom BatchRenderer Plugin for Pixi.js Primitives",
+    "This article explains how to build and register a custom BatchRenderer plugin in Pixi.js to batch user-defined primitives into single draw calls. You will learn how to configure a custom shader, define vertex attributes, extend the BatchRenderer class, a",
+    false
+  ],
+  [
+    130,
+    "How Blend Modes Break Sprite Batching in PixiJS",
+    "This article explores how altering blend modes between adjacent sprites prevents PixiJS from executing efficient batch rendering. In WebGL, batching minimizes draw calls by grouping compatible render commands together. When consecutive sprites use confli",
+    false
+  ],
+  [
+    129,
+    "BatchGeometry in PixiJS Low-Level Rendering",
+    "This article explores the fundamental role of the BatchGeometry class within the low-level WebGL rendering pipeline of PixiJS. It covers how BatchGeometry coordinates dynamic vertex and index data, enables high-performance draw call batching, and interac",
+    false
+  ],
+  [
+    128,
+    "Adjust Max Vertex Count and Batch Size in Pixi.js",
+    "In Pixi.js, batching combines multiple 2D objects into single WebGL draw calls to maximize rendering performance. By default, the batcher allocates a buffer sized for a specific number of quads, but you can adjust this limit to accommodate heavier vertex",
+    false
+  ],
+  [
+    127,
+    "How PixiJS Determines MultiTexture Batch Limits",
+    "This article explores how Pixi.js optimizes 2D rendering performance through its multi-texture batching system by querying WebGL hardware capabilities, applying safety thresholds, and dynamically generating shaders to determine the maximum number of text",
+    false
+  ],
+  [
+    126,
+    "Pixi.js BatchRenderer: Causes of Extra Draw Calls",
+    "The Pixi.js BatchRenderer is designed to optimize WebGL performance by aggregating consecutive 2D display objects into single draw calls. However, whenever the renderer encounters an object requiring a state change that WebGL cannot handle mid-draw, or w",
+    false
+  ],
+  [
+    125,
+    "Configure WebGPU Anti-Aliasing in PixiJS",
+    "Configuring anti-aliasing sample counts on a WebGPU context in PixiJS allows developers to smooth jagged edges and produce high-fidelity 2D and 3D graphics. This guide outlines how to enable multi-sample anti-aliasing (MSAA) during application initializa",
+    false
+  ],
+  [
+    124,
+    "PixiJS WebGPU and WebGL Rendering Abstraction",
+    "PixiJS achieves cross-platform rendering by decoupling its high-level scene graph from the underlying graphics API using an internal Hardware Abstraction Layer (HAL). Introduced comprehensively in PixiJS v8, this architecture provides a unified set of re",
+    false
+  ],
+  [
+    123,
+    "Pixi.js RenderGroup: Optimizing Scene Sub-Trees",
+    "In modern Pixi.js architecture, the RenderGroup concept serves as a high-performance boundary that isolates sub-trees within the scene graph. By decoupling nested display objects from the root rendering loop, RenderGroups drastically reduce CPU-bound tra",
+    false
+  ],
+  [
+    122,
+    "How to Bind Vertex Buffers in Pixi.js WebGPU",
+    "This article provides an overview of how Pixi.js manages and binds vertex buffers to WebGPU pipeline states during rendering. You will learn how the engine abstracts WebGPU's strict pipeline interfaces, how Pixi.js geometry layouts map to low-level GPU v",
+    false
+  ],
+  [
+    121,
+    "PixiJS WebGPU Memory Management on Mobile",
+    "This article explores how PixiJS v8 and its WebGPU renderer manage the constrained GPU memory environments typical of mobile devices. Because mobile platforms share unified memory between the CPU and GPU, running out of memory leads directly to context l",
+    false
+  ],
+  [
+    120,
+    "Inspect WebGPU GPUCommandEncoder in Pixi.js",
+    "Inspecting the active WebGPU GPUCommandEncoder in Pixi.js allows developers to debug low-level rendering pipelines, inject custom pass commands, or profile performance. Pixi.js v8 abstracts WebGPU operations behind internal subsystems, but it still expos",
+    false
+  ],
+  [
+    119,
+    "WebGPU Resource Tracking and GC in Pixi.js",
+    "WebGPU introduces explicit resource tracking to modern web rendering, fundamentally altering how 2D and 3D frameworks handle assets in memory. In Pixi.js—particularly starting with version 8—the shift from WebGL to WebGPU transforms asset garbage col",
+    false
+  ],
+  [
+    118,
+    "PixiJS WebGPU Command Encoder Allocation Explained",
+    "PixiJS version 8 introduced a modern architecture built to support WebGPU alongside WebGL, fundamentally changing how rendering instructions are issued. Rather than assigning individual WebGPU command encoders to separate display objects, PixiJS coordina",
+    false
+  ],
+  [
+    117,
+    "Compute Shaders for Dynamic Vertices in Pixi.js",
+    "Pixi.js allows you to modify vertex data dynamically using off-screen compute operations, but your implementation depends heavily on the renderer backend in use. With the introduction of WebGPU in Pixi.js v8, true compute shaders can directly mutate vert",
+    false
+  ],
+  [
+    116,
+    "WebGPU BGRA8Unorm Canvas Contexts in Pixi.js",
+    "This article examines how Pixi.js interfaces with the WebGPU API to configure canvas presentation contexts, focusing on texture formats such as bgra8unorm. It explains how Pixi.js determines hardware-optimal formats via navigator.gpu.getPreferredCanvasFo",
+    false
+  ],
+  [
+    115,
+    "PixiJS WebGPU GpuBuffer Class Explained",
+    "This article explores the GpuBuffer class in Pixi.js, detailing its architectural role within the modern WebGPU rendering subsystem. It explains how GpuBuffer abstracts hardware-level memory, coordinates resource allocation, and synchronizes geometry, in",
+    false
+  ],
+  [
+    114,
+    "Pixi.js WebGPU Async Shader Compilation",
+    "In modern web graphics, compiling shaders at runtime often introduces sudden frame drops and visual micro-stuttering. This article explores how Pixi.js resolves this issue within its WebGPU backend by utilizing asynchronous pipeline creation, internal pi",
+    false
+  ],
+  [
+    113,
+    "Pixi.js WebGPU Depth and Stencil Attachments",
+    "This article provides a technical overview of how depth and stencil attachments are configured within WebGPU render passes in Pixi.js. It details the setup of custom RenderTarget instances, how WebGPU depth-stencil formats are selected, and the way Pixi.",
+    false
+  ],
+  [
+    112,
+    "Pixi.js WebGPU vs WebGL Draw Call Performance",
+    "This article examines the performance differences between WebGPU and WebGL draw calls in Pixi.js when rendering high object counts. As 2D scenes scale into tens or hundreds of thousands of dynamic elements, the underlying rendering API dictates whether t",
+    false
+  ],
+  [
+    111,
+    "How to Configure WebGPU MRT in Pixi.js",
+    "Multiple Render Targets (MRT) allow a fragment shader to output color data to multiple textures simultaneously in a single render pass, an essential technique for deferred shading, normal mapping, and complex post-processing. In Pixi.js v8, WebGPU suppor",
+    false
+  ],
+  [
+    110,
+    "How PixiJS Translates GLSL to WGSL at Runtime",
+    "PixiJS bridges the gap between WebGL and WebGPU by enabling developers to write standard GLSL shaders that seamlessly execute on modern WebGPU backends. To achieve this without requiring external offline compilation tools or shipping massive binary compi",
+    false
+  ],
+  [
+    109,
+    "Query WebGPU Limits and Features in Pixi.js",
+    "PixiJS v8 introduces first-class support for WebGPU alongside WebGL, allowing applications to leverage modern GPU capabilities for high-performance 2D rendering. When building advanced graphical pipelines, shaders, or compute workloads, understanding the",
+    false
+  ],
+  [
+    108,
+    "How the Pixi.js Render Graph Organizes Draw Passes",
+    "Modern Pixi.js versions utilize a reactive Render Graph architecture to streamline graphics rendering across WebGL and WebGPU. This article explains how the Render Graph dynamically records visual instructions, analyzes resource dependencies, optimizes d",
+    false
+  ],
+  [
+    107,
+    "Pixi.js WebGPU Uniform Buffer Memory Alignment Rules",
+    "Understanding memory alignment for uniform buffers in Pixi.js is essential when developing shaders for the WebGPU backend. Because WebGPU relies on strict memory layouts defined by the WGSL specification, data passed via uniform buffers must align to spe",
+    false
+  ],
+  [
+    106,
+    "WebGPU Compute Shaders with Pixi.js Rendering",
+    "Pixi.js v8 natively supports WebGPU, enabling developers to harness high-performance modern graphics capabilities alongside its familiar scene graph API. This article explains how to combine custom WebGPU compute shaders with standard Pixi.js rendering p",
+    false
+  ],
+  [
+    105,
+    "How PixiJS Chooses WebGPU Over WebGL2 Automatically",
+    "Starting in version 8, PixiJS introduces a dual-engine architecture that automatically prioritizes WebGPU while retaining WebGL2 as a reliable fallback. During application initialization, PixiJS inspects the host runtime using an asynchronous feature-det",
+    false
+  ],
+  [
+    104,
+    "Role of WebGPU BindGroups in PixiJS Pipeline",
+    "In PixiJS, BindGroup objects act as the vital bridge connecting compiled shader programs with the runtime resources they need, such as uniform buffers, textures, and samplers. Within the PixiJS WebGPU rendering engine introduced in version 8, BindGroups",
+    false
+  ],
+  [
+    103,
+    "WebGPU Device Lost Handling in Pixi.js",
+    "This article explains how Pixi.js detects WebGPU device loss, invalidates active GPU resources, and manages the recovery lifecycle. When running on modern hardware, GPU crashes, driver resets, or system power transitions can trigger a device lost event.",
+    false
+  ],
+  [
+    102,
+    "WGSL vs GLSL Shaders in Pixi.js: Syntax Differences",
+    "Pixi.js v8 introduced a unified graphics pipeline supporting both WebGL and WebGPU, enabling developers to write custom shaders using either legacy OpenGL Shading Language (GLSL) or the modern WebGPU Shading Language (WGSL). While both shading languages",
+    false
+  ],
+  [
+    101,
+    "WebGPU vs WebGL Pipeline Layouts in Pixi.js",
+    "This article explores how Pixi.js (starting with version 8) constructs and manages pipeline layouts in its WebGPU renderer compared to its traditional WebGL implementation. While WebGL relies on an immediate, mutable state machine where shaders, attribut",
+    false
+  ],
+  [
+    100,
+    "Using Pixi.js in React with ReactPixi",
+    "Integrating the high-performance 2D rendering engine Pixi.js with React's declarative UI can be challenging because Pixi.js relies on an imperative canvas API, while React manages a virtual DOM. This article explains how to bridge this gap using the offi",
+    false
+  ],
+  [
+    99,
+    "Pixi.js v8 Major Changes and Migration Guide",
+    "Pixi.js version 8 represents a massive leap forward for the 2D rendering library, introducing a ground-up rebuild designed to support modern web graphics standards. This article covers the transition from WebGL-first to WebGPU-first architecture, the new",
+    false
+  ],
+  [
+    98,
+    "Handle WebGL Context Loss in Pixi.js",
+    "WebGL context loss occurs when the computer's graphics card resets or runs out of memory, causing your WebGL application to crash or freeze. This article provides a straightforward guide on how to detect this event, listen for restoration, and gracefully",
+    false
+  ],
+  [
+    97,
+    "Export Pixi.js Canvas to Base64 Securely",
+    "This article explains how to securely capture a screenshot and export the canvas state to a base64 image in Pixi.js. You will learn how to use Pixi's built-in extraction utilities, configure your renderer to avoid blank screen issues, and handle cross-or",
+    false
+  ],
+  [
+    96,
+    "Role of Renderer in PixiJS WebGL Context",
+    "In Pixi.js, the Renderer class serves as the central hub for managing the WebGL context state, ensuring efficient rendering of 2D graphics. This article explains how the Renderer handles state transitions, minimizes overhead through state caching, coordi",
+    false
+  ],
+  [
+    95,
+    "How to Optimize Pixi.js Games for Mobile 60FPS",
+    "Achieving a smooth 60fps in Pixi.js games on older, low-end mobile devices requires aggressive optimization of rendering processes, asset management, and code execution. This article outlines actionable strategies to minimize draw calls, optimize texture",
+    false
+  ],
+  [
+    94,
+    "Pixi.js destroy Method Purpose and Usage",
+    "Managing memory is critical in WebGL applications, and Pixi.js relies on the destroy() method to prevent performance degradation and memory leaks. This article explains the exact purpose of the destroy() method in Pixi.js, how it interacts with the GPU,",
+    false
+  ],
+  [
+    93,
+    "Pixi.js Memory Management and Garbage Collection",
+    "Web applications utilizing Pixi.js require diligent memory management to maintain high frame rates and prevent browser crashes caused by memory leaks. This article explores how Pixi.js handles resource allocation and garbage collection, detailing the man",
+    false
+  ],
+  [
+    92,
+    "Integrate Spine Animations with Pixi.js",
+    "This article provides a direct guide on how to integrate and render skeletal mesh animations exported from Esoteric Software's Spine within a Pixi.js application. You will learn about the required export files, how to install the official integration plu",
+    false
+  ],
+  [
+    91,
+    "PixiJS Particle Editors and Tools",
+    "Creating visually stunning particle effects in Pixi.js is made significantly easier using dedicated design and playback tools. This article explores the primary official and community-backed tools available for generating, customizing, and rendering comp",
+    false
+  ],
+  [
+    90,
+    "Resize Pixi.js App and Maintain Aspect Ratio",
+    "Creating a responsive Pixi.js application requires handling browser window resizing while preserving a specific aspect ratio. This article provides a straightforward guide and code implementation to dynamically scale your Pixi.js canvas, ensuring your vi",
+    false
+  ],
+  [
+    89,
+    "Pixi.js NineSlicePlane Guide for Scalable UI",
+    "When building user interfaces in Pixi.js, scaling assets without stretching their borders or corners is a common challenge. This article explores the role of the NineSlicePlane class, explaining how it enables developers to create scalable UI elements—",
+    false
+  ],
+  [
+    88,
+    "Pixi.js Mesh Class: Advanced 2D Vertex Deformation",
+    "The Pixi.js Mesh class is a powerful tool that enables developers to perform advanced 2D vertex deformation and custom rendering by providing direct control over geometry, shaders, and textures. This article explores how the Mesh class operates under the",
+    false
+  ],
+  [
+    87,
+    "PixiJS ParticleContainer Sprite Limitations",
+    "The ParticleContainer in PixiJS is a highly optimized WebGL-only container designed to render thousands of sprites at ultra-high performance. However, to achieve this speed, PixiJS bypasses many standard rendering pipelines, resulting in strict feature l",
+    false
+  ],
+  [
+    86,
+    "PixiJS ParticleContainer vs Container",
+    "In Pixi.js, managing visual elements efficiently is crucial for maintaining high frame rates. This article explains the key differences between a standard Container and a ParticleContainer, highlighting when you should swap the flexible but heavier stand",
+    false
+  ],
+  [
+    85,
+    "Animate PixiJS Filter Properties Over Time",
+    "This article explains how to animate the internal properties and custom uniforms of filters in Pixi.js using the application loop. You will learn how to set up an animation ticker, access filter properties, and update them incrementally over time to crea",
+    false
+  ],
+  [
+    84,
+    "PixiJS Heavy Filter Performance on Mobile",
+    "Using computationally heavy filters in Pixi.js can severely degrade performance on mobile devices due to hardware limitations. This article explores how complex WebGL shaders impact mobile GPU resources, the direct consequences on frame rates and battery",
+    false
+  ],
+  [
+    83,
+    "How to Create Soft Alpha Masks in Pixi.js",
+    "Creating a soft-edged alpha mask in Pixi.js allows you to smoothly blend and fade visual elements using a transparent PNG. This guide provides a direct, step-by-step walkthrough on how to load a gradient PNG, apply it as an alpha mask to a target sprite,",
+    false
+  ],
+  [
+    82,
+    "Graphics Mask vs Sprite Mask in Pixi.js",
+    "Masking in Pixi.js is a fundamental technique used to hide or reveal portions of display objects. This article explains the core differences between a Graphics mask and a Sprite mask, focusing on their rendering mechanisms, support for alpha transparency",
+    false
+  ],
+  [
+    81,
+    "How Pixi.js Masks Work to Hide Display Objects",
+    "In Pixi.js, masking is a powerful technique used to restrict the visibility of a display object to a specific shape or area. This article explains the underlying mechanics of how masks work in Pixi.js, distinguishes between the two primary types of masks",
+    false
+  ],
+  [
+    80,
+    "Pixi.js Blend Modes: How to Apply Add and Multiply",
+    "This article explains what blend modes are in digital graphics and provides a direct, practical guide on how to apply the ADD and MULTIPLY blend modes to sprites in Pixi.js. You will learn how these modes manipulate pixel colors and the exact JavaScript",
+    false
+  ],
+  [
+    79,
+    "Custom Fragment Shader Filter in Pixi.js",
+    "This guide explains the step-by-step process of creating and implementing a custom fragment shader filter in Pixi.js. You will learn how to write the GLSL fragment code, define and update custom uniforms for dynamic effects, instantiate the filter within",
+    false
+  ],
+  [
+    78,
+    "Apply Multiple Filters in Pixi.js",
+    "In Pixi.js, applying multiple visual effects to a single display object—such as a Sprite, Container, or Graphics object—is achieved by assigning an array of filter instances to the object's filters property. This article explains how to instantiate,",
+    false
+  ],
+  [
+    77,
+    "How to Use PixiJS BlurFilter for Gaussian Blur",
+    "This article provides a quick and straightforward guide on how to apply a Gaussian blur effect in Pixi.js using its built-in BlurFilter. You will learn how to initialize the filter, apply it to a display object such as a sprite or container, and adjust i",
+    false
+  ],
+  [
+    76,
+    "Apply WebGL Filters to Pixi.js Containers and Sprites",
+    "WebGL filters in Pixi.js are powerful tools that allow developers to apply real-time visual effects, such as blurs, color adjustments, and displacement maps, directly to display objects. This article explains what WebGL filters are and provides a direct,",
+    false
+  ],
+  [
+    75,
+    "PixiJS EventSystem vs Legacy InteractionManager",
+    "This article explains the transition in PixiJS from the legacy InteractionManager to the modern EventSystem introduced in version 7. You will learn how the new event model improves performance, aligns with modern web standards, and simplifies input handl",
+    false
+  ],
+  [
+    74,
+    "Why Background Elements Receive Clicks in Pixi.js",
+    "In Pixi.js, developers often encounter scenarios where an interactive element positioned behind another object still registers click or pointer events. This behavior typically stems from how Pixi.js handles hit-testing, input propagation, and the scene g",
+    false
+  ],
+  [
+    73,
+    "Capture Global Pointer Events on Pixi.js Stage",
+    "This article explains how to capture global pointer events—such as clicks, taps, and mouse movements—anywhere on the background canvas stage in Pixi.js. By default, the root stage does not register interaction events on empty background areas. You wi",
+    false
+  ],
+  [
+    72,
+    "Why Use interactiveChildren False in Pixi JS",
+    "This article explains the purpose and benefits of setting the interactiveChildren property to false on a Pixi.js Container. You will learn how this property controls event propagation, improves rendering performance in complex scenes, and simplifies inpu",
+    false
+  ],
+  [
+    71,
+    "How to Detect Cursor Hover on Pixi.js DisplayObject",
+    "Detecting when a user's cursor is hovering over a specific DisplayObject in Pixi.js is a fundamental requirement for creating interactive games and applications. This article explains how to achieve this using Pixi.js's built-in event system, covering bo",
+    false
+  ],
+  [
+    70,
+    "Pixi.js Multi-Touch Events on Mobile Devices",
+    "Modern mobile web applications rely heavily on responsive touch interactions, and Pixi.js provides a robust system to manage them. This article explores how Pixi.js handles multi-touch events on mobile devices, covering its internal EventSystem, pointer",
+    false
+  ],
+  [
+    69,
+    "PixiJS hitArea: Optimize Interaction Performance",
+    "In interactive web graphics, detecting exactly where a user clicks or taps on an object can become a major performance bottleneck. This article explains the hitArea property in Pixi.js, how it defines custom interaction zones for display objects, and why",
+    false
+  ],
+  [
+    68,
+    "How to Implement Drag and Drop in Pixi.js",
+    "Implementing drag-and-drop functionality in Pixi.js involves enabling interactivity on a display object, listening to pointer events, and updating the object's coordinates based on pointer movement. This article provides a step-by-step guide and a comple",
+    false
+  ],
+  [
+    67,
+    "Difference Between pointerdown and mousedown in Pixi.js",
+    "When building interactive user interfaces in Pixi.js, choosing the right input event is crucial for ensuring a seamless user experience across different devices. This article explains the difference between the pointerdown and mousedown events in Pixi.js",
+    false
+  ],
+  [
+    66,
+    "How to Enable Click and Touch on Pixi.js Sprites",
+    "To make a specific Sprite responsive to mouse and touch interactions in Pixi.js, you must enable its interactivity properties and bind event listeners to it. This guide quickly explains how to configure a Sprite's interaction mode, change the cursor styl",
+    false
+  ],
+  [
+    65,
+    "How to Use Fixed Timestep Physics with Pixi.js Ticker",
+    "Integrating a physics engine with Pixi.js requires reconciling Pixi's variable rendering frame rate with the rigid, constant intervals needed for stable physics. This article explains how to implement the standard fixed timestep accumulator pattern insid",
+    false
+  ],
+  [
+    64,
+    "PixiJS Shared Ticker vs Application Ticker",
+    "In Pixi.js, managing the rendering loop and animations is handled by Tickers, which execute callback functions on every frame using requestAnimationFrame. This article explains the core differences between the shared global Ticker and an application-spec",
+    false
+  ],
+  [
+    63,
+    "How to Integrate GSAP with Pixi.js",
+    "Integrating Pixi.js for high-performance 2D rendering with GSAP (GreenSock Animation Platform) for robust animation control allows developers to create complex, hardware-accelerated web animations with ease. This guide provides a straightforward walkthro",
+    false
+  ],
+  [
+    62,
+    "Difference Between requestAnimationFrame and PixiJS Ticker",
+    "This article compares the browser's native requestAnimationFrame API with the built-in PixiJS Ticker utility. While both tools are designed to facilitate smooth, frame-by-frame updates for web animations and games, they operate at different levels of abs",
+    false
+  ],
+  [
+    61,
+    "Control Pixi.js Ticker: Pause, Resume, and Stop",
+    "Controlling the animation loop in Pixi.js is essential for managing game states, pausing gameplay, and optimizing performance. This article provides a quick and direct guide on how to programmatically pause, resume, and entirely destroy the main Pixi.js",
+    false
+  ],
+  [
+    60,
+    "How to Create Multiple Tickers in PixiJS",
+    "Yes, you can create and run multiple independent Ticker instances within a single Pixi.js application. While Pixi.js provides a default shared ticker (PIXI.Ticker.shared or app.ticker) for general rendering and updates, instantiating custom, independent",
+    false
+  ],
+  [
+    59,
+    "Why Multiply Movement by Delta Time in Pixi.js",
+    "This article explains why multiplying movement values by delta time inside a Pixi.js update loop is essential for game development. You will learn how delta time ensures your animations and character movements remain consistent, smooth, and fair across d",
+    false
+  ],
+  [
+    58,
+    "How Pixi.js Calculates Ticker Delta Time",
+    "This article explains how Pixi.js calculates and manages delta time within its Ticker update loop. You will learn how the framework translates raw millisecond differences between animation frames into a normalized delta time value, allowing you to create",
+    false
+  ],
+  [
+    57,
+    "Attach Custom Update Function to Pixi.js Ticker",
+    "This article provides a straightforward guide on how to attach a custom update function to the main game loop using the Pixi.js Ticker. You will learn how to access the ticker from your Pixi.js Application, write a compatible update function that utilize",
+    false
+  ],
+  [
+    56,
+    "Understanding the PixiJS Ticker Class",
+    "This article explores the primary purpose of the Ticker class in the Pixi.js ecosystem. It explains how this utility manages the application's animation loop, synchronizes updates with the browser's refresh rate, and drives frame-rate independent animati",
+    false
+  ],
+  [
+    55,
+    "How to Fix Blurry Text in Pixi.js on High-DPI Screens",
+    "This article explains why text rendering in Pixi.js applications can appear blurry or pixelated on high-DPI (Retina) screens and provides straightforward, actionable solutions to ensure crisp typography. By adjusting the application's resolution settings",
+    false
+  ],
+  [
+    54,
+    "How to Update Text Dynamically in Pixi.js",
+    "In Pixi.js, rendering and updating text is a fundamental requirement for creating interactive applications, games, and dashboards. This article provides a direct guide on how to dynamically change the string value of an already rendered Text object. You",
+    false
+  ],
+  [
+    53,
+    "How to Use Custom Web Fonts in PixiJS",
+    "Using custom web fonts loaded via CSS in Pixi.js can often result in rendering issues, such as text falling back to default system fonts or failing to display. This article explains why these rendering glitches occur and provides practical, step-by-step",
+    false
+  ],
+  [
+    52,
+    "Auto Word Wrap Text in Pixi.js",
+    "This article provides a quick guide on how to configure and apply automatic word wrapping to text elements in the Pixi.js 2D rendering engine. You will learn which style properties to enable, how to set custom wrapping widths, and how to handle edge case",
+    false
+  ],
+  [
+    51,
+    "How to Use Custom Bitmap Fonts in Pixi.js",
+    "This article provides a straightforward guide on how to generate and load custom bitmap fonts for your Pixi.js projects. You will learn how to create the necessary font sheet assets, load them into your application using the Pixi.js Assets manager, and r",
+    false
+  ],
+  [
+    50,
+    "Why Use BitmapText Over Text in Pixi.js",
+    "When building a user interface (UI) in Pixi.js, developers must choose between standard Text and BitmapText for rendering written information. While standard Text is easier to set up initially using system fonts, BitmapText is the industry standard for g",
+    false
+  ],
+  [
+    49,
+    "Pixi.js Text vs BitmapText Performance",
+    "In Pixi.js, choosing between the standard Text and BitmapText classes has a major impact on your application's rendering performance. While the standard Text class is highly flexible and easy to style, it suffers from heavy performance overhead when upda",
+    false
+  ],
+  [
+    48,
+    "Apply Drop Shadow and Text Stroke in Pixi.js",
+    "This article explains how to enhance typography in Pixi.js by applying visual effects such as drop shadows and text strokes. You will learn how to configure the TextStyle class properties to customize outline thickness, shadow distance, color, angle, and",
+    false
+  ],
+  [
+    47,
+    "Pixi.js TextStyle Properties Guide",
+    "This article provides a comprehensive overview of the styling properties available within the TextStyle object in Pixi.js. By understanding these properties, you can precisely control the appearance of text in your HTML5 games and applications, including",
+    false
+  ],
+  [
+    46,
+    "Render Text in Pixi.js Using the Text Class",
+    "Rendering text is a fundamental part of creating interactive web applications and games. This article provides a quick, step-by-step guide on how to render standard vector text to the screen using the Text class in Pixi.js. You will learn how to define t",
+    false
+  ],
+  [
+    45,
+    "How to Convert Graphics to Texture in Pixi.js",
+    "Drawing shapes dynamically with the Pixi.js Graphics class is highly flexible, but rendering complex vector shapes repeatedly can degrade your application's performance. By converting a dynamically drawn Graphics object into a reusable Texture, you allow",
+    false
+  ],
+  [
+    44,
+    "Pixi.js Graphics vs Baked Sprites Performance",
+    "Choosing between PIXI.Graphics and baked PIXI.Sprite objects in Pixi.js significantly impacts your application's rendering performance and frame rate. While Graphics objects offer flexibility for dynamic vector drawing, converting them into baked Sprites",
+    false
+  ],
+  [
+    43,
+    "How to Draw Quadratic Bezier Curves in Pixi.js",
+    "This article provides a quick, step-by-step guide on how to draw a quadratic Bezier curve using the Pixi.js Graphics API. You will learn the specific methods required to define the start, control, and end points of a curve, along with a practical code ex",
+    false
+  ],
+  [
+    42,
+    "Dynamic Graphics Masking in PixiJS",
+    "In Pixi.js, using a dynamically drawn Graphics object as a visibility mask allows you to create complex, real-time masking effects like spotlights, revealing transitions, or custom clip paths. This guide will walk you through the step-by-step process of",
+    false
+  ],
+  [
+    41,
+    "Clear Pixi.js Graphics Instance for Redrawing",
+    "In Pixi.js, managing and updating visual shapes dynamically is a common requirement for interactive applications and games. This article provides a straightforward guide on how to clear previously drawn shapes from a PIXI.Graphics instance and redraw new",
+    false
+  ],
+  [
+    40,
+    "How to Draw Custom Polygons with Pixi.js Graphics",
+    "Pixi.js offers robust support for rendering custom 2D shapes, and its Graphics object is fully capable of drawing complex, custom polygons. This article explains how to define custom paths using coordinate arrays, render concave and complex shapes, and u",
+    false
+  ],
+  [
+    39,
+    "How to Add Stroke and Fill to Pixi.js Shapes",
+    "To apply both a line stroke and a solid fill color to a shape in Pixi.js, you use the Graphics class. This article provides a quick guide and code examples on how to combine these two properties to style your 2D vector shapes, covering both classic Pixi.",
+    false
+  ],
+  [
+    38,
+    "How to Draw Circles and Ellipses in Pixi.js",
+    "This article provides a direct guide on how to render circles and ellipses using the Pixi.js Graphics utility. You will learn the specific API methods required, their parameter configurations, and see clear code examples to implement these geometric shap",
+    false
+  ],
+  [
+    37,
+    "How to Draw a Rectangle in Pixi.js Graphics",
+    "Drawing basic shapes is a fundamental task when working with Pixi.js, a popular 2D rendering engine for the web. This article provides a quick, step-by-step guide on how to instantiate the Graphics class, define a specific fill color, and render a basic",
+    false
+  ],
+  [
+    36,
+    "What is the Pixi.js Graphics API Used For?",
+    "This article explains the primary purposes of the Graphics API in Pixi.js, a popular HTML5 2D rendering engine. It covers how developers use this API to programmatically draw vector shapes, create masks, build dynamic UI components, and optimize renderin",
+    false
+  ],
+  [
+    35,
+    "Efficiently Render Thousands of Sprites in PixiJS",
+    "Rendering thousands of fast-moving, identical sprites in Pixi.js without dropping frames requires bypassing standard container workflows to minimize CPU and GPU overhead. This article explains how to achieve maximum rendering performance using PIXI.Parti",
+    false
+  ],
+  [
+    34,
+    "Pixi.js TilingSprite Texture Repeating and Scrolling",
+    "This article explains how to use the TilingSprite class in Pixi.js to create repeating texture patterns and infinite scrolling backgrounds. You will learn how to instantiate a TilingSprite, control the scale of the repeated pattern, and animate the textu",
+    false
+  ],
+  [
+    33,
+    "PixiJS Texture Caching and Rendering Performance",
+    "Pixi.js optimizes 2D rendering performance by utilizing a sophisticated internal texture caching system that prevents redundant GPU uploads and minimizes memory overhead. This article explores how Pixi.js manages its internal texture caches, differentiat",
+    false
+  ],
+  [
+    32,
+    "What is RenderTexture in PixiJS",
+    "This article provides a comprehensive overview of RenderTexture in PixiJS, explaining its core concepts and how it functions within the rendering engine. You will discover its most common practical applications, including performance optimization, dynami",
+    false
+  ],
+  [
+    31,
+    "How to Change Pixi.js Sprite Texture Dynamically",
+    "In Pixi.js, updating the visual appearance of an already rendered sprite does not require destroying and recreating the object. This article provides a quick and direct guide on how to programmatically swap the texture of an active Sprite, ensuring optim",
+    false
+  ],
+  [
+    30,
+    "Control AnimatedSprite Speed and Loop in Pixi.js",
+    "This article provides a straightforward guide on how to adjust the playback speed and configure the looping behavior of an AnimatedSprite in Pixi.js. You will learn how to use the animationSpeed property to control how fast your animations run, and how t",
+    false
+  ],
+  [
+    29,
+    "How to Use AnimatedSprite in Pixi.js",
+    "This article explains what an AnimatedSprite is in the Pixi.js 2D rendering engine and provides a step-by-step guide on how to implement one in your project. You will learn the core concepts behind frame-by-frame animations in PixiJS, followed by a strai",
+    false
+  ],
+  [
+    28,
+    "How to Change Sprite Tint Dynamically in Pixi.js",
+    "This article explains how to dynamically alter the color tint of an existing Sprite in Pixi.js. You will learn how to modify the tint property, use the correct color formats, and update the sprite's color in real-time within an animation loop. In Pixi.js",
+    false
+  ],
+  [
+    27,
+    "Pixi.js Sprite Anchor Point and Positioning",
+    "In Pixi.js, the anchor point of a Sprite defines the origin of its texture, dictating how the sprite is positioned, rotated, and scaled relative to its coordinates. This article explains what the anchor point is, how it affects sprite positioning, and ho",
+    false
+  ],
+  [
+    26,
+    "Pixi.js Loading Progress Bar for Heavy Assets",
+    "When building rich web applications or games with Pixi.js, loading heavy assets like high-resolution textures, audio, and spritesheets can take time. To prevent a blank screen and improve user experience, implementing a visual progress bar is essential.",
+    false
+  ],
+  [
+    25,
+    "Guide to Pixi.js Assets Module for Resource Loading",
+    "In modern Pixi.js (version 7 and newer), the Assets module serves as the modernized, promise-based system for loading and managing external resources such as textures, fonts, audio, and custom data. This article explains the crucial role of the Assets ut",
+    false
+  ],
+  [
+    24,
+    "Create Multiple Sprites from a Spritesheet in Pixi.js",
+    "Using a single spritesheet is an efficient way to manage game assets and improve rendering performance in Pixi.js. This article provides a straightforward guide on how to load a spritesheet and extract multiple independent sprites from it. You will learn",
+    false
+  ],
+  [
+    23,
+    "PixiJS Texture vs BaseTexture: What is the Difference?",
+    "Understanding the distinction between Texture and BaseTexture is fundamental to optimizing rendering and memory usage in PixiJS. This article explains the technical differences between these two classes, detailing how BaseTexture manages raw image source",
+    false
+  ],
+  [
+    22,
+    "How to Load Images Asynchronously in Pixi.js",
+    "Loading images asynchronously to create textures in Pixi.js is essential for preventing performance stutters and ensuring a smooth user experience. This article explains how to use Pixi.js's modern Assets utility to load an image file from a URL, convert",
+    false
+  ],
+  [
+    21,
+    "What is a Sprite in Pixi.js?",
+    "This article provides a comprehensive overview of what defines a Sprite within the Pixi.js rendering engine. It covers the fundamental relationship between Sprites and Textures, explains key properties like anchors and positioning, and details how Sprite",
+    false
+  ],
+  [
+    20,
+    "Core Renderable Base Class in PixiJS",
+    "This article explains the core architectural base class for all renderable objects within PixiJS. It covers the identity of this base class, how it manages properties like transforms and visibility, and how its role has evolved between older versions of",
+    false
+  ],
+  [
+    19,
+    "Pixi.js Get Child Element by Name",
+    "This article explains how to retrieve a specific child display object from a Pixi.js Container using its assigned name. You will learn how to assign names to your Pixi.js objects and use the built-in getChildByName method to locate and manipulate them wi",
+    false
+  ],
+  [
+    18,
+    "PixiJS Visible vs Alpha Properties Explained",
+    "In Pixi.js, both the visible and alpha properties of a DisplayObject control whether an element is seen on the screen, but they do so in fundamentally different ways. This article explains the technical differences between these two properties, how they",
+    false
+  ],
+  [
+    17,
+    "Remove Child Element from Pixi.js Stage Safely",
+    "This article provides a straightforward guide on how to safely remove a specific child element from the stage in Pixi.js. You will learn the best practices for removing display objects using built-in Pixi.js methods, preventing runtime errors, and proper",
+    false
+  ],
+  [
+    16,
+    "Pixi.js Container Scale and Rotation Effects on Children",
+    "In Pixi.js, the display hierarchy operates as a tree structure where transformations applied to a parent Container automatically propagate down to all of its child elements. This article explains how scaling and rotating a parent container affects the vi",
+    false
+  ],
+  [
+    15,
+    "How to Change Z-Index of Sibling Objects in Pixi.js",
+    "Managing the rendering order of overlapping visual elements is essential for creating depth in 2D applications. In Pixi.js, the draw order of display objects is determined by their position within their parent container's child array. This article explai",
+    false
+  ],
+  [
+    14,
+    "Add Child to Container in Pixi.js Dynamically",
+    "In Pixi.js, you can dynamically add child objects—such as Sprites, Graphics, or other Containers—to an existing Container at runtime using the addChild() method. This article explains how to instantiate a Pixi.js container, create display objects dyn",
+    false
+  ],
+  [
+    13,
+    "What is a PixiJS Container",
+    "This article explains the concept of a Container in Pixi.js, detailing how it functions as the fundamental building block of the rendering engine. You will learn how Containers establish hierarchical structures, simplify coordinate space positioning, and",
+    false
+  ],
+  [
+    12,
+    "Understanding Pixi.js Display List and Scenegraph",
+    "This article explains the inner workings of the Pixi.js scenegraph and display list, detailing how parent-child relationships govern rendering order, coordinate transformations, and visual inheritance. By understanding how Pixi.js traverses this hierarch",
+    false
+  ],
+  [
+    11,
+    "Purpose of the Pixi.js Stage Object",
+    "This article provides a clear overview of the main stage object in a Pixi.js application, explaining its essential role in managing 2D graphics. Readers will learn how the stage acts as the root container of the scene graph, how it facilitates rendering,",
+    false
+  ],
+  [
+    10,
+    "Configure Pixi.js Background Color and Resolution",
+    "Setting up a new Pixi.js application requires configuring essential canvas properties to fit your project's design and performance needs. This article provides a direct, step-by-step guide on how to configure both the background color and the rendering r",
+    false
+  ],
+  [
+    9,
+    "Rendering Library vs Game Engine: Key Differences",
+    "When building interactive web applications or digital games, choosing the right software tool is critical to your project's success. This article explores the fundamental differences between a dedicated 2D rendering library like Pixi.js and a full-featur",
+    false
+  ],
+  [
+    8,
+    "How to Append Pixi.js Canvas to HTML Body",
+    "To render graphics in your web browser using Pixi.js, you must add its rendering surface to your web page. This article provides a straightforward guide on how to initialize a Pixi.js application and append its automatically generated canvas element dire",
+    false
+  ],
+  [
+    7,
+    "Understanding the Pixi.js Application Class",
+    "When setting up a Pixi.js project, the Application class serves as the central foundation that simplifies the initialization process. This article explains the essential role of the Application class in bootstrapping a Pixi.js application, detailing how",
+    false
+  ],
+  [
+    6,
+    "How to Install and Import Pixi.js Using npm",
+    "This article provides a straightforward, step-by-step guide on how to integrate Pixi.js into a modern web application using npm. You will learn how to install the Pixi.js package, import it into your JavaScript or TypeScript files using ES modules, and i",
+    false
+  ],
+  [
+    5,
+    "Why Pixi.js is Faster than HTML5 Canvas",
+    "This article explores the main performance advantages of using Pixi.js over the native HTML5 Canvas API. While the Canvas API is excellent for simple drawings, Pixi.js leverages hardware acceleration, automatic batching, and optimized rendering pipelines",
+    false
+  ],
+  [
+    4,
+    "Pixi.js vs DOM Manipulation for Graphics",
+    "This article explores the fundamental differences between rendering graphics using Pixi.js and traditional HTML DOM manipulation. By comparing their underlying technologies, performance capabilities, and ideal use cases, you will understand why and when",
+    false
+  ],
+  [
+    3,
+    "How to Initialize a PixiJS Application",
+    "This article provides a step-by-step guide on how to initialize a basic PixiJS application instance using the latest industry standards. You will learn how to set up the library, configure the application asynchronously, and mount the rendering canvas to",
+    false
+  ],
+  [
+    2,
+    "Pixi.js WebGL Fallback Explained",
+    "This article explains how the Pixi.js rendering engine manages cross-browser compatibility by automatically falling back to alternative rendering technologies when WebGL is unsupported. It covers the mechanics of Pixi's auto-detection system, the transit",
+    false
+  ],
+  [
+    1,
+    "What is PixiJS and How is it Used in Web Development?",
+    "This article provides a clear overview of Pixi.js, explaining what the library is and its primary role in modern web development. We will explore how PixiJS utilizes WebGL to deliver high-performance 2D graphics, its key features, and the specific scenar",
+    false
+  ]
+]

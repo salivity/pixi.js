@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS Sprite Batching and Custom Uniform Performance - pixi.js</title>
+    <meta name="description" content="In Pixi.js, high-performance 2D rendering relies heavily on sprite batching, a technique that aggregates multiple display objects into a single WebGL draw call. When you introduce custom uniforms to individual sprites, you inherently disrupt this pipelin">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-sprite-batching-and-custom-uniform-performance">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS Sprite Batching and Custom Uniform Performance - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-sprite-batching-and-custom-uniform-performance" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In Pixi.js, high-performance 2D rendering relies heavily on sprite batching, a technique that aggregates multiple display objects into a single WebGL draw call. When you introduce custom uniforms to individual sprites, you inherently disrupt this pipelin" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-sprite-batching-and-custom-uniform-performance">PixiJS
+Sprite Batching and Custom Uniform Performance</h1>
+<p>In Pixi.js, high-performance 2D rendering relies heavily on sprite
+batching, a technique that aggregates multiple display objects into a
+single WebGL draw call. When you introduce custom uniforms to individual
+sprites, you inherently disrupt this pipeline. Because standard WebGL
+uniforms apply globally to an entire draw call rather than per-vertex,
+attempting to assign unique uniform values to individual sprites forces
+Pixi.js to break batches, resulting in severe performance bottlenecks
+characterized by multiplied draw calls, CPU overhead, and GPU pipeline
+stalls.</p>
+<h3 id="how-sprite-batching-works-in-pixijs">How Sprite Batching Works
+in Pixi.js</h3>
+<p>Pixi.js achieves high frame rates by funneling standard sprites
+through its internal <code>BatchRenderer</code>. The renderer combines
+the geometry, textures, UV coordinates, and tint colors of sequential
+sprites into a single shared vertex buffer. As long as sprites share
+compatible shader configurations and textures, Pixi.js draws hundreds or
+thousands of elements in a single operation
+(<code>gl.drawElements</code>).</p>
+<h3 id="why-custom-uniforms-break-batching">Why Custom Uniforms Break
+Batching</h3>
+<p>WebGL shader uniforms are program-level constants. They remain
+unchanged for all vertices processed within a single draw execution.</p>
+<p>When an individual sprite uses a custom shader (or a
+<code>Filter</code>) with unique uniform values:</p>
+<ol type="1">
+<li><strong>Batch Interruption:</strong> Pixi.js cannot merge that
+sprite with surrounding elements because doing so would apply its
+uniform values to every other sprite in the shared buffer.</li>
+<li><strong>Buffer Flush:</strong> The batch renderer must immediately
+flush any queued sprites to the GPU via an active draw call.</li>
+<li><strong>State Switching:</strong> Pixi.js binds the custom shader,
+uploads the unique uniform data to the GPU via <code>gl.uniform*</code>
+calls, and issues an isolated draw call for that single sprite.</li>
+<li><strong>Pipeline Restart:</strong> After rendering the customized
+sprite, Pixi.js must restore the default batch shader and state to
+continue rendering subsequent sprites.</li>
+</ol>
+<h3 id="direct-performance-consequences">Direct Performance
+Consequences</h3>
+<p>Applying unique uniforms to individual sprites scales your
+application's rendering cost linearly (<span
+class="math inline">\(O(N)\)</span>) with sprite count:</p>
+<ul>
+<li><strong>Draw Call Multiplication:</strong> A scene that normally
+requires 1 to 5 draw calls can easily balloon into hundreds or thousands
+of draw calls. WebGL performance drops sharply as draw call counts
+rise.</li>
+<li><strong>CPU-Side Driver Overhead:</strong> Executing frequent draw
+calls and binding uniforms repeatedly monopolizes main-thread CPU time,
+leading to lower frame rates and frame pacing stutter.</li>
+<li><strong>GPU Pipeline Stalls:</strong> Constant context switching
+between different shader states and uniform registers prevents the GPU
+from maintaining peak pipeline throughput and parallelization.</li>
+</ul>
+<h3 id="recommended-alternatives">Recommended Alternatives</h3>
+<p>To customize individual sprites without losing batching performance,
+use approaches that decouple per-instance data from WebGL uniforms:</p>
+<ul>
+<li><strong>Vertex Attributes via Custom Geometry:</strong> Encode
+per-sprite custom parameters (such as phase, custom scale factors, or
+timers) directly into custom vertex attributes rather than uniforms.
+Attributes are evaluated per-vertex and natively batch together.</li>
+<li><strong>Vertex Color and Alpha Channels:</strong> If your custom
+data consists of 1 to 4 scalar values (like normalized timers or
+intensity factors), store them in unused color or alpha channels of the
+sprite's tint.</li>
+<li><strong>Texture Packing (Data Textures):</strong> Store per-sprite
+parameters inside a small dynamic texture. Pass a normalized texture
+coordinate as a vertex attribute so the shader can sample individual
+sprite parameters within a single, unified batch.</li>
+<li><strong>Uniform Buffer Objects (UBOs):</strong> In WebGL2 contexts,
+pack uniform data for an array of instances into a single buffer and
+pass instance IDs through vertex data, minimizing state changes.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

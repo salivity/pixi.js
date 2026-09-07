@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Multiply Movement by Delta Time in Pixi.js - pixi.js</title>
+    <meta name="description" content="This article explains why multiplying movement values by delta time inside a Pixi.js update loop is essential for game development. You will learn how delta time ensures your animations and character movements remain consistent, smooth, and fair across d">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/why-multiply-movement-by-delta-time-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Why Multiply Movement by Delta Time in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/why-multiply-movement-by-delta-time-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains why multiplying movement values by delta time inside a Pixi.js update loop is essential for game development. You will learn how delta time ensures your animations and character movements remain consistent, smooth, and fair across d" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="why-multiply-movement-by-delta-time-in-pixijs">Why Multiply
+Movement by Delta Time in Pixi.js</h1>
+<p>This article explains why multiplying movement values by delta time
+inside a Pixi.js update loop is essential for game development. You will
+learn how delta time ensures your animations and character movements
+remain consistent, smooth, and fair across different devices, monitors,
+and frame rates.</p>
+<p>When building games or interactive applications in Pixi.js, you
+typically use an update loop (via <code>app.ticker.add</code>) to update
+the positions of your sprites on every frame. However, if you move a
+sprite by a fixed pixel value per frame—such as
+<code>sprite.x += 5</code>—the actual speed of the sprite becomes
+directly tied to the user's frame rate.</p>
+<h3 id="the-problem-with-frame-rate-dependent-movement">The Problem with
+Frame-Rate Dependent Movement</h3>
+<p>In a frame-dependent setup, a game running on a standard 60 Hz
+monitor will render 60 frames per second (FPS), moving the sprite 300
+pixels per second. If a user plays the same game on a 144 Hz gaming
+monitor, the update loop runs 144 times per second, causing the sprite
+to move at 720 pixels per second. Conversely, if a mobile device
+experiences lag and drops to 30 FPS, the sprite will crawl at only 150
+pixels per second.</p>
+<p>This inconsistency breaks gameplay physics, makes games unplayable on
+high-refresh-rate monitors, and punishes players with slower
+hardware.</p>
+<h3 id="how-delta-time-solves-the-problem">How Delta Time Solves the
+Problem</h3>
+<p>Pixi.js provides a <code>deltaTime</code> value (often passed as a
+parameter in the ticker callback) to solve this issue. Delta time
+represents the fractional amount of time that has elapsed since the last
+frame, relative to a target frame rate (usually 60 FPS).</p>
+<p>By multiplying your movement values by delta time, you transition
+from frame-dependent movement to time-dependent movement:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">ticker</span><span class="op">.</span><span class="fu">add</span>((ticker) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> speed <span class="op">=</span> <span class="dv">5</span><span class="op">;</span> <span class="co">// Base speed per frame at 60 FPS</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    sprite<span class="op">.</span><span class="at">x</span> <span class="op">+=</span> speed <span class="op">*</span> ticker<span class="op">.</span><span class="at">deltaTime</span><span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h3 id="why-this-is-crucial-for-your-project">Why This is Crucial for
+Your Project</h3>
+<ol type="1">
+<li><strong>Consistent Speed Across Hardware:</strong> Whether a player
+is on a 30 FPS budget smartphone or a 240 Hz desktop monitor, the sprite
+will cover the exact same distance in real-time.</li>
+<li><strong>Fair Gameplay:</strong> In multiplayer or physics-heavy
+games, consistent movement speeds ensure that players with faster
+computers do not gain a speed advantage over those with slower
+hardware.</li>
+<li><strong>Smooth Performance During Lag Spikes:</strong> If the
+rendering engine temporarily stutters, the next frame's
+<code>deltaTime</code> will be larger to compensate for the lost time,
+"catching up" the sprite to its correct physical position.</li>
+</ol></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure PixiJS Assets for Compressed Formats - pixi.js</title>
+    <meta name="description" content="This guide explains how to configure the Pixi.js Assets manager to detect hardware capabilities and serve GPU-compressed texture formats like ASTC, BCn, ETC, or modern web formats like WebP and AVIF. By configuring detection parsers and structured asset">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/configure-pixijs-assets-for-compressed-formats">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Configure PixiJS Assets for Compressed Formats - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/configure-pixijs-assets-for-compressed-formats" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This guide explains how to configure the Pixi.js Assets manager to detect hardware capabilities and serve GPU-compressed texture formats like ASTC, BCn, ETC, or modern web formats like WebP and AVIF. By configuring detection parsers and structured asset" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="configure-pixijs-assets-for-compressed-formats">Configure PixiJS
+Assets for Compressed Formats</h1>
+<p>This guide explains how to configure the Pixi.js <code>Assets</code>
+manager to detect hardware capabilities and serve GPU-compressed texture
+formats like ASTC, BCn, ETC, or modern web formats like WebP and AVIF.
+By configuring detection parsers and structured asset manifests, Pixi.js
+automatically evaluates client GPU extensions and loads the most
+efficient texture available, with seamless fallbacks for unsupported
+devices.</p>
+<h3 id="1-enable-compressed-texture-support">1. Enable Compressed
+Texture Support</h3>
+<p>To handle GPU-native formats such as KTX or DDS containers holding
+BCn, ETC, or ASTC textures, ensure that the compressed texture package
+is included in your project. In full Pixi.js bundles, compressed texture
+extensions are often included, but in modular setups, install and
+register <code>@pixi/compressed-textures</code>:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install @pixi/compressed-textures</span></code></pre></div>
+<p>Import and register the parsers to ensure Pixi.js registers detection
+rules and decoding capabilities:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { extensions } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    loadKTX<span class="op">,</span> </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    loadDDS<span class="op">,</span> </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    detectCompressed</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>} <span class="im">from</span> <span class="st">&#39;@pixi/compressed-textures&#39;</span><span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>extensions<span class="op">.</span><span class="fu">add</span>(loadKTX<span class="op">,</span> loadDDS<span class="op">,</span> detectCompressed)<span class="op">;</span></span></code></pre></div>
+<p>Once added, Pixi.js inspects the underlying WebGL context for
+supported extensions (such as
+<code>WEBGL_compressed_texture_s3tc</code>,
+<code>WEBGL_compressed_texture_astc</code>, or
+<code>WEBGL_compressed_texture_etc</code>).</p>
+<h3 id="2-configure-format-preferences-in-assetsinit">2. Configure
+Format Preferences in Assets.init</h3>
+<p>When initializing the <code>Assets</code> cache, define your
+preference order using <code>Assets.init()</code>. Pixi.js uses this
+list to break ties when multiple compatible formats are provided:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { Assets } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> Assets<span class="op">.</span><span class="fu">init</span>({</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">preferences</span><span class="op">:</span> {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">preferWorkers</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="dt">preferCreateImageBitmap</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Order formats from highest priority to lowest priority</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="dt">formats</span><span class="op">:</span> [<span class="st">&#39;astc&#39;</span><span class="op">,</span> <span class="st">&#39;bc3&#39;</span><span class="op">,</span> <span class="st">&#39;etc2&#39;</span><span class="op">,</span> <span class="st">&#39;webp&#39;</span><span class="op">,</span> <span class="st">&#39;png&#39;</span>]</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>Pixi.js cross-references this <code>formats</code> array against the
+formats supported by the current device's hardware.</p>
+<h3 id="3-supply-multi-format-assets">3. Supply Multi-Format Assets</h3>
+<p>To enable automatic selection, provide the loader with multiple
+format alternatives for a single asset key. You can achieve this using
+an array in <code>Assets.load</code> or via an asset manifest.</p>
+<h4 id="using-assetsload-directly">Using <code>Assets.load</code>
+Directly</h4>
+<p>Pass an array of URLs. Pixi.js will pick the first format in the list
+that the device supports:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Provide formats in preferred order or rely on Assets.init preferences</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> texture <span class="op">=</span> <span class="cf">await</span> Assets<span class="op">.</span><span class="fu">load</span>([</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;textures/character.astc.ktx&#39;</span><span class="op">,</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;textures/character.s3tc.ktx&#39;</span><span class="op">,</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;textures/character.webp&#39;</span><span class="op">,</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;textures/character.png&#39;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>])<span class="op">;</span></span></code></pre></div>
+<h4 id="using-an-asset-manifest">Using an Asset Manifest</h4>
+<p>For larger projects, create an asset manifest where an asset alias
+points to multiple file formats under a single entry:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> manifest <span class="op">=</span> {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bundles</span><span class="op">:</span> [</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        {</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>            <span class="dt">name</span><span class="op">:</span> <span class="st">&#39;game-screen&#39;</span><span class="op">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>            <span class="dt">assets</span><span class="op">:</span> [</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                {</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                    <span class="dt">alias</span><span class="op">:</span> <span class="st">&#39;background&#39;</span><span class="op">,</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                    <span class="dt">src</span><span class="op">:</span> [</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                        <span class="st">&#39;assets/bg.astc.ktx&#39;</span><span class="op">,</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                        <span class="st">&#39;assets/bg.bc7.ktx&#39;</span><span class="op">,</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                        <span class="st">&#39;assets/bg.etc2.ktx&#39;</span><span class="op">,</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>                        <span class="st">&#39;assets/bg.webp&#39;</span><span class="op">,</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>                        <span class="st">&#39;assets/bg.png&#39;</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>                    ]</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>                }</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>            ]</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">// Initialize the manifest</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> Assets<span class="op">.</span><span class="fu">init</span>({ manifest })<span class="op">;</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">// Load the bundle</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> bundle <span class="op">=</span> <span class="cf">await</span> Assets<span class="op">.</span><span class="fu">loadBundle</span>(<span class="st">&#39;game-screen&#39;</span>)<span class="op">;</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co">// Retrieve the texture via its alias</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> backgroundTexture <span class="op">=</span> bundle<span class="op">.</span><span class="at">background</span><span class="op">;</span></span></code></pre></div>
+<h3 id="4-how-format-matching-operates">4. How Format Matching
+Operates</h3>
+<p>When <code>Assets.load</code> evaluates an array of candidate
+URLs:</p>
+<ol type="1">
+<li><strong>Detection:</strong> Registered detectors (like
+<code>detectCompressed</code>, <code>detectWebp</code>, and
+<code>detectAvif</code>) run during initialization to query browser and
+WebGL capabilities.</li>
+<li><strong>Filtering:</strong> Pixi.js strips out any URLs containing
+format extensions the system cannot decode.</li>
+<li><strong>Resolution:</strong> If multiple valid formats remain,
+Pixi.js selects the one with the highest priority according to the
+<code>formats</code> preference array configured during
+<code>Assets.init</code>.</li>
+<li><strong>Fallback:</strong> If no compressed GPU format is supported,
+the loader cascades down to WebP or standard raster formats
+(PNG/JPEG).</li>
+</ol></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

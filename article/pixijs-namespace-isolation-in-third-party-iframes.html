@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS Namespace Isolation in Third-Party Iframes - pixi.js</title>
+    <meta name="description" content="Embedding Pixi.js inside a third-party iframe ensures robust isolation from the host page by leveraging the browser's native browsing context boundaries alongside modular library architecture. This article explains how the execution context of an iframe">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-namespace-isolation-in-third-party-iframes">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS Namespace Isolation in Third-Party Iframes - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-namespace-isolation-in-third-party-iframes" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Embedding Pixi.js inside a third-party iframe ensures robust isolation from the host page by leveraging the browser's native browsing context boundaries alongside modular library architecture. This article explains how the execution context of an iframe" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-namespace-isolation-in-third-party-iframes">PixiJS
+Namespace Isolation in Third-Party Iframes</h1>
+<p>Embedding Pixi.js inside a third-party iframe ensures robust
+isolation from the host page by leveraging the browser's native browsing
+context boundaries alongside modular library architecture. This article
+explains how the execution context of an iframe shields the parent
+application from global namespace conflicts, how modern Pixi.js builds
+eliminate top-level scope leakage, and the practices required to ensure
+complete runtime encapsulation and resource teardown.</p>
+<h3 id="execution-context-sandboxing">Execution Context Sandboxing</h3>
+<p>The primary mechanism that isolates Pixi.js within an iframe is the
+browser’s native window segregation. When an iframe loads, it
+instantiates an entirely independent global execution context
+(<code>contentWindow</code>). Even if a legacy or standalone build of
+Pixi.js assigns its entry point to the global scope via
+<code>window.PIXI</code>, that object is bound exclusively to the
+iframe's local window object. The host page's <code>window</code> object
+remains untouched, eliminating the risk of variable collisions,
+framework conflicts, or accidental overrides of global utilities.</p>
+<h3 id="modular-packaging-and-scoped-instances">Modular Packaging and
+Scoped Instances</h3>
+<p>Modern versions of Pixi.js (v7 and v8) rely on ECMAScript Modules
+(ESM) rather than implicit global variables. When bundled using tools
+like Vite, Webpack, or Rollup:</p>
+<ul>
+<li>Classes such as <code>Application</code>, <code>Container</code>,
+and <code>Sprite</code> are scoped locally within the bundled
+closure.</li>
+<li>No properties are automatically assigned to <code>window</code> or
+<code>globalThis</code>.</li>
+<li>Multiple Pixi.js applications, even across different versions, can
+run within the same iframe or across separate nested frames without
+cross-contaminating shared prototypes or internal settings.</li>
+</ul>
+<h3 id="dom-and-event-listener-containment">DOM and Event Listener
+Containment</h3>
+<p>Pixi.js renders via an HTML5 <code>HTMLCanvasElement</code> managed
+by its internal <code>EventSystem</code>. When running inside an
+iframe:</p>
+<ul>
+<li>Event listeners for interaction (pointers, touch, mouse wheel)
+attach specifically to the encapsulated canvas or the iframe's
+<code>document</code>.</li>
+<li>Pointer coordinates are calculated relative to the iframe's
+viewport, preventing input events from interfering with host page
+elements.</li>
+<li>Style recalculations and WebGL rendering operations remain
+restricted to the iframe's paint cycle, preventing CSS cascade bleed or
+layout thrashing in the parent environment.</li>
+</ul>
+<h3 id="shared-tickers-and-singleton-control">Shared Tickers and
+Singleton Control</h3>
+<p>Pixi.js utilizes a shared ticker (<code>Ticker.shared</code>) for
+driving animations. In a standard global environment, a shared ticker
+might inadvertently be shared across separate sub-applications. Inside
+an iframe, the singleton ticker exists only for that specific document.
+To achieve absolute isolation and prevent frame-rate or throttling
+interference, developers can instantiate dedicated tickers:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> app <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Application</span>()<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> app<span class="op">.</span><span class="fu">init</span>({</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">height</span><span class="op">:</span> <span class="dv">600</span><span class="op">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">autoStart</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">sharedTicker</span><span class="op">:</span> <span class="kw">false</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> privateTicker <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Ticker</span>()<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>privateTicker<span class="op">.</span><span class="fu">add</span>((time) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    app<span class="op">.</span><span class="fu">render</span>()<span class="op">;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>privateTicker<span class="op">.</span><span class="fu">start</span>()<span class="op">;</span></span></code></pre></div>
+<h3 id="complete-teardown-and-memory-leak-prevention">Complete Teardown
+and Memory Leak Prevention</h3>
+<p>While the iframe boundary handles namespace pollution, embedded
+environments must also isolate memory consumption. If an iframe is
+reused or dynamically reloaded, residual WebGL contexts or ongoing
+animation loops can cause memory leaks. Calling Pixi's destruction
+methods cleans up all internal references:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="fu">destroy</span>(<span class="kw">true</span><span class="op">,</span> {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">children</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">texture</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">textureSource</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">context</span><span class="op">:</span> <span class="kw">true</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>Passing explicit destruction flags ensures WebGL buffer bindings,
+GPU-allocated textures, DOM listeners, and ticker hooks are released
+from the iframe's memory space, leaving a clean environment for
+subsequent operations.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How PixiJS Uses Bitwise Flags for Dirty States - pixi.js</title>
+    <meta name="description" content="PixiJS relies on bitwise flags to maintain high-performance rendering across complex, deeply nested scene graphs. Instead of evaluating matrix math and hierarchy states on every frame, PixiJS uses single integers as bitmasks to track changes to container">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-pixijs-uses-bitwise-flags-for-dirty-states">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How PixiJS Uses Bitwise Flags for Dirty States - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-pixijs-uses-bitwise-flags-for-dirty-states" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="PixiJS relies on bitwise flags to maintain high-performance rendering across complex, deeply nested scene graphs. Instead of evaluating matrix math and hierarchy states on every frame, PixiJS uses single integers as bitmasks to track changes to container" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-pixijs-uses-bitwise-flags-for-dirty-states">How PixiJS Uses
+Bitwise Flags for Dirty States</h1>
+<p>PixiJS relies on bitwise flags to maintain high-performance rendering
+across complex, deeply nested scene graphs. Instead of evaluating matrix
+math and hierarchy states on every frame, PixiJS uses single integers as
+bitmasks to track changes to container transformations, alpha, and
+visibility. This article examines how these bitwise flags work, how
+changes propagate through the display tree, and how PixiJS uses these
+operations to skip redundant recalculations.</p>
+<h3 id="the-challenge-of-hierarchical-scene-graphs">The Challenge of
+Hierarchical Scene Graphs</h3>
+<p>In PixiJS, visual elements reside in a tree structure composed of
+<code>Container</code> instances. Each container has local properties
+(position, scale, rotation, pivot, skew, and alpha) and calculated world
+properties (the concatenated world transform matrix and world
+alpha).</p>
+<p>Recalculating the world transform and final visibility for thousands
+of display objects on every tick creates massive CPU overhead. Most
+objects in a 2D scene remain static for long periods. To optimize the
+render loop, PixiJS only recalculates a container's world matrix or
+visibility status when its own local state—or that of any ancestor—has
+actually mutated.</p>
+<h3 id="representing-states-with-bitmasks">Representing States with
+Bitmasks</h3>
+<p>Rather than allocating multiple boolean variables (such as
+<code>isTransformDirty</code>, <code>isVisibilityDirty</code>, or
+<code>isBoundsDirty</code>) per display object, PixiJS stores these
+states within a single 32-bit integer, commonly referred to as a dirty
+flag.</p>
+<p>Each specific dirty condition is assigned a power of two (a single
+bit in the bitmask):</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> TRANSFORM_DIRTY   <span class="op">=</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">0</span><span class="op">;</span> <span class="co">// 0001 (1)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> WORLD_DIRTY       <span class="op">=</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">1</span><span class="op">;</span> <span class="co">// 0010 (2)</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VISIBILITY_DIRTY  <span class="op">=</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">2</span><span class="op">;</span> <span class="co">// 0100 (4)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CHILDREN_DIRTY    <span class="op">=</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">3</span><span class="op">;</span> <span class="co">// 1000 (8)</span></span></code></pre></div>
+<p>By using bitwise operators, PixiJS can manipulate and query multiple
+states simultaneously with minimal CPU cycles:</p>
+<ul>
+<li><strong>Setting a state (Bitwise OR):</strong>
+<code>flags |= TRANSFORM_DIRTY</code> flips the specified bit to 1,
+marking the property as needing an update.</li>
+<li><strong>Checking a state (Bitwise AND):</strong>
+<code>if (flags &amp; TRANSFORM_DIRTY)</code> evaluates whether that
+specific bit is set.</li>
+<li><strong>Clearing a state (Bitwise AND with NOT):</strong>
+<code>flags &amp;= ~TRANSFORM_DIRTY</code> clears the bit once the
+system recalculates the required matrix or value.</li>
+</ul>
+<h3 id="transform-invalidation-and-propagation">Transform Invalidation
+and Propagation</h3>
+<p>When a property such as <code>container.x</code> or
+<code>container.rotation</code> changes, the container sets its local
+transform flag using a bitwise OR operation. However, because a
+container’s world transform is the product of its local transform and
+its parent’s world transform, invalidation must be handled across the
+hierarchy.</p>
+<p>PixiJS handles propagation efficiently:</p>
+<ol type="1">
+<li><strong>Local Mutation:</strong> Mutating a local transform sets the
+local dirty flag on the container.</li>
+<li><strong>Upward/Downward Propagation:</strong> When a container's
+local transform changes, its world transform and all of its descendants'
+world transforms immediately become invalid. PixiJS marks the current
+container’s world transform as dirty. Rather than performing an
+immediate, expensive recursive traversal through all descendants, the
+system defers work by utilizing dirty IDs or setting flags that are
+evaluated during the render pass.</li>
+<li><strong>Hierarchical Resolution:</strong> During the update pass,
+PixiJS traverses the container tree from the root downward. If a
+parent's world transform flag is dirty, it forces the recalculation of
+its own world matrix and passes a dirty flag down to its children via
+bitwise inheritance (<code>childFlags |= WORLD_DIRTY</code>).</li>
+</ol>
+<h3 id="visibility-and-renderable-state-invalidation">Visibility and
+Renderable State Invalidation</h3>
+<p>Visibility and transparency behave similarly to spatial transforms.
+An object’s ultimate visibility depends on its own <code>visible</code>
+and <code>renderable</code> flags, its <code>alpha</code> value, and the
+combined states of its parent containers.</p>
+<ul>
+<li>If an ancestor container has <code>visible = false</code> or
+<code>worldAlpha = 0</code>, the entire subtree is skipped during
+rendering.</li>
+<li>PixiJS stores visibility and alpha dirty states in the bitmask. When
+alpha or visibility updates, a <code>VISIBILITY_DIRTY</code> bit is
+flagged.</li>
+<li>During traversal, the effective <code>worldAlpha</code> is computed
+by multiplying the parent's <code>worldAlpha</code> by the local
+<code>alpha</code>. If the dirty bit is not set on either the parent or
+the child, this calculation is skipped entirely.</li>
+</ul>
+<h3 id="performance-benefits-of-bitwise-dirty-tracking">Performance
+Benefits of Bitwise Dirty Tracking</h3>
+<p>The bitwise approach provides three distinct architectural
+benefits:</p>
+<ul>
+<li><strong>Memory Footprint:</strong> Storing several dozen potential
+operational states inside a single integer avoids the overhead of
+managing numerous discrete boolean properties across millions of
+instances.</li>
+<li><strong>CPU Cache Locality:</strong> Packing multiple flags into a
+single numerical property allows the CPU to fetch and inspect all state
+indicators within a single memory read operation.</li>
+<li><strong>Compound State Checks:</strong> PixiJS can test for multiple
+conditions in a single instruction. For example, evaluating
+<code>flags &amp; (TRANSFORM_DIRTY | WORLD_DIRTY)</code> determines if
+any matrix math needs to occur, avoiding nested conditional branching in
+performance-critical render loops.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

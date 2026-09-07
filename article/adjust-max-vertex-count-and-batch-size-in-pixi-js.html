@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adjust Max Vertex Count and Batch Size in Pixi.js - pixi.js</title>
+    <meta name="description" content="In Pixi.js, batching combines multiple 2D objects into single WebGL draw calls to maximize rendering performance. By default, the batcher allocates a buffer sized for a specific number of quads, but you can adjust this limit to accommodate heavier vertex">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/adjust-max-vertex-count-and-batch-size-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Adjust Max Vertex Count and Batch Size in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/adjust-max-vertex-count-and-batch-size-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In Pixi.js, batching combines multiple 2D objects into single WebGL draw calls to maximize rendering performance. By default, the batcher allocates a buffer sized for a specific number of quads, but you can adjust this limit to accommodate heavier vertex" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="adjust-max-vertex-count-and-batch-size-in-pixijs">Adjust Max
+Vertex Count and Batch Size in Pixi.js</h1>
+<p>In Pixi.js, batching combines multiple 2D objects into single WebGL
+draw calls to maximize rendering performance. By default, the batcher
+allocates a buffer sized for a specific number of quads, but you can
+adjust this limit to accommodate heavier vertex requirements or reduce
+memory overhead. This guide explains how to configure the maximum vertex
+count and batch size across different versions of Pixi.js, as well as
+the technical trade-offs of adjusting these values.</p>
+<hr />
+<h2 id="pixijs-v6-and-v7-replacing-the-default-batch-plugin">Pixi.js v6
+and v7: Replacing the Default Batch Plugin</h2>
+<p>In Pixi.js v6 and v7, the default 2D batching system is handled by
+the <code>BatchRenderer</code>. The internal vertex capacity is
+determined by the <code>defaultBatchSize</code> property within
+<code>BatchPluginFactory</code>, which represents the maximum number of
+quads processed in a single batch (default is usually 4,096 quads, equal
+to 16,384 vertices).</p>
+<p>To adjust the batch size globally, generate a new batch renderer with
+your desired capacity and register it under the <code>'batch'</code>
+plugin name before initializing the <code>Application</code> or
+<code>Renderer</code>.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> <span class="op">*</span> <span class="im">as</span> PIXI <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Define the custom quad capacity (e.g., 8192 quads = 32,768 vertices)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> customBatchSize <span class="op">=</span> <span class="dv">8192</span><span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Create a new batch renderer class with the custom size</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CustomBatchRenderer <span class="op">=</span> PIXI<span class="op">.</span><span class="at">BatchPluginFactory</span><span class="op">.</span><span class="fu">create</span>({</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">defaultBatchSize</span><span class="op">:</span> customBatchSize</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">// Register it to override the default batch renderer</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>PIXI<span class="op">.</span><span class="at">extensions</span><span class="op">.</span><span class="fu">add</span>({</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">name</span><span class="op">:</span> <span class="st">&#39;batch&#39;</span><span class="op">,</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">type</span><span class="op">:</span> PIXI<span class="op">.</span><span class="at">ExtensionType</span><span class="op">.</span><span class="at">RendererPlugin</span><span class="op">,</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">ref</span><span class="op">:</span> CustomBatchRenderer</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co">// Initialize your application as usual</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> app <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Application</span>({</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="dt">height</span><span class="op">:</span> <span class="dv">600</span><span class="op">,</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>If you are using an older Pixi.js v5 or v6 setup using
+<code>PIXI.Renderer.registerPlugin</code>, you can register it like
+this:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>PIXI<span class="op">.</span><span class="at">Renderer</span><span class="op">.</span><span class="fu">registerPlugin</span>(<span class="st">&#39;batch&#39;</span><span class="op">,</span> CustomBatchRenderer)<span class="op">;</span></span></code></pre></div>
+<hr />
+<h2 id="pixijs-v8-pipe-architecture-and-batcher-limits">Pixi.js v8: Pipe
+Architecture and Batcher Limits</h2>
+<p>Pixi.js v8 completely rewrote the internal rendering engine using a
+modular pipe architecture. In v8, geometry batching is managed by the
+<code>Batcher</code> class.</p>
+<p>Unlike previous versions with fixed compile-time plugin generation,
+the v8 <code>Batcher</code> dynamically manages vertex and index
+allocation, but you can still override batch settings via custom batch
+pipe configurations or by modifying the <code>Batcher</code> instance
+defaults.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { Batcher<span class="op">,</span> Application } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Adjust the default vertex and index capacity</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>Batcher<span class="op">.</span><span class="at">defaultOptions</span> <span class="op">=</span> {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span>Batcher<span class="op">.</span><span class="at">defaultOptions</span><span class="op">,</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">maxVertices</span><span class="op">:</span> <span class="dv">65535</span><span class="op">,</span> <span class="co">// Adjust vertex limit per batch</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> app <span class="op">=</span> <span class="kw">new</span> <span class="fu">Application</span>()<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> app<span class="op">.</span><span class="fu">init</span>({</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">height</span><span class="op">:</span> <span class="dv">600</span><span class="op">,</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<hr />
+<h2 id="technical-considerations-when-changing-batch-size">Technical
+Considerations When Changing Batch Size</h2>
+<ul>
+<li><strong>16-bit Index Buffer Limits:</strong> By default, standard
+WebGL 1.0/2.0 implementations often use 16-bit unsigned integers
+(<code>Uint16Array</code>) for element index buffers
+(<code>gl.UNSIGNED_SHORT</code>). This limits the maximum number of
+unique vertices in a single batch to <strong>65,535</strong>. Setting a
+batch size higher than 16,383 quads (which totals 65,532 vertices) will
+require 32-bit indices (<code>OES_element_index_uint</code>), which may
+not be supported on low-end hardware.</li>
+<li><strong>CPU-to-GPU Upload Times:</strong> Increasing batch size
+reduces the total number of draw calls, but it increases the time spent
+uploading vertex buffers to the GPU in a single chunk. If your
+application rarely fills large buffers, a high batch size wastes CPU
+memory.</li>
+<li><strong>Texture Paging Limits:</strong> A batch breaks not only when
+the vertex limit is reached, but also when the number of bound textures
+exceeds the GPU's <code>MAX_TEXTURE_IMAGE_UNITS</code> limit. Increasing
+vertex capacity will not prevent batch breaks caused by referencing too
+many unique sprite textures.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

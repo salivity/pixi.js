@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customize UV Coordinates in a Pixi.js Mesh - pixi.js</title>
+    <meta name="description" content="Customizing the UV coordinates of individual vertices in a Pixi.js Mesh allows developers to achieve advanced texture mapping, custom sprite deformation, and selective texture wrapping. This article explains how to access a mesh's geometry attributes, al">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/customize-uv-coordinates-in-a-pixi-js-mesh">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Customize UV Coordinates in a Pixi.js Mesh - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/customize-uv-coordinates-in-a-pixi-js-mesh" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Customizing the UV coordinates of individual vertices in a Pixi.js Mesh allows developers to achieve advanced texture mapping, custom sprite deformation, and selective texture wrapping. This article explains how to access a mesh's geometry attributes, al" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="customize-uv-coordinates-in-a-pixijs-mesh">Customize UV
+Coordinates in a Pixi.js Mesh</h1>
+<p>Customizing the UV coordinates of individual vertices in a Pixi.js
+<code>Mesh</code> allows developers to achieve advanced texture mapping,
+custom sprite deformation, and selective texture wrapping. This article
+explains how to access a mesh's geometry attributes, alter specific UV
+values mapped to individual vertices, and properly flag the underlying
+buffers so Pixi.js uploads the updated coordinates to the GPU.</p>
+<h3 id="understanding-pixijs-mesh-uv-structure">Understanding Pixi.js
+Mesh UV Structure</h3>
+<p>In Pixi.js, a <code>Mesh</code> relies on a <code>MeshGeometry</code>
+(or a generic <code>Geometry</code> object) to define vertices, texture
+coordinates, and triangle indices. Texture coordinates are stored in a
+flattened array (typically a <code>Float32Array</code>) associated with
+the <code>aTextureCoord</code> attribute.</p>
+<p>Each vertex has two UV coordinates:</p>
+<ul>
+<li><strong>U (horizontal):</strong> Ranges from <code>0.0</code> (left)
+to <code>1.0</code> (right).</li>
+<li><strong>V (vertical):</strong> Ranges from <code>0.0</code> (top) to
+<code>1.0</code> (bottom).</li>
+</ul>
+<p>Because the array is flattened, the coordinates for vertex
+<code>i</code> occupy indices <code>i * 2</code> (for U) and
+<code>i * 2 + 1</code> (for V).</p>
+<h3 id="modifying-vertex-uvs-step-by-step">Modifying Vertex UVs
+Step-by-Step</h3>
+<p>To update the UV coordinates for specific vertices, directly modify
+the geometry's UV buffer and notify the renderer of the change.</p>
+<h4 id="1-retrieve-the-uv-buffer">1. Retrieve the UV Buffer</h4>
+<p>Access the UV array directly from the geometry. In most standard mesh
+setups (such as <code>SimpleMesh</code> or custom meshes), you can
+access the array through the <code>uvs</code> property or the attribute
+buffer.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Access the Float32Array containing the UV coordinates</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> uvs <span class="op">=</span> mesh<span class="op">.</span><span class="at">geometry</span><span class="op">.</span><span class="at">uvs</span><span class="op">;</span></span></code></pre></div>
+<p>If working with custom low-level geometries, access the buffer
+directly via the attribute list:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> uvBuffer <span class="op">=</span> mesh<span class="op">.</span><span class="at">geometry</span><span class="op">.</span><span class="fu">getAttribute</span>(<span class="st">&#39;aTextureCoord&#39;</span>)<span class="op">.</span><span class="at">buffer</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> uvs <span class="op">=</span> uvBuffer<span class="op">.</span><span class="at">data</span><span class="op">;</span></span></code></pre></div>
+<h4 id="2-update-the-target-coordinates">2. Update the Target
+Coordinates</h4>
+<p>Locate the index of the vertex you want to modify and assign new
+values between <code>0.0</code> and <code>1.0</code>.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Index of the vertex to modify</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> vertexIndex <span class="op">=</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Set new U and V coordinates</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>uvs[vertexIndex <span class="op">*</span> <span class="dv">2</span>] <span class="op">=</span> <span class="fl">0.5</span><span class="op">;</span>     <span class="co">// New U coordinate</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>uvs[vertexIndex <span class="op">*</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> <span class="fl">0.8</span><span class="op">;</span> <span class="co">// New V coordinate</span></span></code></pre></div>
+<h4 id="3-flag-the-buffer-for-gpu-upload">3. Flag the Buffer for GPU
+Upload</h4>
+<p>Pixi.js buffers do not automatically re-upload to the GPU every frame
+for performance reasons. When buffer data changes, manually invoke
+<code>update()</code> on the buffer to mark it as dirty.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Update using the geometry helper</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>mesh<span class="op">.</span><span class="at">geometry</span><span class="op">.</span><span class="fu">getBuffer</span>(<span class="st">&#39;aTextureCoord&#39;</span>)<span class="op">.</span><span class="fu">update</span>()<span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Or update the buffer directly if referenced</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>mesh<span class="op">.</span><span class="at">geometry</span><span class="op">.</span><span class="at">buffers</span>[<span class="dv">1</span>]<span class="op">.</span><span class="fu">update</span>()<span class="op">;</span></span></code></pre></div>
+<h3 id="complete-implementation-example">Complete Implementation
+Example</h3>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> <span class="op">*</span> <span class="im">as</span> PIXI <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">// 1. Create a basic plane or mesh</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> vertices <span class="op">=</span> <span class="kw">new</span> <span class="bu">Float32Array</span>([</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span>     <span class="co">// Vertex 0: Top-Left</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">100</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span>   <span class="co">// Vertex 1: Top-Right</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="dv">100</span><span class="op">,</span> <span class="dv">100</span><span class="op">,</span> <span class="co">// Vertex 2: Bottom-Right</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span> <span class="dv">100</span>    <span class="co">// Vertex 3: Bottom-Left</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>])<span class="op">;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> uvs <span class="op">=</span> <span class="kw">new</span> <span class="bu">Float32Array</span>([</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="co">// Vertex 0</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="co">// Vertex 1</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="co">// Vertex 2</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span>  <span class="co">// Vertex 3</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>])<span class="op">;</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> indices <span class="op">=</span> <span class="kw">new</span> <span class="bu">Uint16Array</span>([<span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>])<span class="op">;</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> geometry <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">MeshGeometry</span>(vertices<span class="op">,</span> uvs<span class="op">,</span> indices)<span class="op">;</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mesh <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Mesh</span>(geometry<span class="op">,</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">MeshMaterial</span>(PIXI<span class="op">.</span><span class="at">Texture</span><span class="op">.</span><span class="at">WHITE</span>))<span class="op">;</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">// 2. Custom function to update a specific vertex UV</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">setVertexUV</span>(meshInstance<span class="op">,</span> vertexIndex<span class="op">,</span> u<span class="op">,</span> v) {</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> uvData <span class="op">=</span> meshInstance<span class="op">.</span><span class="at">geometry</span><span class="op">.</span><span class="at">uvs</span><span class="op">;</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Assign normalized coordinates</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    uvData[vertexIndex <span class="op">*</span> <span class="dv">2</span>] <span class="op">=</span> u<span class="op">;</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    uvData[vertexIndex <span class="op">*</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> v<span class="op">;</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Inform the GPU that the buffer has changed</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    meshInstance<span class="op">.</span><span class="at">geometry</span><span class="op">.</span><span class="fu">getBuffer</span>(<span class="st">&#39;aTextureCoord&#39;</span>)<span class="op">.</span><span class="fu">update</span>()<span class="op">;</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co">// 3. Customize the UV of Vertex 2 (Bottom-Right)</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="fu">setVertexUV</span>(mesh<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="fl">0.5</span><span class="op">,</span> <span class="fl">0.5</span>)<span class="op">;</span></span></code></pre></div>
+<h3 id="key-considerations">Key Considerations</h3>
+<ul>
+<li><strong>Normalized Values:</strong> Pixi.js expects UV values
+between <code>0.0</code> and <code>1.0</code>. If you assign values
+outside this range, the behavior depends on the texture's
+<code>wrapMode</code> (such as <code>CLAMP</code> or
+<code>REPEAT</code>).</li>
+<li><strong>Texture Atlases:</strong> When using textures from a
+spritesheet or atlas, UV coordinates must be calculated relative to the
+frame rectangle within the base texture rather than the global
+<code>0.0</code> to <code>1.0</code> range.</li>
+<li><strong>Batching Impact:</strong> Frequently modifying buffer data
+marks the mesh as dynamic, which requires data transfer over the bus to
+the GPU. Keep updates confined only to frames where coordinates actually
+change.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

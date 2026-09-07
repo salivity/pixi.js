@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom 2D Lighting and Shadows Shader in Pixi.js - pixi.js</title>
+    <meta name="description" content="Creating realistic 2D lighting and shadows in Pixi.js involves writing a custom fragment shader using the PIXI.Filter class. This article explains how to build a dynamic 2D point light system from scratch, complete with distance attenuation and raymarche">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/custom-2d-lighting-and-shadows-shader-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Custom 2D Lighting and Shadows Shader in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/custom-2d-lighting-and-shadows-shader-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Creating realistic 2D lighting and shadows in Pixi.js involves writing a custom fragment shader using the PIXI.Filter class. This article explains how to build a dynamic 2D point light system from scratch, complete with distance attenuation and raymarche" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="custom-2d-lighting-and-shadows-shader-in-pixijs">Custom 2D
+Lighting and Shadows Shader in Pixi.js</h1>
+<p>Creating realistic 2D lighting and shadows in Pixi.js involves
+writing a custom fragment shader using the <code>PIXI.Filter</code>
+class. This article explains how to build a dynamic 2D point light
+system from scratch, complete with distance attenuation and raymarched
+2D shadows. By passing light coordinates and scene occlusion data to
+GLSL uniforms, you can render smooth ambient lighting, falloff curves,
+and realistic occlusions over your game sprites in real time.</p>
+<h2 id="understanding-the-architecture">Understanding the
+Architecture</h2>
+<p>A 2D lighting system requires two primary components: an occlusion
+map (which defines where light-blocking obstacles exist) and a light
+shader. Pixi.js passes the scene as a standard texture
+(<code>uSampler</code>), while a custom fragment shader calculates the
+distance between each pixel and the light source. To generate shadows,
+the fragment shader steps along a ray from the current pixel toward the
+light source, testing the occlusion map for obstacles.</p>
+<h2 id="step-1-setting-up-the-occlusion-map">Step 1: Setting Up the
+Occlusion Map</h2>
+<p>Before writing the shader, you need a texture that tells the shader
+where obstacles are. Create a dedicated container for shadow-casting
+objects and render it to a <code>PIXI.RenderTexture</code>.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> app <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Application</span>({ <span class="dt">width</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">600</span> })<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">document</span><span class="op">.</span><span class="at">body</span><span class="op">.</span><span class="fu">appendChild</span>(app<span class="op">.</span><span class="at">view</span>)<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Container for obstacles that cast shadows</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> shadowCasters <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Container</span>()<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">// Render texture used as the occlusion map</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> occlusionTexture <span class="op">=</span> PIXI<span class="op">.</span><span class="at">RenderTexture</span><span class="op">.</span><span class="fu">create</span>({</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> app<span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">width</span><span class="op">,</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">height</span><span class="op">:</span> app<span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">height</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>Black or transparent pixels in this container represent open air,
+while white or opaque pixels represent walls and obstacles.</p>
+<h2 id="step-2-writing-the-glsl-fragment-shader">Step 2: Writing the
+GLSL Fragment Shader</h2>
+<p>The fragment shader evaluates light intensity based on distance
+falloff and traces a ray to ensure no opaque pixels sit between the
+light and the current fragment.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">precision</span> <span class="dt">mediump</span> <span class="dt">float</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="dt">varying</span> <span class="dt">vec2</span> vTextureCoord<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">sampler2D</span> uSampler<span class="op">;</span>          <span class="co">// Scene texture</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">sampler2D</span> uOcclusionMap<span class="op">;</span>     <span class="co">// Obstacle texture</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">vec2</span> uLightPosition<span class="op">;</span>         <span class="co">// Light position in normalized coordinates (0.0 to 1.0)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">vec3</span> uLightColor<span class="op">;</span>            <span class="co">// Light tint (R, G, B)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">float</span> uLightRadius<span class="op">;</span>          <span class="co">// Radius of the light in normalized units</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">vec3</span> uAmbientColor<span class="op">;</span>          <span class="co">// Base ambient light level</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="dt">const</span> <span class="dt">int</span> RAY_STEPS <span class="op">=</span> <span class="dv">32</span><span class="op">;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">main</span><span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> sceneColor <span class="op">=</span> <span class="dt">texture2D</span><span class="op">(</span>uSampler<span class="op">,</span> vTextureCoord<span class="op">);</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Calculate direction and distance to the light source</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec2</span> lightDir <span class="op">=</span> uLightPosition <span class="op">-</span> vTextureCoord<span class="op">;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> dist <span class="op">=</span> <span class="bu">length</span><span class="op">(</span>lightDir<span class="op">);</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">// If outside the radius, apply only ambient light</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> <span class="op">(</span>dist <span class="op">&gt;</span> uLightRadius<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="va">gl_FragColor</span> <span class="op">=</span> <span class="dt">vec4</span><span class="op">(</span>sceneColor<span class="op">.</span><span class="fu">rgb</span> <span class="op">*</span> uAmbientColor<span class="op">,</span> sceneColor<span class="op">.</span><span class="fu">a</span><span class="op">);</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        <span class="kw">return</span><span class="op">;</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Trace a ray from the fragment to the light</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec2</span> stepVector <span class="op">=</span> lightDir <span class="op">/</span> <span class="dt">float</span><span class="op">(</span>RAY_STEPS<span class="op">);</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec2</span> currentPos <span class="op">=</span> vTextureCoord<span class="op">;</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> shadow <span class="op">=</span> <span class="fl">1.0</span><span class="op">;</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> RAY_STEPS<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>        currentPos <span class="op">+=</span> stepVector<span class="op">;</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Stop if the ray passes the light position</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> <span class="op">(</span><span class="bu">length</span><span class="op">(</span>uLightPosition <span class="op">-</span> currentPos<span class="op">)</span> <span class="op">&lt;</span> <span class="bu">length</span><span class="op">(</span>stepVector<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>            <span class="kw">break</span><span class="op">;</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Check if an obstacle is hit (alpha or red threshold)</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>        <span class="dt">vec4</span> occlusionSample <span class="op">=</span> <span class="dt">texture2D</span><span class="op">(</span>uOcclusionMap<span class="op">,</span> currentPos<span class="op">);</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> <span class="op">(</span>occlusionSample<span class="op">.</span><span class="fu">a</span> <span class="op">&gt;</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>            shadow <span class="op">=</span> <span class="fl">0.0</span><span class="op">;</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>            <span class="kw">break</span><span class="op">;</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Calculate attenuation (smooth quadratic falloff)</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> attenuation <span class="op">=</span> <span class="bu">clamp</span><span class="op">(</span><span class="fl">1.0</span> <span class="op">-</span> <span class="op">(</span>dist <span class="op">/</span> uLightRadius<span class="op">),</span> <span class="fl">0.0</span><span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>    attenuation <span class="op">*=</span> attenuation<span class="op">;</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Combine light, shadows, and ambient illumination</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec3</span> totalLight <span class="op">=</span> uAmbientColor <span class="op">+</span> <span class="op">(</span>uLightColor <span class="op">*</span> attenuation <span class="op">*</span> shadow<span class="op">);</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>    <span class="va">gl_FragColor</span> <span class="op">=</span> <span class="dt">vec4</span><span class="op">(</span>sceneColor<span class="op">.</span><span class="fu">rgb</span> <span class="op">*</span> totalLight<span class="op">,</span> sceneColor<span class="op">.</span><span class="fu">a</span><span class="op">);</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 id="step-3-instantiating-the-pixijs-filter">Step 3: Instantiating
+the Pixi.js Filter</h2>
+<p>Create an instance of <code>PIXI.Filter</code> using your fragment
+shader. Map the uniforms so they can be modified dynamically from
+JavaScript.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> uniforms <span class="op">=</span> {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uOcclusionMap</span><span class="op">:</span> occlusionTexture<span class="op">,</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uLightPosition</span><span class="op">:</span> <span class="kw">new</span> <span class="bu">Float32Array</span>([<span class="fl">0.5</span><span class="op">,</span> <span class="fl">0.5</span>])<span class="op">,</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uLightColor</span><span class="op">:</span> <span class="kw">new</span> <span class="bu">Float32Array</span>([<span class="fl">1.0</span><span class="op">,</span> <span class="fl">0.9</span><span class="op">,</span> <span class="fl">0.7</span>])<span class="op">,</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uLightRadius</span><span class="op">:</span> <span class="fl">0.4</span><span class="op">,</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uAmbientColor</span><span class="op">:</span> <span class="kw">new</span> <span class="bu">Float32Array</span>([<span class="fl">0.1</span><span class="op">,</span> <span class="fl">0.1</span><span class="op">,</span> <span class="fl">0.15</span>])</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> lightingFilter <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Filter</span>(<span class="kw">null</span><span class="op">,</span> fragmentShaderSource<span class="op">,</span> uniforms)<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co">// Apply the filter to your main game scene</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mainScene <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Container</span>()<span class="op">;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(mainScene)<span class="op">;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>mainScene<span class="op">.</span><span class="at">filters</span> <span class="op">=</span> [lightingFilter]<span class="op">;</span></span></code></pre></div>
+<h2 id="step-4-updating-lights-in-the-render-loop">Step 4: Updating
+Lights in the Render Loop</h2>
+<p>Normalize screen coordinates to the <code>[0.0, 1.0]</code> range
+required by the fragment shader and render the occlusion texture every
+frame.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">ticker</span><span class="op">.</span><span class="fu">add</span>(() <span class="kw">=&gt;</span> {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Render shadow casters to the occlusion texture</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="fu">render</span>(shadowCasters<span class="op">,</span> {</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="dt">renderTexture</span><span class="op">:</span> occlusionTexture<span class="op">,</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">clear</span><span class="op">:</span> <span class="kw">true</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Update the light position to follow mouse or player</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> mousePos <span class="op">=</span> app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="at">events</span><span class="op">.</span><span class="at">pointer</span><span class="op">.</span><span class="at">global</span><span class="op">;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    lightingFilter<span class="op">.</span><span class="at">uniforms</span><span class="op">.</span><span class="at">uLightPosition</span>[<span class="dv">0</span>] <span class="op">=</span> mousePos<span class="op">.</span><span class="at">x</span> <span class="op">/</span> app<span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">width</span><span class="op">;</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    lightingFilter<span class="op">.</span><span class="at">uniforms</span><span class="op">.</span><span class="at">uLightPosition</span>[<span class="dv">1</span>] <span class="op">=</span> mousePos<span class="op">.</span><span class="at">y</span> <span class="op">/</span> app<span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">height</span><span class="op">;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h2 id="optimizing-shader-performance">Optimizing Shader
+Performance</h2>
+<p>Raymarching within a 2D fragment shader is computationally intensive
+because every pixel samples the occlusion map multiple times. To
+maintain high framerates:</p>
+<ol type="1">
+<li><strong>Keep step counts reasonable</strong>: A step count of 16 to
+32 is generally sufficient for 2D games.</li>
+<li><strong>Downsample the occlusion map</strong>: Render the occlusion
+texture at half or quarter resolution to save memory bandwidth.</li>
+<li><strong>Use early exits</strong>: Discard pixels outside
+<code>uLightRadius</code> immediately before executing the raymarching
+loop.</li>
+</ol></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

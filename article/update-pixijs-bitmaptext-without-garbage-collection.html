@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update PixiJS BitmapText Without Garbage Collection - pixi.js</title>
+    <meta name="description" content="Updating a PixiJS BitmapText instance dynamically without triggering garbage collection is possible, but not through the standard .text property assignment. In high-frequency rendering loops—such as HUD counters, damage numbers, or timers—setting bit">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/update-pixijs-bitmaptext-without-garbage-collection">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Update PixiJS BitmapText Without Garbage Collection - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/update-pixijs-bitmaptext-without-garbage-collection" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Updating a PixiJS BitmapText instance dynamically without triggering garbage collection is possible, but not through the standard .text property assignment. In high-frequency rendering loops—such as HUD counters, damage numbers, or timers—setting bit" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="update-pixijs-bitmaptext-without-garbage-collection">Update
+PixiJS BitmapText Without Garbage Collection</h1>
+<p>Updating a PixiJS <code>BitmapText</code> instance dynamically
+without triggering garbage collection is possible, but not through the
+standard <code>.text</code> property assignment. In high-frequency
+rendering loops—such as HUD counters, damage numbers, or timers—setting
+<code>bitmapText.text = "123"</code> generates garbage by allocating new
+JavaScript string primitives and triggering internal glyph-tracking
+churn. To achieve zero-allocation text updates, you must bypass runtime
+string creation and directly mutate pre-allocated internal glyph sprites
+or build a dedicated character pool.</p>
+<h3 id="why-standard-updates-trigger-garbage-collection">Why Standard
+Updates Trigger Garbage Collection</h3>
+<p>When you execute <code>bitmapText.text = newString</code>, two
+distinct memory allocation events occur:</p>
+<ol type="1">
+<li><strong>JavaScript String Allocation:</strong> Converting numbers or
+combining characters creates new primitive strings on the V8/JS heap
+that must eventually be collected.</li>
+<li><strong>Internal Structure Rebuilding:</strong> PixiJS parses the
+string, measures kerning, and updates an internal array of child glyph
+sprites. While PixiJS uses pooling for its glyph sprites, clearing,
+slicing, or resizing text lengths still creates intermediate object
+references and array modifications.</li>
+</ol>
+<h3 id="technique-1-pre-allocated-glyph-pools">Technique 1:
+Pre-Allocated Glyph Pools</h3>
+<p>The most reliable way to avoid GC is to avoid the
+<code>BitmapText</code> class directly for high-frequency dynamic text
+and instead construct a fixed-size pool of <code>PIXI.Sprite</code>
+instances mapped to your bitmap font’s textures.</p>
+<ol type="1">
+<li><strong>Pre-populate Sprites:</strong> Determine the maximum
+character length required (e.g., 8 characters for a score). Instantiate
+that fixed number of child sprites under a single
+<code>PIXI.Container</code>.</li>
+<li><strong>Extract Textures Once:</strong> Access the cached character
+textures directly from
+<code>PIXI.BitmapFont.available[fontName].chars[charCode].texture</code>.</li>
+<li><strong>Update Textures via Math:</strong> Instead of converting
+numbers to strings, use arithmetic (modulo and division) to isolate
+individual digits as integer character codes. Assign these pre-cached
+textures directly to the corresponding child sprites.</li>
+<li><strong>Toggle Visibility:</strong> If the value requires fewer
+characters than the maximum capacity, set
+<code>sprite.visible = false</code> instead of destroying or unlinking
+the child.</li>
+</ol>
+<p>This method completely bypasses the JavaScript string parser,
+generates zero runtime allocations, and avoids the internal layout loop
+of <code>BitmapText</code>.</p>
+<h3 id="technique-2-in-place-mutation-of-internal-glyph-data">Technique
+2: In-Place Mutation of Internal Glyph Data</h3>
+<p>If you must use an existing <code>BitmapText</code> instance, you can
+modify its internal children directly without calling the
+<code>.text</code> setter:</p>
+<ol type="1">
+<li><strong>Initialize to Maximum Width:</strong> Instantiate the
+<code>BitmapText</code> with a placeholder string of maximum expected
+length (e.g., <code>"000000"</code>). This ensures the underlying sprite
+array allocates the required capacity upfront.</li>
+<li><strong>Direct Glyph Replacement:</strong> Access the internal
+children via <code>bitmapText.children</code>. Loop through the children
+and reassign their <code>.texture</code> properties using textures
+looked up directly from
+<code>BitmapFont.available[fontName].chars[charCode]</code>.</li>
+<li><strong>Manual Offsets:</strong> Update each sprite’s <code>x</code>
+and <code>y</code> properties based on the character's
+<code>xOffset</code>, <code>yOffset</code>, and <code>xAdvance</code>
+data stored in the font definition to preserve correct spacing.</li>
+<li><strong>Hide Unused Glyphs:</strong> Set
+<code>.visible = false</code> on remaining sprites when the current text
+is shorter than the initialized maximum.</li>
+</ol>
+<h3 id="technique-3-zero-allocation-string-caching">Technique 3:
+Zero-Allocation String Caching</h3>
+<p>If standard <code>.text</code> updates must be retained for kerning
+calculations, you can eliminate JavaScript string GC by pre-generating a
+lookup table for common values.</p>
+<p>For counters from 0 to 9999, pre-allocate an array of strings at
+application startup:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> stringCache <span class="op">=</span> <span class="bu">Array</span><span class="op">.</span><span class="fu">from</span>({ <span class="dt">length</span><span class="op">:</span> <span class="dv">10000</span> }<span class="op">,</span> (_<span class="op">,</span> i) <span class="kw">=&gt;</span> i<span class="op">.</span><span class="fu">toString</span>())<span class="op">;</span></span></code></pre></div>
+<p>Passing <code>stringCache[score]</code> into
+<code>bitmapText.text</code> eliminates dynamic string allocations.
+While this does not prevent PixiJS’s internal layout overhead, it
+removes the primary source of per-frame heap growth in the JavaScript
+runtime.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

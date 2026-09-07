@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extract RGBA Pixels from Pixi.js Texture - pixi.js</title>
+    <meta name="description" content="Extracting raw RGBA pixel data from a rendered Pixi.js Texture is essential for tasks such as computer vision, pixel-perfect collision detection, and procedural image processing. Pixi.js provides a dedicated extraction utility within its rendering pipeli">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/extract-rgba-pixels-from-pixi-js-texture">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Extract RGBA Pixels from Pixi.js Texture - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/extract-rgba-pixels-from-pixi-js-texture" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Extracting raw RGBA pixel data from a rendered Pixi.js Texture is essential for tasks such as computer vision, pixel-perfect collision detection, and procedural image processing. Pixi.js provides a dedicated extraction utility within its rendering pipeli" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="extract-rgba-pixels-from-pixijs-texture">Extract RGBA Pixels
+from Pixi.js Texture</h1>
+<p>Extracting raw RGBA pixel data from a rendered Pixi.js
+<code>Texture</code> is essential for tasks such as computer vision,
+pixel-perfect collision detection, and procedural image processing.
+Pixi.js provides a dedicated extraction utility within its rendering
+pipeline that reads GPU framebuffers back to CPU memory, returning pixel
+data as a typed array. This guide demonstrates how to programmatically
+obtain this raw RGBA array using both modern Pixi.js v8 and legacy
+Pixi.js v7 methods.</p>
+<h3 id="using-pixijs-v8-async-extraction">Using Pixi.js v8 (Async
+Extraction)</h3>
+<p>In Pixi.js v8, WebGPU and modern WebGL architectures make texture
+readbacks asynchronous to avoid stalling the GPU pipeline. Use the
+<code>renderer.extract.pixels()</code> method by passing the texture as
+the target:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { Application<span class="op">,</span> Assets } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> app <span class="op">=</span> <span class="kw">new</span> <span class="fu">Application</span>()<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> app<span class="op">.</span><span class="fu">init</span>({ <span class="dt">width</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">600</span> })<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Load or create your texture</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> texture <span class="op">=</span> <span class="cf">await</span> Assets<span class="op">.</span><span class="fu">load</span>(<span class="st">&#39;path/to/image.png&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Extract pixel data asynchronously</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> pixelData <span class="op">=</span> <span class="cf">await</span> app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="at">extract</span><span class="op">.</span><span class="fu">pixels</span>({ <span class="dt">target</span><span class="op">:</span> texture })<span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">// pixelData contains:</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">// - pixels: Uint8ClampedArray</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">// - width: number</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">// - height: number</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(pixelData<span class="op">.</span><span class="at">pixels</span>)<span class="op">;</span> </span></code></pre></div>
+<h3 id="using-pixijs-v7-and-earlier-synchronous-extraction">Using
+Pixi.js v7 and Earlier (Synchronous Extraction)</h3>
+<p>In Pixi.js v7 and v6, <code>renderer.extract.pixels()</code> executes
+synchronously via WebGL <code>readPixels</code>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Assuming app is an initialized PIXI.Application and texture is ready</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> pixels <span class="op">=</span> app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="at">extract</span><span class="op">.</span><span class="fu">pixels</span>(texture)<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Returns a Uint8Array containing raw RGBA values</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(pixels)<span class="op">;</span> </span></code></pre></div>
+<h3 id="accessing-individual-rgba-values">Accessing Individual RGBA
+Values</h3>
+<p>Regardless of version, the resulting array formats pixel components
+in a continuous 1D array ordered sequentially as Red, Green, Blue, and
+Alpha: <code>[R, G, B, A, R, G, B, A, ...]</code>. Each channel is an
+integer ranging from <code>0</code> to <code>255</code>.</p>
+<p>To read a specific pixel at coordinates <code>(x, y)</code>:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">getPixelColor</span>(pixels<span class="op">,</span> width<span class="op">,</span> x<span class="op">,</span> y) {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> index <span class="op">=</span> (y <span class="op">*</span> width <span class="op">+</span> x) <span class="op">*</span> <span class="dv">4</span><span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">r</span><span class="op">:</span> pixels[index]<span class="op">,</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="dt">g</span><span class="op">:</span> pixels[index <span class="op">+</span> <span class="dv">1</span>]<span class="op">,</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">b</span><span class="op">:</span> pixels[index <span class="op">+</span> <span class="dv">2</span>]<span class="op">,</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="dt">a</span><span class="op">:</span> pixels[index <span class="op">+</span> <span class="dv">3</span>]</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    }<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co">// Example usage:</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> width <span class="op">=</span> texture<span class="op">.</span><span class="at">width</span><span class="op">;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> color <span class="op">=</span> <span class="fu">getPixelColor</span>(pixelData<span class="op">.</span><span class="at">pixels</span> <span class="op">||</span> pixels<span class="op">,</span> width<span class="op">,</span> <span class="dv">10</span><span class="op">,</span> <span class="dv">20</span>)<span class="op">;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`RGBA at (10, 20): rgba(</span><span class="sc">${</span>color<span class="op">.</span><span class="at">r</span><span class="sc">}</span><span class="vs">, </span><span class="sc">${</span>color<span class="op">.</span><span class="at">g</span><span class="sc">}</span><span class="vs">, </span><span class="sc">${</span>color<span class="op">.</span><span class="at">b</span><span class="sc">}</span><span class="vs">, </span><span class="sc">${</span>color<span class="op">.</span><span class="at">a</span> <span class="op">/</span> <span class="dv">255</span><span class="sc">}</span><span class="vs">)`</span>)<span class="op">;</span></span></code></pre></div>
+<h3 id="alternative-reading-via-html-canvas">Alternative: Reading via
+HTML Canvas</h3>
+<p>If you need to bypass Pixi's extract pipeline, you can draw the
+texture onto a standard 2D canvas and extract the data using native
+browser APIs:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Extract HTMLCanvasElement from the texture</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> canvas <span class="op">=</span> app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="at">extract</span><span class="op">.</span><span class="fu">canvas</span>(texture)<span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ctx <span class="op">=</span> canvas<span class="op">.</span><span class="fu">getContext</span>(<span class="st">&#39;2d&#39;</span>)<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Read the native ImageData</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> imageData <span class="op">=</span> ctx<span class="op">.</span><span class="fu">getImageData</span>(<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> canvas<span class="op">.</span><span class="at">width</span><span class="op">,</span> canvas<span class="op">.</span><span class="at">height</span>)<span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> rawBytes <span class="op">=</span> imageData<span class="op">.</span><span class="at">data</span><span class="op">;</span> <span class="co">// Uint8ClampedArray</span></span></code></pre></div>
+<h3 id="performance-considerations">Performance Considerations</h3>
+<p>Extracting raw pixel data forces the GPU to synchronize with the CPU
+(a GPU readback), which temporarily blocks render execution. To maintain
+optimal framerates:</p>
+<ol type="1">
+<li><strong>Avoid per-frame extractions:</strong> Cache the pixel array
+locally if the texture contents do not change continuously.</li>
+<li><strong>Crop before extracting:</strong> If you only need a small
+region, render that region into a smaller <code>RenderTexture</code>
+before extraction to minimize the data transfer size over the bus.</li>
+</ol></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

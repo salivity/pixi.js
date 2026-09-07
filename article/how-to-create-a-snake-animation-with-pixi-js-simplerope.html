@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Create a Snake Animation with Pixi.js SimpleRope - pixi.js</title>
+    <meta name="description" content="This article demonstrates how to build a dynamic worm or snake animation in Pixi.js using the SimpleRope mesh object. By chaining an array of control points to a continuous texture and updating those points sequentially toward a target, you can simulate">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-to-create-a-snake-animation-with-pixi-js-simplerope">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Create a Snake Animation with Pixi.js SimpleRope - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-to-create-a-snake-animation-with-pixi-js-simplerope" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article demonstrates how to build a dynamic worm or snake animation in Pixi.js using the SimpleRope mesh object. By chaining an array of control points to a continuous texture and updating those points sequentially toward a target, you can simulate" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-to-create-a-snake-animation-with-pixijs-simplerope">How to
+Create a Snake Animation with Pixi.js SimpleRope</h1>
+<p>This article demonstrates how to build a dynamic worm or snake
+animation in Pixi.js using the <code>SimpleRope</code> mesh object. By
+chaining an array of control points to a continuous texture and updating
+those points sequentially toward a target, you can simulate realistic,
+flexible skeletal motion. The following guide covers texture
+preparation, point array configuration, and the mathematical logic
+needed to create smooth, undulating movement in your render loop.</p>
+<h3 id="understanding-simplerope">Understanding SimpleRope</h3>
+<p>The <code>PIXI.SimpleRope</code> class renders a strip of textured
+triangles across a defined array of <code>PIXI.Point</code> instances.
+Instead of rotating individual rigid sprites to form segments,
+<code>SimpleRope</code> deforms and bends a single texture smoothly
+along the curve defined by these points.</p>
+<h3 id="1-initialize-points-and-the-simplerope-mesh">1. Initialize
+Points and the SimpleRope Mesh</h3>
+<p>To create a snake, you need a collection of equidistant points
+representing the spine, along with a texture. The texture should
+typically be a horizontal strip representing the snake from head to
+tail.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> <span class="op">*</span> <span class="im">as</span> PIXI <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> app <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Application</span>({ <span class="dt">width</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">600</span> })<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">document</span><span class="op">.</span><span class="at">body</span><span class="op">.</span><span class="fu">appendChild</span>(app<span class="op">.</span><span class="at">view</span>)<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Configuration</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ropeLength <span class="op">=</span> <span class="dv">40</span><span class="op">;</span> <span class="co">// Total number of segments</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> segmentLength <span class="op">=</span> <span class="dv">15</span><span class="op">;</span> <span class="co">// Distance between each point</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> points <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">// Initialize points in a straight line</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> ropeLength<span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    points<span class="op">.</span><span class="fu">push</span>(<span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Point</span>(i <span class="op">*</span> segmentLength<span class="op">,</span> <span class="dv">0</span>))<span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">// Create the rope</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> snakeTexture <span class="op">=</span> PIXI<span class="op">.</span><span class="at">Texture</span><span class="op">.</span><span class="fu">from</span>(<span class="st">&#39;snake_body.png&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> snakeRope <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">SimpleRope</span>(snakeTexture<span class="op">,</span> points)<span class="op">;</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(snakeRope)<span class="op">;</span></span></code></pre></div>
+<h3 id="2-tracking-movement-and-simulating-the-body">2. Tracking
+Movement and Simulating the Body</h3>
+<p>A natural snake or worm body animation requires two distinct
+behaviors:</p>
+<ol type="1">
+<li><strong>Target Following (Inverse Kinematics):</strong> The head
+leads, and each following point maintains a fixed distance from the
+point ahead of it.</li>
+<li><strong>Undulation:</strong> A sine wave offset is added
+perpendicular to the direction of travel to simulate slithering.</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> count <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mousePosition <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Point</span>(app<span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">width</span> <span class="op">/</span> <span class="dv">2</span><span class="op">,</span> app<span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">height</span> <span class="op">/</span> <span class="dv">2</span>)<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Update mouse target position on interaction</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="at">eventMode</span> <span class="op">=</span> <span class="st">&#39;static&#39;</span><span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="at">hitArea</span> <span class="op">=</span> app<span class="op">.</span><span class="at">screen</span><span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">on</span>(<span class="st">&#39;pointermove&#39;</span><span class="op">,</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    mousePosition<span class="op">.</span><span class="fu">copyFrom</span>(<span class="bu">event</span><span class="op">.</span><span class="at">global</span>)<span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">ticker</span><span class="op">.</span><span class="fu">add</span>(() <span class="kw">=&gt;</span> {</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    count <span class="op">+=</span> <span class="fl">0.1</span><span class="op">;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 1. Move the head toward the target with ease</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> head <span class="op">=</span> points[<span class="dv">0</span>]<span class="op">;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    head<span class="op">.</span><span class="at">x</span> <span class="op">+=</span> (mousePosition<span class="op">.</span><span class="at">x</span> <span class="op">-</span> head<span class="op">.</span><span class="at">x</span>) <span class="op">*</span> <span class="fl">0.1</span><span class="op">;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    head<span class="op">.</span><span class="at">y</span> <span class="op">+=</span> (mousePosition<span class="op">.</span><span class="at">y</span> <span class="op">-</span> head<span class="op">.</span><span class="at">y</span>) <span class="op">*</span> <span class="fl">0.1</span><span class="op">;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 2. Make each subsequent segment follow the one ahead of it</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">1</span><span class="op">;</span> i <span class="op">&lt;</span> points<span class="op">.</span><span class="at">length</span><span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> current <span class="op">=</span> points[i]<span class="op">;</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> leader <span class="op">=</span> points[i <span class="op">-</span> <span class="dv">1</span>]<span class="op">;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Calculate angle and distance to the leading segment</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> dx <span class="op">=</span> leader<span class="op">.</span><span class="at">x</span> <span class="op">-</span> current<span class="op">.</span><span class="at">x</span><span class="op">;</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> dy <span class="op">=</span> leader<span class="op">.</span><span class="at">y</span> <span class="op">-</span> current<span class="op">.</span><span class="at">y</span><span class="op">;</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> angle <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">atan2</span>(dy<span class="op">,</span> dx)<span class="op">;</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Constrain segment length</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>        current<span class="op">.</span><span class="at">x</span> <span class="op">=</span> leader<span class="op">.</span><span class="at">x</span> <span class="op">-</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">cos</span>(angle) <span class="op">*</span> segmentLength<span class="op">;</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>        current<span class="op">.</span><span class="at">y</span> <span class="op">=</span> leader<span class="op">.</span><span class="at">y</span> <span class="op">-</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sin</span>(angle) <span class="op">*</span> segmentLength<span class="op">;</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>        <span class="co">// 3. Add perpendicular wave motion for slithering</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Skip the head and tail extremities to keep them stable</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (i <span class="op">&gt;</span> <span class="dv">1</span> <span class="op">&amp;&amp;</span> i <span class="op">&lt;</span> points<span class="op">.</span><span class="at">length</span> <span class="op">-</span> <span class="dv">2</span>) {</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>            <span class="kw">const</span> wave <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sin</span>(count <span class="op">+</span> i <span class="op">*</span> <span class="fl">0.3</span>) <span class="op">*</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>            <span class="kw">const</span> perpAngle <span class="op">=</span> angle <span class="op">+</span> <span class="bu">Math</span><span class="op">.</span><span class="cn">PI</span> <span class="op">/</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>            current<span class="op">.</span><span class="at">x</span> <span class="op">+=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">cos</span>(perpAngle) <span class="op">*</span> wave<span class="op">;</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>            current<span class="op">.</span><span class="at">y</span> <span class="op">+=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sin</span>(perpAngle) <span class="op">*</span> wave<span class="op">;</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h3 id="3-tuning-the-behavior">3. Tuning the Behavior</h3>
+<ul>
+<li><strong>Number of Points:</strong> More points yield smoother bends,
+but require more CPU updates. A range between 20 and 50 points provides
+optimal balance between fluidity and performance.</li>
+<li><strong>Segment Length:</strong> Lower <code>segmentLength</code>
+values create a tighter, denser body, while higher values create a
+looser chain. Ensure the total length
+(<code>ropeLength * segmentLength</code>) matches the aspect ratio of
+your texture to avoid distortion.</li>
+<li><strong>Slither Intensity:</strong> Adjust the frequency
+(<code>count += rate</code>) to change slither speed, and scale the wave
+multiplier to change the amplitude of the slither.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

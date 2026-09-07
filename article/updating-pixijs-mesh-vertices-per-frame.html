@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Updating PixiJS Mesh Vertices Per Frame - pixi.js</title>
+    <meta name="description" content="Updating hundreds of mesh vertices dynamically each frame in Pixi.js can introduce significant CPU and GPU overhead, primarily through frequent buffer uploads, garbage collection pressure, and WebGL state changes. This article examines the core performan">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/updating-pixijs-mesh-vertices-per-frame">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Updating PixiJS Mesh Vertices Per Frame - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/updating-pixijs-mesh-vertices-per-frame" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Updating hundreds of mesh vertices dynamically each frame in Pixi.js can introduce significant CPU and GPU overhead, primarily through frequent buffer uploads, garbage collection pressure, and WebGL state changes. This article examines the core performan" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="updating-pixijs-mesh-vertices-per-frame">Updating PixiJS Mesh
+Vertices Per Frame</h1>
+<p>Updating hundreds of mesh vertices dynamically each frame in Pixi.js
+can introduce significant CPU and GPU overhead, primarily through
+frequent buffer uploads, garbage collection pressure, and WebGL state
+changes. This article examines the core performance bottlenecks
+associated with per-frame mesh deformation in Pixi.js and outlines the
+best practices for optimizing memory management, WebGL buffer streaming,
+and rendering pipelines to sustain high frame rates.</p>
+<h3 id="cpu-to-gpu-bandwidth-and-buffer-uploads">CPU-to-GPU Bandwidth
+and Buffer Uploads</h3>
+<p>When modifying vertices on the CPU using JavaScript, the updated
+array must be transferred to the GPU's VRAM over the WebGL bus every
+single frame. This operation uses WebGL calls like
+<code>gl.bufferSubData</code> or <code>gl.bufferData</code>.</p>
+<p>While modern GPUs can easily handle hundreds of vertices, the
+bottleneck lies in the frequency of the transfer. To optimize this
+transfer:</p>
+<ul>
+<li>Update only the specific buffer that changes (e.g., positions)
+rather than re-uploading static data like UV coordinates, vertex colors,
+or index buffers.</li>
+<li>Mark the buffer as dirty using
+<code>mesh.geometry.getBuffer('aVertexPosition').update()</code> so
+Pixi.js knows a re-upload is required, avoiding redundant state
+checks.</li>
+</ul>
+<h3 id="memory-allocation-and-garbage-collection">Memory Allocation and
+Garbage Collection</h3>
+<p>Allocating new arrays or objects inside a 60 FPS update loop
+generates transient memory that forces the browser's garbage collector
+(GC) to run frequently, causing frame stutter.</p>
+<ul>
+<li><strong>Mutate in place:</strong> Always reuse the underlying
+<code>Float32Array</code> stored in
+<code>geometry.getBuffer('aVertexPosition').data</code>. Mutate the
+array indices directly rather than instantiating new arrays or creating
+temporary vector objects.</li>
+<li><strong>Avoid slicing:</strong> Avoid methods like
+<code>Array.prototype.slice</code> or
+<code>Float32Array.prototype.subarray</code> inside the tick handler
+unless strictly necessary, as they can still create object wrappers that
+stress the GC.</li>
+</ul>
+<h3 id="separate-vs-interleaved-buffers">Separate vs. Interleaved
+Buffers</h3>
+<p>Pixi.js allows geometries to use either interleaved attributes (where
+position, UV, and color share a single buffer) or non-interleaved
+attributes (where each attribute has its own buffer).</p>
+<ul>
+<li>If you only animate vertex positions, store them in a dedicated
+position buffer.</li>
+<li>Interleaving static UV data with dynamic position data forces the
+CPU to upload untouched UV data on every frame, needlessly consuming bus
+bandwidth.</li>
+</ul>
+<h3 id="draw-call-overhead-and-batching">Draw Call Overhead and
+Batching</h3>
+<p>Meshes in Pixi.js do not batch in the same manner as standard
+<code>PIXI.Sprite</code> objects. Each <code>PIXI.Mesh</code> typically
+results in its own WebGL draw call.</p>
+<ul>
+<li><strong>Single Mesh vs. Multiple Meshes:</strong> Updating hundreds
+of vertices inside a single mesh (such as a large terrain grid, rope, or
+cloth simulation) is computationally lightweight. However, updating
+hundreds of separate <code>PIXI.Mesh</code> instances with a few
+vertices each will drastically increase draw calls, degrading
+performance due to WebGL state-switch overhead.</li>
+<li>Consolidate separate vertex structures into a single unified
+geometry whenever possible to minimize draw calls.</li>
+</ul>
+<h3 id="cpu-computation-vs-vertex-shaders">CPU Computation vs. Vertex
+Shaders</h3>
+<p>Calculating vertex coordinates in JavaScript consumes main-thread CPU
+time, which competes with physics, input handling, and other application
+logic.</p>
+<ul>
+<li><strong>Offload to Vertex Shaders:</strong> If vertex movement
+follows mathematical patterns (such as ocean waves, flag waving, or
+simple skeletal skinning), calculate the displacement in a custom vertex
+shader via uniforms (e.g., elapsed time) rather than on the CPU.</li>
+<li>Shifting calculations to the vertex shader eliminates the need to
+upload vertex positions to the GPU on every frame, reducing CPU overhead
+and data transfer to near zero.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

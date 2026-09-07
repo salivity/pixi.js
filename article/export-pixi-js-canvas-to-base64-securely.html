@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Pixi.js Canvas to Base64 Securely - pixi.js</title>
+    <meta name="description" content="This article explains how to securely capture a screenshot and export the canvas state to a base64 image in Pixi.js. You will learn how to use Pixi's built-in extraction utilities, configure your renderer to avoid blank screen issues, and handle cross-or">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/export-pixi-js-canvas-to-base64-securely">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Export Pixi.js Canvas to Base64 Securely - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/export-pixi-js-canvas-to-base64-securely" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how to securely capture a screenshot and export the canvas state to a base64 image in Pixi.js. You will learn how to use Pixi's built-in extraction utilities, configure your renderer to avoid blank screen issues, and handle cross-or" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="export-pixijs-canvas-to-base64-securely">Export Pixi.js Canvas
+to Base64 Securely</h1>
+<p>This article explains how to securely capture a screenshot and export
+the canvas state to a base64 image in Pixi.js. You will learn how to use
+Pixi's built-in extraction utilities, configure your renderer to avoid
+blank screen issues, and handle cross-origin resource sharing (CORS) to
+prevent browser security errors.</p>
+<h2 id="using-the-pixijs-extract-utility">Using the Pixi.js Extract
+Utility</h2>
+<p>Pixi.js provides a dedicated <code>extract</code> system to convert
+your display objects or the entire stage into various formats, including
+base64 strings.</p>
+<p>To export your current stage to a base64 image, use the
+<code>renderer.extract.base64</code> method:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// For Pixi.js v7 and v8 (asynchronous)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> base64Image <span class="op">=</span> <span class="cf">await</span> app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="at">extract</span><span class="op">.</span><span class="fu">base64</span>(app<span class="op">.</span><span class="at">stage</span>)<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(base64Image)<span class="op">;</span> <span class="co">// Outputs: &quot;data:image/png;base64,...&quot;</span></span></code></pre></div>
+<p>If you are using an older version of Pixi.js (v6 or below), the
+method is synchronous:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// For Pixi.js v6 and below (synchronous)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> base64Image <span class="op">=</span> app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="at">plugins</span><span class="op">.</span><span class="at">extract</span><span class="op">.</span><span class="fu">base64</span>(app<span class="op">.</span><span class="at">stage</span>)<span class="op">;</span></span></code></pre></div>
+<h2 id="securing-your-canvas-against-tainted-canvas-errors">Securing
+Your Canvas Against Tainted Canvas Errors</h2>
+<p>The primary security concern when exporting a canvas is the browser's
+"Tainted Canvas" security policy. If your Pixi.js application loads
+textures from an external domain without proper CORS authorization, the
+browser will block any attempts to export the canvas to a base64
+string.</p>
+<p>To prevent this error, you must ensure that all external assets are
+loaded with CORS enabled.</p>
+<h3 id="1-configure-the-assets-loader">1. Configure the Assets
+Loader</h3>
+<p>When loading external images, set the <code>crossOrigin</code>
+property to <code>anonymous</code>:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Pixi.js v7/v8 Asset Loading</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> texture <span class="op">=</span> <span class="cf">await</span> Assets<span class="op">.</span><span class="fu">load</span>({</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">src</span><span class="op">:</span> <span class="st">&#39;https://external-domain.com/image.png&#39;</span><span class="op">,</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">data</span><span class="op">:</span> {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">crossOrigin</span><span class="op">:</span> <span class="st">&#39;anonymous&#39;</span><span class="op">,</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h3 id="2-server-side-cors-headers">2. Server-Side CORS Headers</h3>
+<p>The server hosting your external assets must also return the
+appropriate CORS headers in its HTTP response:</p>
+<pre class="http"><code>Access-Control-Allow-Origin: *</code></pre>
+<h2 id="preserving-the-drawing-buffer">Preserving the Drawing
+Buffer</h2>
+<p>By default, WebGL clears the drawing buffer after rendering each
+frame to optimize performance. If you attempt to capture the canvas
+outside of Pixi's internal render loop, you may end up with a blank or
+black image.</p>
+<p>To securely capture the canvas at any time, you can enable
+<code>preserveDrawingBuffer</code> when initializing your Pixi
+application:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> app <span class="op">=</span> <span class="kw">new</span> <span class="fu">Application</span>()<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> app<span class="op">.</span><span class="fu">init</span>({</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">height</span><span class="op">:</span> <span class="dv">600</span><span class="op">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">preserveDrawingBuffer</span><span class="op">:</span> <span class="kw">true</span> <span class="co">// Guarantees the canvas holds its pixels for extraction</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p><em>Note: While enabling <code>preserveDrawingBuffer</code> makes
+capturing screenshots highly reliable, it can carry a minor performance
+cost on some mobile devices. If performance is critical, perform your
+extraction immediately after a manual render call instead:</em></p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="fu">render</span>(app<span class="op">.</span><span class="at">stage</span>)<span class="op">;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> base64Image <span class="op">=</span> <span class="cf">await</span> app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="at">extract</span><span class="op">.</span><span class="fu">base64</span>(app<span class="op">.</span><span class="at">stage</span>)<span class="op">;</span></span></code></pre></div></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

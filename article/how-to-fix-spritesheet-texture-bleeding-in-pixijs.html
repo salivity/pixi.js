@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Fix Spritesheet Texture Bleeding in PixiJS - pixi.js</title>
+    <meta name="description" content="Texture bleeding in PixiJS manifests as thin, flickering lines or ghost edges around sprites rendered from a shared spritesheet or texture atlas. This article covers the core causes of texture bleeding—namely bilinear filtering, subpixel positioning, a">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-to-fix-spritesheet-texture-bleeding-in-pixijs">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Fix Spritesheet Texture Bleeding in PixiJS - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-to-fix-spritesheet-texture-bleeding-in-pixijs" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Texture bleeding in PixiJS manifests as thin, flickering lines or ghost edges around sprites rendered from a shared spritesheet or texture atlas. This article covers the core causes of texture bleeding—namely bilinear filtering, subpixel positioning, a" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-to-fix-spritesheet-texture-bleeding-in-pixijs">How to Fix
+Spritesheet Texture Bleeding in PixiJS</h1>
+<p>Texture bleeding in PixiJS manifests as thin, flickering lines or
+ghost edges around sprites rendered from a shared spritesheet or texture
+atlas. This article covers the core causes of texture bleeding—namely
+bilinear filtering, subpixel positioning, and mipmapping—and details the
+exact steps needed to resolve it using sprite padding, border extrusion,
+and PixiJS rendering configurations.</p>
+<h3 id="what-causes-texture-bleeding">What Causes Texture Bleeding?</h3>
+<p>Texture bleeding occurs when the GPU's texture sampling process
+inadvertently reads pixel data outside the boundary of a specific
+sub-texture inside a spritesheet.</p>
+<ol type="1">
+<li><strong>Bilinear Filtering and Interpolation:</strong> By default,
+PixiJS uses linear interpolation (<code>PIXI.SCALE_MODES.LINEAR</code>)
+to keep textures smooth when scaled, rotated, or translated. When
+calculating the color of a fragment near the edge of a sprite's UV
+coordinates, the GPU samples adjacent texels. If neighboring sprites or
+transparent borders sit directly next to the edge, the GPU blends those
+pixels together, causing a visible seam.</li>
+<li><strong>Subpixel Positioning and Camera Scaling:</strong> When
+sprites are placed on floating-point coordinates (e.g.,
+<code>x: 10.4, y: 20.7</code>) or when a display container is scaled,
+the rendered pixels do not align 1:1 with the screen grid. The GPU must
+interpolate between texels, heavily increasing the likelihood of
+sampling adjacent sprite data.</li>
+<li><strong>Mipmapping:</strong> When textures generate downscaled
+mipmaps, lower-resolution versions blend wider clusters of pixels
+together. In a tightly packed spritesheet without margins, this blending
+causes severe bleeding at distances or smaller scales.</li>
+</ol>
+<h3 id="how-to-prevent-bleeding-with-sprite-padding-and-extrusion">How
+to Prevent Bleeding with Sprite Padding and Extrusion</h3>
+<p>The most robust solution to texture bleeding is applying proper
+padding and edge extrusion when generating the spritesheet.</p>
+<h4 id="1-extrude-edge-pixels-recommended">1. Extrude Edge Pixels
+(Recommended)</h4>
+<p>Padding alone (adding transparent spacing) prevents bleeding from
+neighboring sprites, but it can still cause bleeding with transparency,
+creating dark or semi-transparent outlines. Extrusion fixes this by
+duplicating the outer edge pixels of each sprite into the surrounding
+padding area.</p>
+<ul>
+<li><strong>Using TexturePacker:</strong> Set the
+<strong>Extrude</strong> value to <code>1</code> or <code>2</code>.
+TexturePacker will automatically duplicate the border pixels outward
+while keeping the sprite's UV coordinates mapped to the original
+boundaries.</li>
+<li><strong>Using Tile-Extruder:</strong> For tilemaps, use the CLI tool
+<code>tile-extruder</code> to automatically add a 1-pixel extruded
+border around every tile in your tileset image before importing it into
+PixiJS.</li>
+</ul>
+<h4 id="2-add-spacing-and-inner-padding">2. Add Spacing and Inner
+Padding</h4>
+<p>If extrusion is not an option, configure your packing software
+with:</p>
+<ul>
+<li><strong>Border Padding / Margin:</strong> At least 2 pixels of empty
+space around the edge of the entire spritesheet.</li>
+<li><strong>Shape Padding / Spacing:</strong> At least 2 pixels of
+transparent space between individual sprites inside the atlas.</li>
+</ul>
+<h3 id="pixijs-configuration-adjustments">PixiJS Configuration
+Adjustments</h3>
+<p>In addition to padding the texture source, certain PixiJS settings
+help eliminate remaining edge artifacts:</p>
+<h4 id="enable-pixel-rounding">Enable Pixel Rounding</h4>
+<p>Prevent subpixel rendering artifacts by forcing PixiJS to snap
+coordinates to whole integer pixels:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Globally for the entire application</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> app <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Application</span>({</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">roundPixels</span><span class="op">:</span> <span class="kw">true</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Or per individual sprite</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>sprite<span class="op">.</span><span class="at">roundPixels</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span></code></pre></div>
+<h4 id="switch-to-nearest-neighbor-filtering">Switch to Nearest-Neighbor
+Filtering</h4>
+<p>For retro or pixel-art games where sharp pixels are desired, disable
+linear interpolation entirely to prevent the GPU from blending adjacent
+texels:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Set globally before loading assets</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>PIXI<span class="op">.</span><span class="at">BaseTexture</span><span class="op">.</span><span class="at">defaultOptions</span><span class="op">.</span><span class="at">scaleMode</span> <span class="op">=</span> PIXI<span class="op">.</span><span class="at">SCALE_MODES</span><span class="op">.</span><span class="at">NEAREST</span><span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Or apply to an individual loaded texture</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>texture<span class="op">.</span><span class="at">baseTexture</span><span class="op">.</span><span class="at">scaleMode</span> <span class="op">=</span> PIXI<span class="op">.</span><span class="at">SCALE_MODES</span><span class="op">.</span><span class="at">NEAREST</span><span class="op">;</span></span></code></pre></div>
+<h4 id="disable-mipmaps-for-spritesheets">Disable Mipmaps for
+Spritesheets</h4>
+<p>If a 2D spritesheet does not require 3D perspective or extreme
+downscaling, turn off mipmaps to prevent downsampled edge bleeding:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>texture<span class="op">.</span><span class="at">baseTexture</span><span class="op">.</span><span class="at">mipmap</span> <span class="op">=</span> PIXI<span class="op">.</span><span class="at">MIPMAP_MODES</span><span class="op">.</span><span class="at">OFF</span><span class="op">;</span></span></code></pre></div></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

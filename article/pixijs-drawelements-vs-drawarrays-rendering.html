@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS drawElements vs drawArrays Rendering - pixi.js</title>
+    <meta name="description" content="PixiJS relies on WebGL to render 2D and 3D graphics on the GPU, abstracting low-level commands into intuitive geometry and mesh objects. At the WebGL level, the engine submits geometry to the screen using either drawElements or drawArrays. This article o">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-drawelements-vs-drawarrays-rendering">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS drawElements vs drawArrays Rendering - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-drawelements-vs-drawarrays-rendering" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="PixiJS relies on WebGL to render 2D and 3D graphics on the GPU, abstracting low-level commands into intuitive geometry and mesh objects. At the WebGL level, the engine submits geometry to the screen using either drawElements or drawArrays. This article o" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-drawelements-vs-drawarrays-rendering">PixiJS drawElements
+vs drawArrays Rendering</h1>
+<p>PixiJS relies on WebGL to render 2D and 3D graphics on the GPU,
+abstracting low-level commands into intuitive geometry and mesh objects.
+At the WebGL level, the engine submits geometry to the screen using
+either <code>drawElements</code> or <code>drawArrays</code>. This
+article outlines how these two rendering calls differ within PixiJS,
+examining how vertex indices, memory consumption, GPU cache utilization,
+and geometry structure dictate which call PixiJS executes.</p>
+<h3 id="the-underlying-webgl-distinction">The Underlying WebGL
+Distinction</h3>
+<p>The fundamental difference between <code>drawArrays</code> and
+<code>drawElements</code> is how the GPU accesses vertex data:</p>
+<ul>
+<li><strong><code>drawArrays</code> (Non-Indexed Rendering):</strong>
+Reads vertex attributes sequentially from the bound vertex buffer object
+(VBO). To draw multiple adjacent triangles, shared vertices must be
+duplicated in the buffer.</li>
+<li><strong><code>drawElements</code> (Indexed Rendering):</strong> Uses
+an additional index buffer (an element array buffer) containing integer
+pointers. The GPU references this list of indices to pull vertex data
+from the VBO, allowing individual vertices to be referenced multiple
+times across different triangles.</li>
+</ul>
+<h3 id="how-pixijs-determines-the-draw-call">How PixiJS Determines the
+Draw Call</h3>
+<p>In PixiJS, rendering geometry centers around the
+<code>Geometry</code> class. The presence of an index buffer determines
+the draw pipeline used by the renderer:</p>
+<ol type="1">
+<li><strong>Indexed Geometry (<code>drawElements</code>):</strong> When
+you add an index buffer via <code>geometry.addIndex(...)</code>, PixiJS
+automatically flags the geometry as indexed. During the render phase,
+the <code>GeometrySystem</code> binds both the vertex attributes and the
+element array buffer, subsequently executing
+<code>gl.drawElements(...)</code>.</li>
+<li><strong>Non-Indexed Geometry (<code>drawArrays</code>):</strong> If
+no index buffer is supplied, PixiJS reads the geometry purely
+sequentially. It determines the number of vertices from the attribute
+lengths and executes <code>gl.drawArrays(...)</code>.</li>
+</ol>
+<h3 id="memory-footprint-and-redundancy">Memory Footprint and
+Redundancy</h3>
+<p>The choice between indexed and non-indexed geometry heavily impacts
+memory allocation in PixiJS applications:</p>
+<ul>
+<li><strong>Memory Overhead with <code>drawArrays</code>:</strong> A
+simple quad composed of two triangles requires 6 distinct vertices. If
+each vertex holds attributes such as 2D position (8 bytes), UV
+coordinates (8 bytes), and tint colors (4 bytes), a single quad consumes
+120 bytes. Complex geometries with high attribute counts compound this
+redundancy quickly.</li>
+<li><strong>Memory Savings with <code>drawElements</code>:</strong> The
+same quad requires only 4 unique vertices (80 bytes) and 6 indices
+stored as 16-bit integers (<code>Uint16Array</code>, consuming 12
+bytes), totaling 92 bytes. For intricate meshes, terrain, or subdivision
+surfaces, indexed geometry significantly reduces both CPU-to-GPU
+transfer sizes and VRAM footprint.</li>
+</ul>
+<h3 id="gpu-post-transform-vertex-cache">GPU Post-Transform Vertex
+Cache</h3>
+<p>Modern GPUs contain a post-transform vertex cache that stores the
+output of recently executed vertex shaders.</p>
+<p>When PixiJS uses <code>drawElements</code>, the GPU uses vertex
+indices to identify previously transformed vertices. If an incoming
+index matches an entry in the cache, the GPU bypasses the vertex shader
+entirely for that vertex and reuses the cached output. Because
+<code>drawArrays</code> lacks explicit vertex IDs, it rarely benefits
+from this caching behavior, forcing the GPU to re-evaluate the vertex
+shader for duplicated coordinates.</p>
+<h3 id="impact-on-pixijs-batch-rendering">Impact on PixiJS Batch
+Rendering</h3>
+<p>PixiJS’s core performance advantage comes from its
+<code>BatchRenderer</code>, which aggregates sprites, graphics, and
+simple meshes into a single draw call.</p>
+<p>The batching system relies almost exclusively on
+<code>drawElements</code>. PixiJS pre-allocates an index buffer
+containing repeating quad indices (<code>[0, 1, 2, 0, 2, 3]</code>,
+offset by four for each subsequent quad) and fills a dynamic vertex
+buffer with transformed sprite vertices. This design allows PixiJS to
+render thousands of independent sprites in a single
+<code>gl.drawElements</code> call without vertex duplication.</p>
+<p>While custom meshes with unique topologies or streaming point-cloud
+data can leverage <code>drawArrays</code> effectively, structured meshes
+and standard display objects in PixiJS are designed around
+<code>drawElements</code> to maximize batching capacity, reduce memory
+overhead, and leverage hardware-level caching.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

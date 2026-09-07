@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js Tree Mutation During Active Render Pass - pixi.js</title>
+    <meta name="description" content="This article explores how Pixi.js processes scene graph modifications executed during an active render pass, detailing the internal traversal mechanics, the risks of mid-render mutations, and how modern versions manage rendering state. Pixi.js prioritize">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-tree-mutation-during-active-render-pass">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js Tree Mutation During Active Render Pass - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-tree-mutation-during-active-render-pass" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explores how Pixi.js processes scene graph modifications executed during an active render pass, detailing the internal traversal mechanics, the risks of mid-render mutations, and how modern versions manage rendering state. Pixi.js prioritize" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-tree-mutation-during-active-render-pass">Pixi.js Tree
+Mutation During Active Render Pass</h1>
+<p>This article explores how Pixi.js processes scene graph modifications
+executed during an active render pass, detailing the internal traversal
+mechanics, the risks of mid-render mutations, and how modern versions
+manage rendering state. Pixi.js prioritizes runtime performance over
+mutation resilience during draw calls, meaning modifying the display
+tree mid-traversal can result in index shifting, desynchronized matrix
+calculations, or pipeline errors.</p>
+<h2 id="direct-traversal-and-garbage-collection-avoidance">Direct
+Traversal and Garbage Collection Avoidance</h2>
+<p>When <code>renderer.render(stage)</code> is invoked, Pixi.js
+traverses the display hierarchy (containers and their child elements) to
+compute transforms and dispatch WebGL or WebGPU draw instructions. To
+maintain high frame rates and avoid triggering garbage collection,
+Pixi.js does not defensively clone the <code>children</code> array of a
+container prior to iteration. Instead, the renderer loops directly over
+the live reference of each container's child list.</p>
+<p>If a script modifies the tree—such as by calling
+<code>addChild</code>, <code>removeChild</code>, or reordering elements
+from within a custom render callback or WebGL hook—the underlying array
+changes mid-loop. Removing an element shifts subsequent sibling indices
+backward, which typically causes the traversal loop to skip the adjacent
+child for that frame. Conversely, adding an element can either cause
+duplicate processing of existing elements or inadvertently process the
+newly added element before its transform matrices are properly
+initialized.</p>
+<h2 id="transform-pipeline-desynchronization">Transform Pipeline
+Desynchronization</h2>
+<p>Before rendering display objects, Pixi.js requires up-to-date world
+transforms, alpha values, and render bounds. Under normal execution,
+transform propagation flows strictly top-down: parent transforms update
+before child transforms.</p>
+<p>Modifying parent-child relationships while a render pass is underway
+breaks this propagation chain. If a display object is detached and
+re-parented during rendering, it may inherit stale matrix data from its
+previous ancestor or draw with uncalculated transforms. This leads to
+visual artifacts such as elements flickering, jumping to
+<code>(0,0)</code>, or drawing with incorrect scaling for a single
+frame.</p>
+<h2 id="rendergroups-and-instruction-lists-in-pixijs-v8">RenderGroups
+and Instruction Lists in Pixi.js v8</h2>
+<p>In Pixi.js v8, rendering architecture shifted toward a reactive model
+utilizing <code>RenderGroup</code> structures and pre-compiled render
+instruction pipelines. In this architecture, display tree structures are
+compiled into flattened command lists to maximize batching and modern
+graphics API efficiency.</p>
+<p>Mutating the display tree during the active render pass in v8 causes
+severe desynchronization:</p>
+<ol type="1">
+<li><strong>Instruction List Invalidation:</strong> The instruction list
+built for the current frame no longer matches the current state of the
+scene graph.</li>
+<li><strong>Dirty Flag Latency:</strong> Modern Pixi.js relies on dirty
+flags (<code>_didChangeId</code>) to invalidate caches. When changes
+occur in the middle of instruction execution, the engine cannot safely
+rebuild the instruction list mid-frame, potentially throwing runtime
+exceptions or dereferencing null pointers.</li>
+</ol>
+<h2 id="safe-display-tree-modification">Safe Display Tree
+Modification</h2>
+<p>Standard Pixi.js application lifecycles decouple scene updates from
+rendering. The <code>PIXI.Ticker</code> mechanism runs update callbacks
+sequentially before calling the renderer:</p>
+<pre class="text"><code>Ticker Event -&gt; Update Systems / Game Logic -&gt; Transform Propagation -&gt; Render Pass</code></pre>
+<p>To avoid tree mutation during rendering:</p>
+<ul>
+<li><strong>Defer Mutations:</strong> If a custom render function or
+graphics callback requires a scene change, queue the action to execute
+in the next tick via <code>ticker.addOnce()</code> or a microtask
+(<code>queueMicrotask()</code>).</li>
+<li><strong>Use Visibility Toggles:</strong> Instead of removing
+elements during render callbacks, toggle <code>renderable = false</code>
+or <code>visible = false</code>. These flags are read dynamically during
+the pass and do not alter array lengths or memory layouts.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

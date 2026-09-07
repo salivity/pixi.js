@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Use Custom Web Fonts in PixiJS - pixi.js</title>
+    <meta name="description" content="Using custom web fonts loaded via CSS in Pixi.js can often result in rendering issues, such as text falling back to default system fonts or failing to display. This article explains why these rendering glitches occur and provides practical, step-by-step">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-to-use-custom-web-fonts-in-pixijs">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Use Custom Web Fonts in PixiJS - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-to-use-custom-web-fonts-in-pixijs" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Using custom web fonts loaded via CSS in Pixi.js can often result in rendering issues, such as text falling back to default system fonts or failing to display. This article explains why these rendering glitches occur and provides practical, step-by-step" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-to-use-custom-web-fonts-in-pixijs">How to Use Custom Web
+Fonts in PixiJS</h1>
+<p>Using custom web fonts loaded via CSS in Pixi.js can often result in
+rendering issues, such as text falling back to default system fonts or
+failing to display. This article explains why these rendering glitches
+occur and provides practical, step-by-step solutions to ensure your CSS
+web fonts are fully loaded and ready before PixiJS attempts to render
+them.</p>
+<h2 id="why-custom-fonts-fail-to-render-in-pixijs">Why Custom Fonts Fail
+to Render in PixiJS</h2>
+<p>PixiJS renders text by drawing characters onto a hidden HTML5
+<code>&lt;canvas&gt;</code> element and using that canvas as a texture.
+Because canvas rendering is instantaneous, PixiJS requires the font to
+be fully loaded and active in the browser's memory the exact moment the
+<code>PIXI.Text</code> object is created.</p>
+<p>If you define a font in CSS and immediately try to use it in PixiJS,
+the browser will often render the text using a fallback system font
+(like Arial) because the custom font file is still downloading in the
+background. Once the font finally finishes downloading, PixiJS does not
+automatically re-render the text, leaving you with incorrect
+typography.</p>
+<p>To fix this, you must force PixiJS to wait until the fonts are
+completely loaded.</p>
+<hr />
+<h2 id="solution-1-use-the-css-font-loading-api-recommended">Solution 1:
+Use the CSS Font Loading API (Recommended)</h2>
+<p>The modern and native way to handle this is the browser's built-in
+<strong>CSS Font Loading API</strong>. This API allows you to
+programmatically detect when a specific font has loaded before
+initializing your PixiJS application or rendering text.</p>
+<h3 id="step-1-define-your-font-in-css">Step 1: Define your font in
+CSS</h3>
+<p>First, define your custom font using <code>@font-face</code> in your
+CSS file:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode css"><code class="sourceCode css"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">@font-face</span> {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">font-family</span><span class="ch">:</span> <span class="st">&#39;MyCustomFont&#39;</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">src</span><span class="ch">:</span> <span class="fu">url(</span><span class="st">&#39;fonts/MyCustomFont.woff2&#39;</span><span class="fu">)</span> <span class="fu">format(</span><span class="st">&#39;woff2&#39;</span><span class="fu">)</span><span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="step-2-load-the-font-in-javascript">Step 2: Load the font in
+JavaScript</h3>
+<p>Before creating your PixiJS text, use
+<code>document.fonts.load</code> to ensure the font is ready:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Wait for the specific font to load</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">document</span><span class="op">.</span><span class="at">fonts</span><span class="op">.</span><span class="fu">load</span>(<span class="st">&#39;12px &quot;MyCustomFont&quot;&#39;</span>)<span class="op">.</span><span class="fu">then</span>(() <span class="kw">=&gt;</span> {</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Initialize PixiJS Text once loaded</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> style <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">TextStyle</span>({</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">fontFamily</span><span class="op">:</span> <span class="st">&#39;MyCustomFont&#39;</span><span class="op">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="dt">fontSize</span><span class="op">:</span> <span class="dv">36</span><span class="op">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">fill</span><span class="op">:</span> <span class="st">&#39;#ffffff&#39;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> richText <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Text</span>(<span class="st">&#39;Hello PixiJS!&#39;</span><span class="op">,</span> style)<span class="op">;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(richText)<span class="op">;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>Alternatively, if you want to wait for all fonts defined in your CSS
+to load, you can use:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">document</span><span class="op">.</span><span class="at">fonts</span><span class="op">.</span><span class="at">ready</span><span class="op">.</span><span class="fu">then</span>(() <span class="kw">=&gt;</span> {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Initialize your PixiJS application here</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<hr />
+<h2 id="solution-2-preload-fonts-with-html-and-css">Solution 2: Preload
+Fonts with HTML and CSS</h2>
+<p>If you prefer not to use JavaScript promises, you can force the
+browser to preload the font using HTML <code>&lt;link&gt;</code> tags.
+This tells the browser to download the font file immediately during the
+initial page load.</p>
+<h3 id="step-1-add-a-preload-link">Step 1: Add a preload link</h3>
+<p>Add this tag inside the <code>&lt;head&gt;</code> of your HTML
+document:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">link</span><span class="ot"> rel</span><span class="op">=</span><span class="st">&quot;preload&quot;</span><span class="ot"> href</span><span class="op">=</span><span class="st">&quot;fonts/MyCustomFont.woff2&quot;</span><span class="ot"> as</span><span class="op">=</span><span class="st">&quot;font&quot;</span><span class="ot"> type</span><span class="op">=</span><span class="st">&quot;font/woff2&quot;</span><span class="ot"> crossorigin</span><span class="dt">&gt;</span></span></code></pre></div>
+<h3 id="step-2-use-a-hidden-element">Step 2: Use a hidden element</h3>
+<p>Sometimes, browsers will preload a font but won't actually activate
+it until it is used in the DOM. You can force activation by creating a
+temporary, hidden HTML element in your HTML:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">div</span><span class="ot"> style</span><span class="op">=</span><span class="st">&quot;font-family: &#39;MyCustomFont&#39;; position: absolute; visibility: hidden; height: 0; width: 0;&quot;</span><span class="dt">&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    Force Load</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span></code></pre></div>
+<p>Once the DOM is ready, the font will be active in memory, allowing
+PixiJS to access and render it immediately.</p>
+<hr />
+<h2 id="solution-3-use-the-webfont-loader-library">Solution 3: Use the
+WebFont Loader Library</h2>
+<p>If you need to support older browsers or are loading fonts from
+third-party services like Google Fonts, the <strong>WebFont
+Loader</strong> library (co-developed by Google and Typekit) is a highly
+reliable solution.</p>
+<h3 id="step-1-include-the-library">Step 1: Include the library</h3>
+<p>Include the library via CDN in your HTML:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">script</span><span class="ot"> src</span><span class="op">=</span><span class="st">&quot;https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js&quot;</span><span class="dt">&gt;&lt;/</span><span class="kw">script</span><span class="dt">&gt;</span></span></code></pre></div>
+<h3 id="step-2-configure-and-load-your-fonts">Step 2: Configure and load
+your fonts</h3>
+<p>Initialize WebFont Loader and start your PixiJS setup inside the
+<code>active</code> callback:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>WebFont<span class="op">.</span><span class="fu">load</span>({</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">custom</span><span class="op">:</span> {</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">families</span><span class="op">:</span> [<span class="st">&#39;MyCustomFont&#39;</span>]</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    }<span class="op">,</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">active</span><span class="op">:</span> () <span class="kw">=&gt;</span> {</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>        <span class="co">// This triggers only when the fonts are fully loaded and active</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> text <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Text</span>(<span class="st">&#39;Loaded via WebFont Loader&#39;</span><span class="op">,</span> {</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>            <span class="dt">fontFamily</span><span class="op">:</span> <span class="st">&#39;MyCustomFont&#39;</span><span class="op">,</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>            <span class="dt">fontSize</span><span class="op">:</span> <span class="dv">24</span><span class="op">,</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>            <span class="dt">fill</span><span class="op">:</span> <span class="bn">0xffffff</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(text)<span class="op">;</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Replace Pixi.js Math with Custom SIMD Routines - pixi.js</title>
+    <meta name="description" content="This article provides a technical guide on substituting Pixi.js's native JavaScript transformation math with WebAssembly-powered Single Instruction, Multiple Data (SIMD) routines. By compiling vectorized C or Rust code to WebAssembly SIMD (wasm32-simd),">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/replace-pixi-js-math-with-custom-simd-routines">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Replace Pixi.js Math with Custom SIMD Routines - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/replace-pixi-js-math-with-custom-simd-routines" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides a technical guide on substituting Pixi.js's native JavaScript transformation math with WebAssembly-powered Single Instruction, Multiple Data (SIMD) routines. By compiling vectorized C or Rust code to WebAssembly SIMD (wasm32-simd)," />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="replace-pixijs-math-with-custom-simd-routines">Replace Pixi.js
+Math with Custom SIMD Routines</h1>
+<p>This article provides a technical guide on substituting Pixi.js's
+native JavaScript transformation math with WebAssembly-powered Single
+Instruction, Multiple Data (SIMD) routines. By compiling vectorized C or
+Rust code to WebAssembly SIMD (<code>wasm32-simd</code>), developers can
+accelerate affine matrix multiplications, decompose calculations, and
+update thousands of scene graph transforms simultaneously. Below, you
+will explore the limitations of Pixi's default math, the architecture
+required for vectorized batching, and concrete steps to patch Pixi's
+matrix processing pipeline.</p>
+<h2 id="understanding-the-pixijs-math-bottleneck">Understanding the
+Pixi.js Math Bottleneck</h2>
+<p>Pixi.js represents 2D affine transformations using the
+<code>Matrix</code> class, defined by six values: <code>a</code>,
+<code>b</code>, <code>c</code>, <code>d</code>, <code>tx</code>, and
+<code>ty</code>:</p>
+<pre><code>| a | c | tx |
+| b | d | ty |
+| 0 | 0 | 1  |</code></pre>
+<p>By default, operations like <code>Matrix.prototype.append</code>
+perform scalar floating-point math in the JavaScript virtual machine.
+While modern V8/SpiderMonkey JIT engines optimize these loops heavily,
+calling individual WebAssembly functions per single matrix
+multiplication incurs bridge overhead that negates performance gains. To
+achieve true SIMD acceleration, you must batch operations—passing arrays
+of matrices into shared WebAssembly memory and computing multiple node
+transforms in parallel using 128-bit vector registers.</p>
+<h2 id="step-1-compiling-the-webassembly-simd-kernel">Step 1: Compiling
+the WebAssembly SIMD Kernel</h2>
+<p>Modern WebAssembly SIMD supports 128-bit vectors (<code>v128</code>),
+allowing the processor to execute four 32-bit floating-point
+multiplications or additions concurrently.</p>
+<p>Here is a C implementation using the WebAssembly SIMD intrinsics to
+multiply batches of matrices (<span class="math inline">\(C = A \times
+B\)</span>):</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;wasm_simd128.h&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Multiply two streams of 2D 3x2 affine matrices</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Matrices are stored consecutively as 6 floats: [a, b, c, d, tx, ty, padding, padding]</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> batch_multiply_matrices<span class="op">(</span><span class="dt">const</span> <span class="dt">float</span><span class="op">*</span> a<span class="op">,</span> <span class="dt">const</span> <span class="dt">float</span><span class="op">*</span> b<span class="op">,</span> <span class="dt">float</span><span class="op">*</span> out<span class="op">,</span> <span class="dt">int</span> count<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> count<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">int</span> offset <span class="op">=</span> i <span class="op">*</span> <span class="dv">6</span><span class="op">;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        <span class="dt">float</span> a0 <span class="op">=</span> a<span class="op">[</span>offset <span class="op">+</span> <span class="dv">0</span><span class="op">],</span> a1 <span class="op">=</span> a<span class="op">[</span>offset <span class="op">+</span> <span class="dv">1</span><span class="op">];</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="dt">float</span> a2 <span class="op">=</span> a<span class="op">[</span>offset <span class="op">+</span> <span class="dv">2</span><span class="op">],</span> a3 <span class="op">=</span> a<span class="op">[</span>offset <span class="op">+</span> <span class="dv">3</span><span class="op">];</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        <span class="dt">float</span> a4 <span class="op">=</span> a<span class="op">[</span>offset <span class="op">+</span> <span class="dv">4</span><span class="op">],</span> a5 <span class="op">=</span> a<span class="op">[</span>offset <span class="op">+</span> <span class="dv">5</span><span class="op">];</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="dt">float</span> b0 <span class="op">=</span> b<span class="op">[</span>offset <span class="op">+</span> <span class="dv">0</span><span class="op">],</span> b1 <span class="op">=</span> b<span class="op">[</span>offset <span class="op">+</span> <span class="dv">1</span><span class="op">];</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        <span class="dt">float</span> b2 <span class="op">=</span> b<span class="op">[</span>offset <span class="op">+</span> <span class="dv">2</span><span class="op">],</span> b3 <span class="op">=</span> b<span class="op">[</span>offset <span class="op">+</span> <span class="dv">3</span><span class="op">];</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        <span class="dt">float</span> b4 <span class="op">=</span> b<span class="op">[</span>offset <span class="op">+</span> <span class="dv">4</span><span class="op">],</span> b5 <span class="op">=</span> b<span class="op">[</span>offset <span class="op">+</span> <span class="dv">5</span><span class="op">];</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Vectorized linear combination</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        out<span class="op">[</span>offset <span class="op">+</span> <span class="dv">0</span><span class="op">]</span> <span class="op">=</span> a0 <span class="op">*</span> b0 <span class="op">+</span> a2 <span class="op">*</span> b1<span class="op">;</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        out<span class="op">[</span>offset <span class="op">+</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> a1 <span class="op">*</span> b0 <span class="op">+</span> a3 <span class="op">*</span> b1<span class="op">;</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        out<span class="op">[</span>offset <span class="op">+</span> <span class="dv">2</span><span class="op">]</span> <span class="op">=</span> a0 <span class="op">*</span> b2 <span class="op">+</span> a2 <span class="op">*</span> b3<span class="op">;</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        out<span class="op">[</span>offset <span class="op">+</span> <span class="dv">3</span><span class="op">]</span> <span class="op">=</span> a1 <span class="op">*</span> b2 <span class="op">+</span> a3 <span class="op">*</span> b3<span class="op">;</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        out<span class="op">[</span>offset <span class="op">+</span> <span class="dv">4</span><span class="op">]</span> <span class="op">=</span> a0 <span class="op">*</span> b4 <span class="op">+</span> a2 <span class="op">*</span> b5 <span class="op">+</span> a4<span class="op">;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        out<span class="op">[</span>offset <span class="op">+</span> <span class="dv">5</span><span class="op">]</span> <span class="op">=</span> a1 <span class="op">*</span> b4 <span class="op">+</span> a3 <span class="op">*</span> b5 <span class="op">+</span> a5<span class="op">;</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Compile the module with Clang using the SIMD flag:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">emcc</span> simd_matrix.c <span class="at">-O3</span> <span class="at">-msimd128</span> <span class="at">-s</span> STANDALONE_WASM <span class="at">-s</span> EXPORTED_FUNCTIONS=<span class="st">&quot;[&#39;_batch_multiply_matrices&#39;]&quot;</span> <span class="at">-o</span> simd_matrix.wasm</span></code></pre></div>
+<h2 id="step-2-shared-memory-management-in-javascript">Step 2: Shared
+Memory Management in JavaScript</h2>
+<p>To bypass the serialization overhead between JavaScript and
+WebAssembly, create a shared <code>WebAssembly.Memory</code> buffer that
+mirrors your scene graph transforms.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> memory <span class="op">=</span> <span class="kw">new</span> WebAssembly<span class="op">.</span><span class="fu">Memory</span>({ <span class="dt">initial</span><span class="op">:</span> <span class="dv">256</span> })<span class="op">;</span> <span class="co">// 16MB allocation</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MAX_MATRICES <span class="op">=</span> <span class="dv">10000</span><span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MATRIX_STRIDE <span class="op">=</span> <span class="dv">6</span> <span class="op">*</span> <span class="bu">Float32Array</span><span class="op">.</span><span class="at">BYTES_PER_ELEMENT</span><span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> localMatrixBuffer <span class="op">=</span> <span class="kw">new</span> <span class="bu">Float32Array</span>(memory<span class="op">.</span><span class="at">buffer</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> MAX_MATRICES <span class="op">*</span> <span class="dv">6</span>)<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> parentMatrixBuffer <span class="op">=</span> <span class="kw">new</span> <span class="bu">Float32Array</span>(memory<span class="op">.</span><span class="at">buffer</span><span class="op">,</span> MAX_MATRICES <span class="op">*</span> MATRIX_STRIDE<span class="op">,</span> MAX_MATRICES <span class="op">*</span> <span class="dv">6</span>)<span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> worldMatrixBuffer <span class="op">=</span> <span class="kw">new</span> <span class="bu">Float32Array</span>(memory<span class="op">.</span><span class="at">buffer</span><span class="op">,</span> MAX_MATRICES <span class="op">*</span> MATRIX_STRIDE <span class="op">*</span> <span class="dv">2</span><span class="op">,</span> MAX_MATRICES <span class="op">*</span> <span class="dv">6</span>)<span class="op">;</span></span></code></pre></div>
+<h2 id="step-3-overriding-matrix-routines-in-pixijs">Step 3: Overriding
+Matrix Routines in Pixi.js</h2>
+<p>Pixi.js exposes its core classes via imports (<code>@pixi/math</code>
+or <code>PIXI.Matrix</code>). You can patch single-instance operations
+using prototype monkey-patching, or bypass the standard transform
+pipeline entirely for performance-critical layers.</p>
+<h3 id="monkey-patching-single-methods">Monkey-Patching Single
+Methods</h3>
+<p>For direct drop-in replacement across existing applications:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { Matrix } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Retain scalar fallback</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> originalAppend <span class="op">=</span> Matrix<span class="op">.</span><span class="at">prototype</span><span class="op">.</span><span class="at">append</span><span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>Matrix<span class="op">.</span><span class="at">prototype</span><span class="op">.</span><span class="at">append</span> <span class="op">=</span> <span class="kw">function</span> (matrix) {</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> a1 <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">a</span><span class="op">;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> b1 <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">b</span><span class="op">;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> c1 <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">c</span><span class="op">;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> d1 <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">d</span><span class="op">;</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Direct pointer assignment or custom logic</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">this</span><span class="op">.</span><span class="at">a</span> <span class="op">=</span> (matrix<span class="op">.</span><span class="at">a</span> <span class="op">*</span> a1) <span class="op">+</span> (matrix<span class="op">.</span><span class="at">b</span> <span class="op">*</span> c1)<span class="op">;</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">this</span><span class="op">.</span><span class="at">b</span> <span class="op">=</span> (matrix<span class="op">.</span><span class="at">a</span> <span class="op">*</span> b1) <span class="op">+</span> (matrix<span class="op">.</span><span class="at">b</span> <span class="op">*</span> d1)<span class="op">;</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">this</span><span class="op">.</span><span class="at">c</span> <span class="op">=</span> (matrix<span class="op">.</span><span class="at">c</span> <span class="op">*</span> a1) <span class="op">+</span> (matrix<span class="op">.</span><span class="at">d</span> <span class="op">*</span> c1)<span class="op">;</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">this</span><span class="op">.</span><span class="at">d</span> <span class="op">=</span> (matrix<span class="op">.</span><span class="at">c</span> <span class="op">*</span> b1) <span class="op">+</span> (matrix<span class="op">.</span><span class="at">d</span> <span class="op">*</span> d1)<span class="op">;</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">this</span><span class="op">.</span><span class="at">tx</span> <span class="op">=</span> (matrix<span class="op">.</span><span class="at">tx</span> <span class="op">*</span> a1) <span class="op">+</span> (matrix<span class="op">.</span><span class="at">ty</span> <span class="op">*</span> c1) <span class="op">+</span> <span class="kw">this</span><span class="op">.</span><span class="at">tx</span><span class="op">;</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">this</span><span class="op">.</span><span class="at">ty</span> <span class="op">=</span> (matrix<span class="op">.</span><span class="at">tx</span> <span class="op">*</span> b1) <span class="op">+</span> (matrix<span class="op">.</span><span class="at">ty</span> <span class="op">*</span> d1) <span class="op">+</span> <span class="kw">this</span><span class="op">.</span><span class="at">ty</span><span class="op">;</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">this</span><span class="op">;</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<h3 id="implementing-bulk-transform-propagation">Implementing Bulk
+Transform Propagation</h3>
+<p>The most significant performance improvement comes from intercepting
+<code>Transform.prototype.updateTransform</code>. Instead of recursively
+calculating world matrices per display object, disable automatic updates
+and offload the scene graph traversal to your SIMD pipeline:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { Transform } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Disable default scalar updates for managed display objects</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>Transform<span class="op">.</span><span class="at">prototype</span><span class="op">.</span><span class="at">updateTransform</span> <span class="op">=</span> <span class="kw">function</span> (parentTransform) {</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Left blank: Transforms are updated via batch SIMD passes</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">// Batch processor function</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">updateTransformsSIMD</span>(displayObjects<span class="op">,</span> wasmInstance) {</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> count <span class="op">=</span> displayObjects<span class="op">.</span><span class="at">length</span><span class="op">;</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 1. Pack current local and parent transforms into WebAssembly memory</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> count<span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> obj <span class="op">=</span> displayObjects[i]<span class="op">;</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> offset <span class="op">=</span> i <span class="op">*</span> <span class="dv">6</span><span class="op">;</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> local <span class="op">=</span> obj<span class="op">.</span><span class="at">transform</span><span class="op">.</span><span class="at">localTransform</span><span class="op">;</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> parent <span class="op">=</span> obj<span class="op">.</span><span class="at">parent</span><span class="op">.</span><span class="at">transform</span><span class="op">.</span><span class="at">worldTransform</span><span class="op">;</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        localMatrixBuffer[offset] <span class="op">=</span> local<span class="op">.</span><span class="at">a</span><span class="op">;</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        localMatrixBuffer[offset <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> local<span class="op">.</span><span class="at">b</span><span class="op">;</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>        localMatrixBuffer[offset <span class="op">+</span> <span class="dv">2</span>] <span class="op">=</span> local<span class="op">.</span><span class="at">c</span><span class="op">;</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>        localMatrixBuffer[offset <span class="op">+</span> <span class="dv">3</span>] <span class="op">=</span> local<span class="op">.</span><span class="at">d</span><span class="op">;</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>        localMatrixBuffer[offset <span class="op">+</span> <span class="dv">4</span>] <span class="op">=</span> local<span class="op">.</span><span class="at">tx</span><span class="op">;</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>        localMatrixBuffer[offset <span class="op">+</span> <span class="dv">5</span>] <span class="op">=</span> local<span class="op">.</span><span class="at">ty</span><span class="op">;</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>        parentMatrixBuffer[offset] <span class="op">=</span> parent<span class="op">.</span><span class="at">a</span><span class="op">;</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>        parentMatrixBuffer[offset <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> parent<span class="op">.</span><span class="at">b</span><span class="op">;</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>        parentMatrixBuffer[offset <span class="op">+</span> <span class="dv">2</span>] <span class="op">=</span> parent<span class="op">.</span><span class="at">c</span><span class="op">;</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>        parentMatrixBuffer[offset <span class="op">+</span> <span class="dv">3</span>] <span class="op">=</span> parent<span class="op">.</span><span class="at">d</span><span class="op">;</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>        parentMatrixBuffer[offset <span class="op">+</span> <span class="dv">4</span>] <span class="op">=</span> parent<span class="op">.</span><span class="at">tx</span><span class="op">;</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>        parentMatrixBuffer[offset <span class="op">+</span> <span class="dv">5</span>] <span class="op">=</span> parent<span class="op">.</span><span class="at">ty</span><span class="op">;</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 2. Execute SIMD-accelerated math in Wasm</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>    wasmInstance<span class="op">.</span><span class="at">exports</span><span class="op">.</span><span class="fu">batch_multiply_matrices</span>(</span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>        localMatrixBuffer<span class="op">.</span><span class="at">byteOffset</span><span class="op">,</span></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>        parentMatrixBuffer<span class="op">.</span><span class="at">byteOffset</span><span class="op">,</span></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>        worldMatrixBuffer<span class="op">.</span><span class="at">byteOffset</span><span class="op">,</span></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>        count</span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 3. Write results back to Pixi&#39;s worldTransform instances</span></span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> count<span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> obj <span class="op">=</span> displayObjects[i]<span class="op">;</span></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> offset <span class="op">=</span> i <span class="op">*</span> <span class="dv">6</span><span class="op">;</span></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> world <span class="op">=</span> obj<span class="op">.</span><span class="at">transform</span><span class="op">.</span><span class="at">worldTransform</span><span class="op">;</span></span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>        world<span class="op">.</span><span class="at">a</span> <span class="op">=</span> worldMatrixBuffer[offset]<span class="op">;</span></span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>        world<span class="op">.</span><span class="at">b</span> <span class="op">=</span> worldMatrixBuffer[offset <span class="op">+</span> <span class="dv">1</span>]<span class="op">;</span></span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>        world<span class="op">.</span><span class="at">c</span> <span class="op">=</span> worldMatrixBuffer[offset <span class="op">+</span> <span class="dv">2</span>]<span class="op">;</span></span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>        world<span class="op">.</span><span class="at">d</span> <span class="op">=</span> worldMatrixBuffer[offset <span class="op">+</span> <span class="dv">3</span>]<span class="op">;</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>        world<span class="op">.</span><span class="at">tx</span> <span class="op">=</span> worldMatrixBuffer[offset <span class="op">+</span> <span class="dv">4</span>]<span class="op">;</span></span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>        world<span class="op">.</span><span class="at">ty</span> <span class="op">=</span> worldMatrixBuffer[offset <span class="op">+</span> <span class="dv">5</span>]<span class="op">;</span></span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>        obj<span class="op">.</span><span class="at">transform</span><span class="op">.</span><span class="at">_worldID</span><span class="op">++;</span></span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h2 id="integration-into-the-render-loop">Integration into the Render
+Loop</h2>
+<p>Hook the SIMD batch pass directly into the Pixi.js application ticker
+before the renderer draws the scene:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">ticker</span><span class="op">.</span><span class="fu">add</span>(() <span class="kw">=&gt;</span> {</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Run SIMD calculation over flat entity pools</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">updateTransformsSIMD</span>(particleEntities<span class="op">,</span> wasmInstance)<span class="op">;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Renderer will now consume the updated world transforms</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>}<span class="op">,</span> <span class="kw">null</span><span class="op">,</span> PIXI<span class="op">.</span><span class="at">UPDATE_PRIORITY</span><span class="op">.</span><span class="at">HIGH</span>)<span class="op">;</span></span></code></pre></div>
+<p>By structuring math updates around flat memory buffers and replacing
+scalar recursive transforms with vector operations, Pixi.js can evaluate
+high-density scenes with minimal CPU frame-time overhead.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

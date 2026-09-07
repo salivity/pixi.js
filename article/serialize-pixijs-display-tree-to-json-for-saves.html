@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serialize PixiJS Display Tree to JSON for Saves - pixi.js</title>
+    <meta name="description" content="Serializing a PixiJS display hierarchy into JSON requires traversing the scene tree, extracting essential transform and visual properties, and mapping them to lightweight data structures while ignoring internal engine objects like WebGL contexts and circ">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/serialize-pixijs-display-tree-to-json-for-saves">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Serialize PixiJS Display Tree to JSON for Saves - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/serialize-pixijs-display-tree-to-json-for-saves" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Serializing a PixiJS display hierarchy into JSON requires traversing the scene tree, extracting essential transform and visual properties, and mapping them to lightweight data structures while ignoring internal engine objects like WebGL contexts and circ" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="serialize-pixijs-display-tree-to-json-for-saves">Serialize
+PixiJS Display Tree to JSON for Saves</h1>
+<p>Serializing a PixiJS display hierarchy into JSON requires traversing
+the scene tree, extracting essential transform and visual properties,
+and mapping them to lightweight data structures while ignoring internal
+engine objects like WebGL contexts and circular references. This guide
+explains how to build a recursive serialization system to export your
+PixiJS display tree to JSON and reconstruct it faithfully for game save
+states.</p>
+<h2 id="the-challenge-of-direct-serialization">The Challenge of Direct
+Serialization</h2>
+<p>Passing a root PixiJS <code>Container</code> directly to
+<code>JSON.stringify</code> will fail due to circular references
+(<code>parent</code> pointing back to ancestors) and complex internal
+references (WebGL textures, event emitters, and renderers). To save game
+states cleanly, you must define a custom schema that extracts only the
+necessary visual and structural properties, then reconstruct the
+instances upon loading.</p>
+<h2 id="defining-the-serializable-schema">Defining the Serializable
+Schema</h2>
+<p>A reliable JSON representation of a display node requires
+identifying:</p>
+<ol type="1">
+<li><strong>Type</strong>: The class to instantiate (e.g.,
+<code>Container</code>, <code>Sprite</code>, <code>Text</code>,
+<code>Graphics</code>).</li>
+<li><strong>Transform Data</strong>: Coordinates, scale, rotation,
+pivot, skew, and alpha.</li>
+<li><strong>Asset References</strong>: Texture keys or frame IDs from
+your asset manager, rather than raw texture objects.</li>
+<li><strong>Custom Game State</strong>: Custom identifiers, interaction
+flags, or gameplay metadata attached to the display object.</li>
+<li><strong>Children</strong>: An array of nested serializable node
+objects.</li>
+</ol>
+<h2 id="implementing-the-recursive-serializer">Implementing the
+Recursive Serializer</h2>
+<p>Traverse the display tree recursively starting from a root container.
+Read the relevant properties from each <code>DisplayObject</code> and
+compile them into a plain JavaScript object.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">serializeDisplayObject</span>(object) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Base node configuration</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> node <span class="op">=</span> {</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">type</span><span class="op">:</span> object<span class="op">.</span><span class="at">constructor</span><span class="op">.</span><span class="at">name</span><span class="op">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">x</span><span class="op">:</span> object<span class="op">.</span><span class="at">x</span><span class="op">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">y</span><span class="op">:</span> object<span class="op">.</span><span class="at">y</span><span class="op">,</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">scaleX</span><span class="op">:</span> object<span class="op">.</span><span class="at">scale</span><span class="op">.</span><span class="at">x</span><span class="op">,</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">scaleY</span><span class="op">:</span> object<span class="op">.</span><span class="at">scale</span><span class="op">.</span><span class="at">y</span><span class="op">,</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">rotation</span><span class="op">:</span> object<span class="op">.</span><span class="at">rotation</span><span class="op">,</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">alpha</span><span class="op">:</span> object<span class="op">.</span><span class="at">alpha</span><span class="op">,</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">visible</span><span class="op">:</span> object<span class="op">.</span><span class="at">visible</span><span class="op">,</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">zIndex</span><span class="op">:</span> object<span class="op">.</span><span class="at">zIndex</span><span class="op">,</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">name</span><span class="op">:</span> object<span class="op">.</span><span class="at">name</span> <span class="op">||</span> <span class="kw">null</span><span class="op">,</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">customData</span><span class="op">:</span> object<span class="op">.</span><span class="at">customData</span> <span class="op">||</span> {}<span class="op">,</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">children</span><span class="op">:</span> []</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  }<span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Extract type-specific properties</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (object <span class="kw">instanceof</span> PIXI<span class="op">.</span><span class="at">Sprite</span>) {</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Store the asset key mapped to the texture, not the texture itself</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    node<span class="op">.</span><span class="at">textureKey</span> <span class="op">=</span> object<span class="op">.</span><span class="at">textureKey</span> <span class="op">||</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    node<span class="op">.</span><span class="at">anchorX</span> <span class="op">=</span> object<span class="op">.</span><span class="at">anchor</span><span class="op">.</span><span class="at">x</span><span class="op">;</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    node<span class="op">.</span><span class="at">anchorY</span> <span class="op">=</span> object<span class="op">.</span><span class="at">anchor</span><span class="op">.</span><span class="at">y</span><span class="op">;</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    node<span class="op">.</span><span class="at">tint</span> <span class="op">=</span> object<span class="op">.</span><span class="at">tint</span><span class="op">;</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (object <span class="kw">instanceof</span> PIXI<span class="op">.</span><span class="at">Text</span>) {</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    node<span class="op">.</span><span class="at">text</span> <span class="op">=</span> object<span class="op">.</span><span class="at">text</span><span class="op">;</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    node<span class="op">.</span><span class="at">style</span> <span class="op">=</span> object<span class="op">.</span><span class="at">style</span><span class="op">.</span><span class="at">toObject</span> <span class="op">?</span> object<span class="op">.</span><span class="at">style</span><span class="op">.</span><span class="fu">toObject</span>() <span class="op">:</span> object<span class="op">.</span><span class="at">style</span><span class="op">;</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Recurse into children if the object is a container</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (object<span class="op">.</span><span class="at">children</span> <span class="op">&amp;&amp;</span> object<span class="op">.</span><span class="at">children</span><span class="op">.</span><span class="at">length</span> <span class="op">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">const</span> child <span class="kw">of</span> object<span class="op">.</span><span class="at">children</span>) {</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>      <span class="co">// Avoid saving transient objects such as debug overlays or UI cursors</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (<span class="op">!</span>child<span class="op">.</span><span class="at">doNotSerialize</span>) {</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>        node<span class="op">.</span><span class="at">children</span><span class="op">.</span><span class="fu">push</span>(<span class="fu">serializeDisplayObject</span>(child))<span class="op">;</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> node<span class="op">;</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="co">// Convert root game stage or a container to JSON</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">exportHierarchyToJSON</span>(rootContainer) {</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> serializedTree <span class="op">=</span> <span class="fu">serializeDisplayObject</span>(rootContainer)<span class="op">;</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>(serializedTree)<span class="op">;</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h2 id="handling-texture-references">Handling Texture References</h2>
+<p>A common pitfall is attempting to serialize
+<code>PIXI.Texture</code>. Instead, store a string identifier
+representing the texture. Assign a <code>textureKey</code> property to
+your sprites during creation or asset loading:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> sprite <span class="op">=</span> PIXI<span class="op">.</span><span class="at">Sprite</span><span class="op">.</span><span class="fu">from</span>(<span class="st">&#39;hero_idle.png&#39;</span>)<span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>sprite<span class="op">.</span><span class="at">textureKey</span> <span class="op">=</span> <span class="st">&#39;hero_idle.png&#39;</span><span class="op">;</span></span></code></pre></div>
+<p>When serializing, write this key to the JSON payload so the
+deserializer can fetch the appropriate texture from cache.</p>
+<h2 id="implementing-the-deserializer">Implementing the
+Deserializer</h2>
+<p>Rebuilding the tree requires reading the JSON, using a factory
+pattern to instantiate the appropriate PixiJS classes, applying stored
+properties, and attaching children back to their parents.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">deserializeDisplayObject</span>(node) {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> instance<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">switch</span> (node<span class="op">.</span><span class="at">type</span>) {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="st">&#39;Sprite&#39;</span><span class="op">:</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>      <span class="kw">const</span> texture <span class="op">=</span> node<span class="op">.</span><span class="at">textureKey</span> </span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">?</span> PIXI<span class="op">.</span><span class="at">Texture</span><span class="op">.</span><span class="fu">from</span>(node<span class="op">.</span><span class="at">textureKey</span>) </span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">:</span> PIXI<span class="op">.</span><span class="at">Texture</span><span class="op">.</span><span class="at">EMPTY</span><span class="op">;</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>      instance <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Sprite</span>(texture)<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>      instance<span class="op">.</span><span class="at">textureKey</span> <span class="op">=</span> node<span class="op">.</span><span class="at">textureKey</span><span class="op">;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>      instance<span class="op">.</span><span class="at">anchor</span><span class="op">.</span><span class="fu">set</span>(node<span class="op">.</span><span class="at">anchorX</span><span class="op">,</span> node<span class="op">.</span><span class="at">anchorY</span>)<span class="op">;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (node<span class="op">.</span><span class="at">tint</span> <span class="op">!==</span> <span class="kw">undefined</span>) instance<span class="op">.</span><span class="at">tint</span> <span class="op">=</span> node<span class="op">.</span><span class="at">tint</span><span class="op">;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>      <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="st">&#39;Text&#39;</span><span class="op">:</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>      instance <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Text</span>(node<span class="op">.</span><span class="at">text</span><span class="op">,</span> node<span class="op">.</span><span class="at">style</span>)<span class="op">;</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>      <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="st">&#39;Container&#39;</span><span class="op">:</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">default</span><span class="op">:</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>      instance <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Container</span>()<span class="op">;</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>      <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Restore transforms and visual attributes</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>  instance<span class="op">.</span><span class="at">x</span> <span class="op">=</span> node<span class="op">.</span><span class="at">x</span><span class="op">;</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  instance<span class="op">.</span><span class="at">y</span> <span class="op">=</span> node<span class="op">.</span><span class="at">y</span><span class="op">;</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  instance<span class="op">.</span><span class="at">scale</span><span class="op">.</span><span class="fu">set</span>(node<span class="op">.</span><span class="at">scaleX</span><span class="op">,</span> node<span class="op">.</span><span class="at">scaleY</span>)<span class="op">;</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  instance<span class="op">.</span><span class="at">rotation</span> <span class="op">=</span> node<span class="op">.</span><span class="at">rotation</span><span class="op">;</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>  instance<span class="op">.</span><span class="at">alpha</span> <span class="op">=</span> node<span class="op">.</span><span class="at">alpha</span><span class="op">;</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>  instance<span class="op">.</span><span class="at">visible</span> <span class="op">=</span> node<span class="op">.</span><span class="at">visible</span><span class="op">;</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>  instance<span class="op">.</span><span class="at">zIndex</span> <span class="op">=</span> node<span class="op">.</span><span class="at">zIndex</span><span class="op">;</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>  instance<span class="op">.</span><span class="at">name</span> <span class="op">=</span> node<span class="op">.</span><span class="at">name</span><span class="op">;</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  instance<span class="op">.</span><span class="at">customData</span> <span class="op">=</span> node<span class="op">.</span><span class="at">customData</span><span class="op">;</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Recursively reconstruct children</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (node<span class="op">.</span><span class="at">children</span> <span class="op">&amp;&amp;</span> node<span class="op">.</span><span class="at">children</span><span class="op">.</span><span class="at">length</span> <span class="op">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">const</span> childNode <span class="kw">of</span> node<span class="op">.</span><span class="at">children</span>) {</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>      <span class="kw">const</span> childInstance <span class="op">=</span> <span class="fu">deserializeDisplayObject</span>(childNode)<span class="op">;</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>      instance<span class="op">.</span><span class="fu">addChild</span>(childInstance)<span class="op">;</span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> instance<span class="op">;</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="co">// Recreate a container from a JSON string</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">loadHierarchyFromJSON</span>(jsonString) {</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> rootNode <span class="op">=</span> <span class="bu">JSON</span><span class="op">.</span><span class="fu">parse</span>(jsonString)<span class="op">;</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="fu">deserializeDisplayObject</span>(rootNode)<span class="op">;</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h2 id="considerations-for-complex-scenes">Considerations for Complex
+Scenes</h2>
+<ul>
+<li><strong>PixiJS Graphics</strong>: Serializing
+<code>PIXI.Graphics</code> by reading geometric paths can be
+inefficient. Instead, store high-level drawing parameters (e.g.,
+<code>shape: "circle", radius: 20</code>) in <code>customData</code> and
+regenerate the vector paths during deserialization.</li>
+<li><strong>Filters and Shaders</strong>: Avoid saving WebGL filter
+objects directly. Store configuration arrays (e.g.,
+<code>[{ type: "ColorMatrixFilter", brightness: 0.5 }]</code>) and
+reapply filters programmatically.</li>
+<li><strong>Decoupling Data from View</strong>: In large projects, avoid
+saving view-only objects directly. Store your game's underlying data
+model instead, and write a synchronization layer that updates the PixiJS
+display tree to match the restored game state.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

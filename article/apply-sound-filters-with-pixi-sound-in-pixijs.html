@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply Sound Filters with Pixi Sound in PixiJS - pixi.js</title>
+    <meta name="description" content="This guide explains how to implement and manipulate real-time audio filters—such as low-pass filters and distortion—using the @pixi/sound package in PixiJS. You will learn how to use the built-in filter classes, integrate native Web Audio API nodes f">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/apply-sound-filters-with-pixi-sound-in-pixijs">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Apply Sound Filters with Pixi Sound in PixiJS - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/apply-sound-filters-with-pixi-sound-in-pixijs" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This guide explains how to implement and manipulate real-time audio filters—such as low-pass filters and distortion—using the @pixi/sound package in PixiJS. You will learn how to use the built-in filter classes, integrate native Web Audio API nodes f" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="apply-sound-filters-with-pixi-sound-in-pixijs">Apply Sound
+Filters with Pixi Sound in PixiJS</h1>
+<p>This guide explains how to implement and manipulate real-time audio
+filters—such as low-pass filters and distortion—using the
+<code>@pixi/sound</code> package in PixiJS. You will learn how to use
+the built-in filter classes, integrate native Web Audio API nodes for
+custom filtering, assign filters to individual sounds or the global
+audio context, and dynamically tweak parameters during runtime to
+respond to in-game events.</p>
+<h3 id="installing-and-importing-the-library">Installing and Importing
+the Library</h3>
+<p>To use sound filters, ensure <code>@pixi/sound</code> is installed in
+your project:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install @pixi/sound pixi.js</span></code></pre></div>
+<p>Import <code>sound</code> and the <code>filters</code> namespace into
+your project:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { sound<span class="op">,</span> filters } <span class="im">from</span> <span class="st">&#39;@pixi/sound&#39;</span><span class="op">;</span></span></code></pre></div>
+<hr />
+<h3 id="applying-a-built-in-distortion-filter">Applying a Built-In
+Distortion Filter</h3>
+<p><code>@pixi/sound</code> includes built-in filter implementations,
+such as <code>DistortionFilter</code>. This effect adds a wave-shaping
+distortion effect to audio.</p>
+<p>You can apply it directly to a specific sound instance:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Load a sound asset</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>sound<span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;engine&#39;</span><span class="op">,</span> <span class="st">&#39;assets/engine.mp3&#39;</span>)<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Create the distortion filter (intensity ranges typically from 0 to 1)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> distortion <span class="op">=</span> <span class="kw">new</span> filters<span class="op">.</span><span class="fu">DistortionFilter</span>(<span class="fl">0.5</span>)<span class="op">;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">// Apply the filter to the specific sound</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> engineSound <span class="op">=</span> sound<span class="op">.</span><span class="fu">find</span>(<span class="st">&#39;engine&#39;</span>)<span class="op">;</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>engineSound<span class="op">.</span><span class="at">filters</span> <span class="op">=</span> [distortion]<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co">// Play the sound</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>engineSound<span class="op">.</span><span class="fu">play</span>({ <span class="dt">loop</span><span class="op">:</span> <span class="kw">true</span> })<span class="op">;</span></span></code></pre></div>
+<hr />
+<h3 id="creating-a-real-time-low-pass-filter">Creating a Real-Time
+Low-Pass Filter</h3>
+<p><code>@pixi/sound</code> allows you to wrap native Web Audio API
+nodes using the base <code>filters.Filter</code> class. A low-pass
+filter cuts higher frequencies, which is commonly used to simulate sound
+muffled by walls, underwater environments, or paused menus.</p>
+<p>Use the Web Audio API's <code>BiquadFilterNode</code> inside a
+<code>@pixi/sound</code> filter:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Access the native AudioContext from @pixi/sound</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> audioContext <span class="op">=</span> sound<span class="op">.</span><span class="at">context</span><span class="op">.</span><span class="at">audioContext</span><span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Create a native BiquadFilterNode</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> biquadNode <span class="op">=</span> audioContext<span class="op">.</span><span class="fu">createBiquadFilter</span>()<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>biquadNode<span class="op">.</span><span class="at">type</span> <span class="op">=</span> <span class="st">&#39;lowpass&#39;</span><span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>biquadNode<span class="op">.</span><span class="at">frequency</span><span class="op">.</span><span class="fu">setValueAtTime</span>(<span class="dv">1000</span><span class="op">,</span> audioContext<span class="op">.</span><span class="at">currentTime</span>)<span class="op">;</span> <span class="co">// Cutoff frequency in Hz</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>biquadNode<span class="op">.</span><span class="at">Q</span><span class="op">.</span><span class="fu">setValueAtTime</span>(<span class="dv">1</span><span class="op">,</span> audioContext<span class="op">.</span><span class="at">currentTime</span>)<span class="op">;</span> <span class="co">// Quality factor</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">// Wrap the native node in a Pixi Sound Filter</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> lowPassFilter <span class="op">=</span> <span class="kw">new</span> filters<span class="op">.</span><span class="fu">Filter</span>(biquadNode)<span class="op">;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">// Apply to a sound</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> backgroundMusic <span class="op">=</span> sound<span class="op">.</span><span class="fu">find</span>(<span class="st">&#39;bgm&#39;</span>)<span class="op">;</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>backgroundMusic<span class="op">.</span><span class="at">filters</span> <span class="op">=</span> [lowPassFilter]<span class="op">;</span></span></code></pre></div>
+<hr />
+<h3 id="applying-filters-globally">Applying Filters Globally</h3>
+<p>If you want an effect applied to every sound played across the entire
+game (for example, muffling everything when a pause menu is opened),
+assign the filter to <code>sound.filtersAll</code>:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Apply the low-pass filter to all sounds globally</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>sound<span class="op">.</span><span class="at">filtersAll</span> <span class="op">=</span> [lowPassFilter]<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Clear global filters to restore normal audio</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>sound<span class="op">.</span><span class="at">filtersAll</span> <span class="op">=</span> []<span class="op">;</span></span></code></pre></div>
+<hr />
+<h3 id="modifying-filter-properties-in-real-time">Modifying Filter
+Properties in Real Time</h3>
+<p>Filter parameters can be modified dynamically during the PixiJS
+render loop or in response to player actions.</p>
+<h4 id="dynamically-modifying-low-pass-cutoff">Dynamically Modifying
+Low-Pass Cutoff</h4>
+<p>Adjusting the <code>frequency</code> parameter of a low-pass filter
+simulates transitioning between environments:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { Ticker } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> targetFrequency <span class="op">=</span> <span class="dv">800</span><span class="op">;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Update the filter cutoff smoothly inside the PixiJS Ticker</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>Ticker<span class="op">.</span><span class="at">shared</span><span class="op">.</span><span class="fu">add</span>(() <span class="kw">=&gt;</span> {</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> current <span class="op">=</span> biquadNode<span class="op">.</span><span class="at">frequency</span><span class="op">.</span><span class="at">value</span><span class="op">;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    biquadNode<span class="op">.</span><span class="at">frequency</span><span class="op">.</span><span class="fu">setValueAtTime</span>(</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        current <span class="op">+</span> (targetFrequency <span class="op">-</span> current) <span class="op">*</span> <span class="fl">0.05</span><span class="op">,</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        audioContext<span class="op">.</span><span class="at">currentTime</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">// Example: Muffle the sound when paused</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">setUnderwater</span>(isUnderwater) {</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    targetFrequency <span class="op">=</span> isUnderwater <span class="op">?</span> <span class="dv">400</span> <span class="op">:</span> <span class="dv">20000</span><span class="op">;</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h4 id="dynamically-modifying-distortion-amount">Dynamically Modifying
+Distortion Amount</h4>
+<p>The <code>DistortionFilter</code> allows direct mutation of its
+<code>amount</code> property:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Increase distortion as a character takes damage or boosts speed</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">updateEngineDistortion</span>(rpmRatio) {</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    distortion<span class="op">.</span><span class="at">amount</span> <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">min</span>(<span class="bu">Math</span><span class="op">.</span><span class="fu">max</span>(rpmRatio<span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> <span class="dv">1</span>)<span class="op">;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<hr />
+<h3 id="combining-multiple-filters">Combining Multiple Filters</h3>
+<p>Multiple filters can be chained together by adding them to the
+<code>filters</code> array. The audio signal passes sequentially through
+each filter node:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> distortion <span class="op">=</span> <span class="kw">new</span> filters<span class="op">.</span><span class="fu">DistortionFilter</span>(<span class="fl">0.2</span>)<span class="op">;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> lowPass <span class="op">=</span> <span class="kw">new</span> filters<span class="op">.</span><span class="fu">Filter</span>(biquadNode)<span class="op">;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">// The sound passes through the low-pass filter, then the distortion filter</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>sound<span class="op">.</span><span class="fu">find</span>(<span class="st">&#39;laser&#39;</span>)<span class="op">.</span><span class="at">filters</span> <span class="op">=</span> [lowPass<span class="op">,</span> distortion]<span class="op">;</span></span></code></pre></div>
+<p>To remove active filters and restore raw audio playback, assign an
+empty array:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sound<span class="op">.</span><span class="fu">find</span>(<span class="st">&#39;laser&#39;</span>)<span class="op">.</span><span class="at">filters</span> <span class="op">=</span> []<span class="op">;</span></span></code></pre></div></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

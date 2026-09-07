@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js Texture.EMPTY vs Texture.WHITE - pixi.js</title>
+    <meta name="description" content="In Pixi.js, Texture.EMPTY and Texture.WHITE are built-in static textures designed for different utility roles within a rendering pipeline. While Texture.EMPTY acts as a transparent, non-rendering placeholder to represent the absence of visual data, Textu">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-texture-empty-vs-texture-white">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js Texture.EMPTY vs Texture.WHITE - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-texture-empty-vs-texture-white" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In Pixi.js, Texture.EMPTY and Texture.WHITE are built-in static textures designed for different utility roles within a rendering pipeline. While Texture.EMPTY acts as a transparent, non-rendering placeholder to represent the absence of visual data, Textu" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-textureempty-vs-texturewhite">Pixi.js Texture.EMPTY vs
+Texture.WHITE</h1>
+<p>In Pixi.js, <code>Texture.EMPTY</code> and <code>Texture.WHITE</code>
+are built-in static textures designed for different utility roles within
+a rendering pipeline. While <code>Texture.EMPTY</code> acts as a
+transparent, non-rendering placeholder to represent the absence of
+visual data, <code>Texture.WHITE</code> provides a solid, single-color
+white pixel surface designed for tinting and drawing procedural colored
+rectangles without loading external image assets.</p>
+<h3 id="textureempty">Texture.EMPTY</h3>
+<p><code>Texture.EMPTY</code> is a shared empty texture with no visual
+content and an effective size of zero. When rendered via a
+<code>Sprite</code>, it does not draw any visible pixels to the
+screen.</p>
+<ul>
+<li><strong>Primary Purpose:</strong> It serves as a safe default or
+placeholder when a display object requires a texture reference, but no
+image should be displayed.</li>
+<li><strong>Common Use Cases:</strong>
+<ul>
+<li>Initializing a <code>Sprite</code> before an asset has finished
+loading asynchronously, avoiding <code>null</code> or
+<code>undefined</code> runtime exceptions.</li>
+<li>Creating invisible interactive regions (hit areas) or structural
+container nodes when you do not want to load a blank transparent
+PNG.</li>
+</ul></li>
+<li><strong>Rendering Behavior:</strong> Pixi.js recognizes that it has
+no underlying resource to draw, so it contributes no visible geometry to
+the render batch.</li>
+</ul>
+<h3 id="texturewhite">Texture.WHITE</h3>
+<p><code>Texture.WHITE</code> is a pre-generated, solid white texture
+(typically a 16x16 canvas or single-pixel texture internally). Because
+it is completely opaque and pure white (<code>#FFFFFF</code>), it
+interacts predictably with Pixi.js's color multiplication engine.</p>
+<ul>
+<li><strong>Primary Purpose:</strong> It functions as a lightweight base
+for solid-color primitives that can be dynamically tinted and
+scaled.</li>
+<li><strong>Common Use Cases:</strong>
+<ul>
+<li>Creating flat-color UI elements, bounding boxes, health bars, or
+solid backgrounds without using <code>PIXI.Graphics</code>.</li>
+<li>Achieving higher rendering performance than
+<code>PIXI.Graphics</code> by taking advantage of the standard
+<code>Sprite</code> batch renderer.</li>
+</ul></li>
+<li><strong>Tinting Capability:</strong> Setting
+<code>sprite.tint = 0xFF0000</code> on a sprite using
+<code>Texture.WHITE</code> produces a crisp, solid red rectangle.</li>
+</ul>
+<h3 id="key-differences">Key Differences</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Feature</th>
+<th style="text-align: left;">Texture.EMPTY</th>
+<th style="text-align: left;">Texture.WHITE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Visual Appearance</strong></td>
+<td style="text-align: left;">Completely transparent / none</td>
+<td style="text-align: left;">Solid white</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Dimensions</strong></td>
+<td style="text-align: left;">0 × 0 pixels</td>
+<td style="text-align: left;">Solid block (commonly 16 × 16)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Tinting Support</strong></td>
+<td style="text-align: left;">No effect (remains invisible)</td>
+<td style="text-align: left;">Multiplies directly with the tint
+color</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Performance Impact</strong></td>
+<td style="text-align: left;">Bypasses standard drawing operations</td>
+<td style="text-align: left;">Batches as standard textured quads</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Best Used For</strong></td>
+<td style="text-align: left;">Fallbacks, invisible anchors, load
+placeholders</td>
+<td style="text-align: left;">Fast colored shapes, UI panels, health
+bars</td>
+</tr>
+</tbody>
+</table>
+<h3 id="summary">Summary</h3>
+<p>Use <code>Texture.EMPTY</code> when you need a safe
+<code>Sprite</code> reference that displays nothing. Use
+<code>Texture.WHITE</code> combined with <code>width</code>,
+<code>height</code>, and <code>tint</code> properties when you need to
+draw colored boxes and UI panels efficiently using the sprite
+batcher.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

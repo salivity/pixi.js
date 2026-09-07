@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js WebGPU Depth and Stencil Attachments - pixi.js</title>
+    <meta name="description" content="This article provides a technical overview of how depth and stencil attachments are configured within WebGPU render passes in Pixi.js. It details the setup of custom RenderTarget instances, how WebGPU depth-stencil formats are selected, and the way Pixi.">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-webgpu-depth-and-stencil-attachments">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js WebGPU Depth and Stencil Attachments - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-webgpu-depth-and-stencil-attachments" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides a technical overview of how depth and stencil attachments are configured within WebGPU render passes in Pixi.js. It details the setup of custom RenderTarget instances, how WebGPU depth-stencil formats are selected, and the way Pixi." />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-webgpu-depth-and-stencil-attachments">Pixi.js WebGPU
+Depth and Stencil Attachments</h1>
+<p>This article provides a technical overview of how depth and stencil
+attachments are configured within WebGPU render passes in Pixi.js. It
+details the setup of custom <code>RenderTarget</code> instances, how
+WebGPU depth-stencil formats are selected, and the way Pixi.js maps
+high-level surface properties to low-level
+<code>GPURenderPassDepthStencilAttachment</code> descriptors, including
+load, store, and clear operations.</p>
+<h3 id="enabling-depth-and-stencil-in-rendertarget">Enabling Depth and
+Stencil in RenderTarget</h3>
+<p>In Pixi.js (v8+), WebGPU render passes are governed by the
+<code>RenderTargetSystem</code>. Rather than requiring you to manually
+instantiate low-level WebGPU descriptors for every frame, Pixi.js
+manages attachments through the <code>RenderTarget</code> class.</p>
+<p>To enable depth and stencil testing, you must configure a
+<code>RenderTarget</code> with the corresponding flags enabled:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode typescript"><code class="sourceCode typescript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { RenderTarget } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> renderTarget <span class="op">=</span> <span class="kw">new</span> <span class="fu">RenderTarget</span>({</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    width<span class="op">:</span> <span class="dv">800</span><span class="op">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    height<span class="op">:</span> <span class="dv">600</span><span class="op">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    depth<span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    stencil<span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>Setting <code>depth: true</code> and <code>stencil: true</code>
+instructs Pixi's <code>GpuRenderTargetSystem</code> to allocate a
+depth-stencil texture alongside the primary color texture.</p>
+<h3 id="webgpu-format-selection">WebGPU Format Selection</h3>
+<p>Under the hood, Pixi.js determines the texture format for the
+depth-stencil attachment. By default, when both depth and stencil are
+requested, Pixi.js provisions a texture using the standard WebGPU
+format:</p>
+<ul>
+<li><code>depth24plus-stencil8</code>: Used when both depth and stencil
+buffers are active.</li>
+<li><code>depth32float</code>: Typically chosen if only high-precision
+depth is requested without a stencil buffer.</li>
+<li><code>stencil8</code>: Used if solely stencil operations are needed
+without depth.</li>
+</ul>
+<p>Pixi's resource management handles the creation of the
+<code>GPUTexture</code> with
+<code>GPUTextureUsage.RENDER_ATTACHMENT</code>, and subsequently creates
+a <code>GPUTextureView</code> targeted for the render pass
+descriptor.</p>
+<h3
+id="construction-of-gpurenderpassdepthstencilattachment">Construction of
+GPURenderPassDepthStencilAttachment</h3>
+<p>When the WebGPU renderer begins a pass with
+<code>renderer.renderTarget.bind(renderTarget, clear)</code>, Pixi.js
+constructs the <code>GPURenderPassDescriptor</code>. The
+<code>depthStencilAttachment</code> property of this descriptor is
+populated with specific WebGPU instructions:</p>
+<ol type="1">
+<li><strong><code>view</code></strong>: The <code>GPUTextureView</code>
+created from the render target's depth-stencil texture.</li>
+<li><strong><code>depthClearValue</code></strong>: Defaults to
+<code>1.0</code> (representing the far clipping plane).</li>
+<li><strong><code>depthLoadOp</code></strong>: Configured as
+<code>'clear'</code> if a clear flag is passed during the bind call, or
+<code>'load'</code> if previous pass contents need to be preserved.</li>
+<li><strong><code>depthStoreOp</code></strong>: Set to
+<code>'store'</code> if the depth information needs to be read in later
+passes or discarded with <code>'discard'</code> to optimize memory
+bandwidth when depth is transient.</li>
+<li><strong><code>stencilClearValue</code></strong>: Defaults to
+<code>0</code>.</li>
+<li><strong><code>stencilLoadOp</code></strong>: Evaluated similarly to
+depth, switching between <code>'clear'</code> and
+<code>'load'</code>.</li>
+<li><strong><code>stencilStoreOp</code></strong>: Set to
+<code>'store'</code> or <code>'discard'</code> depending on whether mask
+data persists beyond the active pass.</li>
+</ol>
+<h3 id="execution-in-custom-pipelines">Execution in Custom
+Pipelines</h3>
+<p>If you are interacting directly with the underlying WebGPU rendering
+pipes or shaders via custom render pipelines, depth-stencil states must
+align with the attachment configuration.</p>
+<p>When creating a <code>GPURenderPipeline</code> through Pixi.js, the
+<code>depthStencil</code> state must match the format of the bound
+<code>RenderTarget</code>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode typescript"><code class="sourceCode typescript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> depthStencilState<span class="op">:</span> GPUDepthStencilState <span class="op">=</span> {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    format<span class="op">:</span> <span class="st">&#39;depth24plus-stencil8&#39;</span><span class="op">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    depthWriteEnabled<span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    depthCompare<span class="op">:</span> <span class="st">&#39;less&#39;</span><span class="op">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<p>If the format specified in your pipeline does not match the format of
+the attachment generated by the <code>RenderTarget</code>, the WebGPU
+device will throw a validation error during render pass execution. When
+rendering with Pixi's standard display tree, these states are
+automatically synchronized based on active masks and sorting
+filters.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

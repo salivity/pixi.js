@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js: getLocalBounds vs getBounds Explained - pixi.js</title>
+    <meta name="description" content="In Pixi.js, both getBounds() and getLocalBounds() are used to measure the rectangular dimensions of a display object, but they evaluate that space differently. The fundamental difference lies in the coordinate system used: getBounds() calculates the axis">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-getlocalbounds-vs-getbounds-explained">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js: getLocalBounds vs getBounds Explained - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-getlocalbounds-vs-getbounds-explained" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In Pixi.js, both getBounds() and getLocalBounds() are used to measure the rectangular dimensions of a display object, but they evaluate that space differently. The fundamental difference lies in the coordinate system used: getBounds() calculates the axis" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-getlocalbounds-vs-getbounds-explained">Pixi.js:
+getLocalBounds vs getBounds Explained</h1>
+<p>In Pixi.js, both <code>getBounds()</code> and
+<code>getLocalBounds()</code> are used to measure the rectangular
+dimensions of a display object, but they evaluate that space
+differently. The fundamental difference lies in the coordinate system
+used: <code>getBounds()</code> calculates the axis-aligned bounding box
+of an object in global stage coordinates—factoring in all position,
+rotation, and scale transforms from the object and its parents—whereas
+<code>getLocalBounds()</code> calculates the bounding box strictly
+within the object's own local coordinate space, completely ignoring
+parent and local transformation matrices.</p>
+<h2 id="understanding-getbounds">Understanding getBounds()</h2>
+<p>The <code>getBounds()</code> method returns a
+<code>PIXI.Rectangle</code> representing the Axis-Aligned Bounding Box
+(AABB) of a <code>DisplayObject</code> in the global coordinate space
+(the root stage).</p>
+<ul>
+<li><strong>Transforms Applied:</strong> It includes the object’s
+position, scale, rotation, skew, as well as the transforms of every
+ancestor container up to the stage root.</li>
+<li><strong>Rotation Impact:</strong> Because the returned rectangle is
+axis-aligned (edges are always parallel to the screen's X and Y axes),
+rotating an object will cause the width and height returned by
+<code>getBounds()</code> to expand to encompass the rotated
+corners.</li>
+<li><strong>Performance:</strong> It is computationally heavier because
+Pixi.js must multiply the entire world transform matrix down the display
+tree.</li>
+<li><strong>Primary Use Cases:</strong>
+<ul>
+<li>Screen-space collision detection and hit-testing.</li>
+<li>Determining if an object is inside the visible viewport
+(frustum/viewport culling).</li>
+<li>Aligning or positioning UI elements relative to the overall screen
+or stage.</li>
+</ul></li>
+</ul>
+<h2 id="understanding-getlocalbounds">Understanding
+getLocalBounds()</h2>
+<p>The <code>getLocalBounds()</code> method returns a
+<code>PIXI.Rectangle</code> measuring the object relative to its own
+origin <code>(0, 0)</code>.</p>
+<ul>
+<li><strong>Transforms Applied:</strong> It ignores the object's own
+position, rotation, and scale, as well as any transformations applied to
+parent containers. It only accounts for the intrinsic geometry of the
+object (such as drawn graphics or the positions of nested child elements
+inside it).</li>
+<li><strong>Rotation Impact:</strong> Rotating the object or its parent
+does not change the dimensions returned by
+<code>getLocalBounds()</code>.</li>
+<li><strong>Performance:</strong> Generally lighter than
+<code>getBounds()</code> because it does not traverse the global
+transformation hierarchy.</li>
+<li><strong>Primary Use Cases:</strong>
+<ul>
+<li>Centering an object's pivot point (e.g., setting
+<code>object.pivot.x = object.getLocalBounds().width / 2</code>).</li>
+<li>Creating dynamic backgrounds or borders that wrap an element
+regardless of its current scale or position.</li>
+<li>Measuring the intrinsic unscaled size of a composite container.</li>
+</ul></li>
+</ul>
+<h2 id="summary-of-differences">Summary of Differences</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Feature</th>
+<th style="text-align: left;"><code>getBounds()</code></th>
+<th style="text-align: left;"><code>getLocalBounds()</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Coordinate Space</strong></td>
+<td style="text-align: left;">Global / World Space</td>
+<td style="text-align: left;">Local Object Space</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Considers Position &amp;
+Scale</strong></td>
+<td style="text-align: left;">Yes (local and ancestor)</td>
+<td style="text-align: left;">No</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Considers Rotation</strong></td>
+<td style="text-align: left;">Yes (produces screen AABB)</td>
+<td style="text-align: left;">No</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Affected by Parent
+Transforms</strong></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">No</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Best Used For</strong></td>
+<td style="text-align: left;">Collisions, screen alignment, culling</td>
+<td style="text-align: left;">Pivoting, intrinsic sizing, framing</td>
+</tr>
+</tbody>
+</table></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

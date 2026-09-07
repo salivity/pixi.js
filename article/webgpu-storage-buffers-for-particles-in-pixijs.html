@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGPU Storage Buffers for Particles in PixiJS - pixi.js</title>
+    <meta name="description" content="This article examines how PixiJS v8 manages WebGPU storage buffer bindings to process arbitrary particle arrays inside custom compute passes. It details the lifecycle of storage buffers within the PixiJS WebGPU rendering abstraction, covering buffer allo">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/webgpu-storage-buffers-for-particles-in-pixijs">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebGPU Storage Buffers for Particles in PixiJS - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/webgpu-storage-buffers-for-particles-in-pixijs" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article examines how PixiJS v8 manages WebGPU storage buffer bindings to process arbitrary particle arrays inside custom compute passes. It details the lifecycle of storage buffers within the PixiJS WebGPU rendering abstraction, covering buffer allo" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webgpu-storage-buffers-for-particles-in-pixijs">WebGPU Storage
+Buffers for Particles in PixiJS</h1>
+<p>This article examines how PixiJS v8 manages WebGPU storage buffer
+bindings to process arbitrary particle arrays inside custom compute
+passes. It details the lifecycle of storage buffers within the PixiJS
+WebGPU rendering abstraction, covering buffer allocation with correct
+usage flags, bind group compilation and resource layout reflection,
+memory synchronization, and execution via compute pipelines.</p>
+<h3 id="webgpu-buffer-abstraction-in-pixijs">WebGPU Buffer Abstraction
+in PixiJS</h3>
+<p>PixiJS abstracts raw <code>GPUBuffer</code> allocations through its
+internal <code>Buffer</code> class. When dealing with arbitrary particle
+data destined for a compute shader, the buffer must be initialized with
+explicit usage flags to be valid as a storage target.</p>
+<p>In WebGPU, a buffer cannot be bound as a storage resource unless it
+contains the <code>GPUBufferUsage.STORAGE</code> flag. In PixiJS, this
+is defined by combining flags via the <code>BufferUsage</code>
+bitmask:</p>
+<ul>
+<li><code>BufferUsage.STORAGE</code>: Allows the buffer to be bound as a
+<code>var&lt;storage, read&gt;</code> or
+<code>var&lt;storage, read_write&gt;</code> resource in WGSL.</li>
+<li><code>BufferUsage.COPY_DST</code>: Permits updating the buffer using
+<code>queue.writeBuffer</code>.</li>
+<li><code>BufferUsage.VERTEX</code>: Often combined with compute buffers
+so the compute output can be fed directly to a render pipeline as an
+instanced vertex attribute array without CPU readback.</li>
+</ul>
+<p>When a PixiJS <code>Buffer</code> is initialized with a typed array
+(such as a <code>Float32Array</code> representing particle positions,
+velocities, and lifespans), the <code>WebGPUBufferSystem</code> lazily
+allocates the underlying hardware buffer during the preparation phase
+before dispatch.</p>
+<h3 id="reflection-and-bind-group-creation">Reflection and Bind Group
+Creation</h3>
+<p>PixiJS bridges shader declarations and JavaScript structures using
+its <code>GpuProgram</code> and <code>BindGroup</code> subsystems:</p>
+<ol type="1">
+<li><strong>Shader Reflection:</strong> When a WGSL compute shader is
+loaded, PixiJS parses or reflects the source code to locate resource
+declarations. It identifies storage variables defined with
+<code>@group(X) @binding(Y) var&lt;storage, ...&gt;</code> attributes
+and builds the internal bind group layout metadata.</li>
+<li><strong>BindGroup Assignment:</strong> An instance of
+<code>BindGroup</code> is instantiated containing the storage
+<code>Buffer</code> assigned to the numeric binding slot defined in the
+WGSL compute code.</li>
+<li><strong>Pipeline Layout Generation:</strong> When preparing to
+execute, PixiJS compares the shader's expected binding layout against
+the assigned <code>BindGroup</code>. It manages the WebGPU
+<code>GPUBindGroupLayout</code> and caches the resulting
+<code>GPUBindGroup</code> to avoid redundant WebGPU driver allocations
+across frames.</li>
+</ol>
+<h3 id="cpu-to-gpu-synchronization">CPU-to-GPU Synchronization</h3>
+<p>For particle data initialized or updated on the CPU:</p>
+<ul>
+<li>Modifying the data requires flagging the PixiJS <code>Buffer</code>
+as dirty via <code>buffer.update()</code>.</li>
+<li>Prior to opening the compute pass, the
+<code>WebGPUBufferSystem</code> resolves pending buffer updates. It
+issues a <code>device.queue.writeBuffer()</code> call to stream the
+altered byte slice directly into GPU memory.</li>
+<li>If particles are simulated entirely on the GPU, CPU synchronization
+is skipped after the initial upload. The buffer remains resident in VRAM
+across frames, with the compute pass continuously mutating the buffer
+via <code>read_write</code> storage access.</li>
+</ul>
+<h3 id="executing-the-compute-pass">Executing the Compute Pass</h3>
+<p>PixiJS does not expose a high-level scene graph object for compute
+operations; instead, compute operations are handled via low-level
+pipeline execution or custom render systems:</p>
+<ol type="1">
+<li><strong>Pipeline Retrieval:</strong> A <code>ComputePipeline</code>
+is acquired from the internal cache using the compute
+<code>GpuProgram</code>.</li>
+<li><strong>Command Recording:</strong> The renderer accesses the
+current <code>GPUCommandEncoder</code> and invokes
+<code>beginComputePass()</code>.</li>
+<li><strong>Binding Resources:</strong> PixiJS binds the pipeline with
+<code>setPipeline()</code> and binds the associated storage
+<code>BindGroup</code> via
+<code>setBindGroup(index, bindGroup)</code>.</li>
+<li><strong>Dispatch:</strong> The developer issues
+<code>dispatchWorkgroups(workgroupCountX, workgroupCountY, workgroupCountZ)</code>
+based on the total particle count divided by the WGSL
+<code>@workgroup_size</code> declaration.</li>
+<li><strong>Compute Pass Termination:</strong> The pass is closed via
+<code>end()</code>.</li>
+</ol>
+<h3 id="interoperability-with-render-passes">Interoperability with
+Render Passes</h3>
+<p>Because WebGPU enforces validation rules regarding simultaneous
+read/write states, PixiJS relies on sequential pass encoding to prevent
+hazard conflicts.</p>
+<p>Once the compute pass completes and is ended on the command encoder,
+the particle storage buffer is safe to use in a subsequent render pass.
+By supplying the identical buffer to a mesh or particle container
+configured with matching vertex attributes, the GPU reads the simulated
+data directly from the buffer without moving data across the PCIe
+bus.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

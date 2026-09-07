@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Configure WebGPU MRT in Pixi.js - pixi.js</title>
+    <meta name="description" content="Multiple Render Targets (MRT) allow a fragment shader to output color data to multiple textures simultaneously in a single render pass, an essential technique for deferred shading, normal mapping, and complex post-processing. In Pixi.js v8, WebGPU suppor">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-to-configure-webgpu-mrt-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Configure WebGPU MRT in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-to-configure-webgpu-mrt-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Multiple Render Targets (MRT) allow a fragment shader to output color data to multiple textures simultaneously in a single render pass, an essential technique for deferred shading, normal mapping, and complex post-processing. In Pixi.js v8, WebGPU suppor" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-to-configure-webgpu-mrt-in-pixijs">How to Configure WebGPU
+MRT in Pixi.js</h1>
+<p>Multiple Render Targets (MRT) allow a fragment shader to output color
+data to multiple textures simultaneously in a single render pass, an
+essential technique for deferred shading, normal mapping, and complex
+post-processing. In Pixi.js v8, WebGPU support is native, enabling
+direct use of WGSL shaders and low-level WebGPU render passes. This
+guide covers how to set up textures, configure a custom
+<code>RenderTarget</code> with multiple color attachments, write the
+matching WGSL shader, and execute the multi-target draw call.</p>
+<h2 id="1-creating-the-target-textures">1. Creating the Target
+Textures</h2>
+<p>To draw to multiple targets, you first need to create the individual
+<code>RenderTexture</code> instances that will hold each output stream
+(e.g., base color, normal data, or material properties).</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { RenderTexture } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> width <span class="op">=</span> <span class="dv">800</span><span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> height <span class="op">=</span> <span class="dv">600</span><span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Create destination textures</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> albedoTexture <span class="op">=</span> RenderTexture<span class="op">.</span><span class="fu">create</span>({ width<span class="op">,</span> height })<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> normalTexture <span class="op">=</span> RenderTexture<span class="op">.</span><span class="fu">create</span>({ width<span class="op">,</span> height })<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> depthOrDataTexture <span class="op">=</span> RenderTexture<span class="op">.</span><span class="fu">create</span>({ width<span class="op">,</span> height })<span class="op">;</span></span></code></pre></div>
+<h2 id="2-configuring-the-rendertarget">2. Configuring the
+RenderTarget</h2>
+<p>Pixi.js manages framebuffers and color attachments using the
+<code>RenderTarget</code> class. To configure MRT, initialize a
+<code>RenderTarget</code> and assign the textures to its
+<code>colorTextures</code> array. The index of each texture in this
+array directly corresponds to the <code>@location(n)</code> output index
+in the WGSL shader.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { RenderTarget } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mrtRenderTarget <span class="op">=</span> <span class="kw">new</span> <span class="fu">RenderTarget</span>({</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">colorTextures</span><span class="op">:</span> [</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        albedoTexture<span class="op">,</span>       <span class="co">// Maps to @location(0)</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        normalTexture<span class="op">,</span>       <span class="co">// Maps to @location(1)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        depthOrDataTexture   <span class="co">// Maps to @location(2)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    ]<span class="op">,</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">depth</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span>             <span class="co">// Include depth buffer if required</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">stencil</span><span class="op">:</span> <span class="kw">false</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>When Pixi.js's WebGPU device compiles the render pipeline for this
+<code>RenderTarget</code>, it configures the underlying
+<code>GPURenderPassDescriptor.colorAttachments</code> to match these
+textures in sequence.</p>
+<h2 id="3-writing-the-wgsl-mrt-shader">3. Writing the WGSL MRT
+Shader</h2>
+<p>A standard WebGPU fragment shader returns a single
+<code>vec4&lt;f32&gt;</code>. For MRT, define a custom output
+<code>struct</code> where each member variable is tagged with the
+<code>@location()</code> attribute matching the indices defined in your
+<code>RenderTarget.colorTextures</code>.</p>
+<pre class="wgsl"><code>struct FragmentOutput {
+    @location(0) albedo : vec4&lt;f32&gt;,
+    @location(1) normal : vec4&lt;f32&gt;,
+    @location(2) extraData : vec4&lt;f32&gt;,
+};
+
+@fragment
+fn mainFragment(
+    @location(0) vUV : vec2&lt;f32&gt;
+) -&gt; FragmentOutput {
+    var output : FragmentOutput;
+
+    // Output diffuse/albedo color
+    output.albedo = vec4&lt;f32&gt;(1.0, 0.5, 0.2, 1.0);
+
+    // Output normal vector encoded as color
+    output.normal = vec4&lt;f32&gt;(0.0, 1.0, 0.0, 1.0);
+
+    // Output miscellaneous data (e.g., roughness, metallic)
+    output.extraData = vec4&lt;f32&gt;(vUV.x, vUV.y, 0.5, 1.0);
+
+    return output;
+}</code></pre>
+<h2 id="4-building-the-custom-shader-material">4. Building the Custom
+Shader Material</h2>
+<p>Bind the WGSL code into a Pixi.js <code>Shader</code> or create a
+custom <code>Mesh</code> or <code>Filter</code> to draw your scene
+objects.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { Shader<span class="op">,</span> Mesh<span class="op">,</span> Geometry } <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> shader <span class="op">=</span> Shader<span class="op">.</span><span class="fu">from</span>({</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">gpu</span><span class="op">:</span> {</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">vertex</span><span class="op">:</span> {</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>            <span class="dt">source</span><span class="op">:</span> vertexWgslSource<span class="op">,</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>            <span class="dt">entryPoint</span><span class="op">:</span> <span class="st">&#39;mainVertex&#39;</span><span class="op">,</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="dt">fragment</span><span class="op">:</span> {</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>            <span class="dt">source</span><span class="op">:</span> fragmentWgslSource<span class="op">,</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>            <span class="dt">entryPoint</span><span class="op">:</span> <span class="st">&#39;mainFragment&#39;</span><span class="op">,</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    }<span class="op">,</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> quadMesh <span class="op">=</span> <span class="kw">new</span> <span class="fu">Mesh</span>({</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">geometry</span><span class="op">:</span> <span class="kw">new</span> <span class="fu">Geometry</span>(<span class="co">/* geometry definitions */</span>)<span class="op">,</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">shader</span><span class="op">:</span> shader</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h2 id="5-rendering-to-the-mrt-target">5. Rendering to the MRT
+Target</h2>
+<p>Direct the Pixi.js WebGPU renderer to draw your container or mesh
+directly into the configured <code>RenderTarget</code>.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Instruct the renderer to output to your MRT setup</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">renderer</span><span class="op">.</span><span class="fu">render</span>({</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">container</span><span class="op">:</span> sceneContainer<span class="op">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">target</span><span class="op">:</span> mrtRenderTarget<span class="op">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">clear</span><span class="op">:</span> <span class="kw">true</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>Once the pass completes, <code>albedoTexture</code>,
+<code>normalTexture</code>, and <code>depthOrDataTexture</code> are
+populated with their respective pass outputs and can be bound as
+standard inputs to subsequent lighting or composition passes.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

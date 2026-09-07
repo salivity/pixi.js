@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS MeshMaterial vs Sprite: Key Differences - pixi.js</title>
+    <meta name="description" content="In Pixi.js, visual assets are commonly displayed using either standard Sprites or Meshes paired with MeshMaterials. While Sprites are designed for standard, rectangular 2D images with optimized automatic batching, MeshMaterial allows developers to render">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-meshmaterial-vs-sprite-key-differences">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS MeshMaterial vs Sprite: Key Differences - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-meshmaterial-vs-sprite-key-differences" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In Pixi.js, visual assets are commonly displayed using either standard Sprites or Meshes paired with MeshMaterials. While Sprites are designed for standard, rectangular 2D images with optimized automatic batching, MeshMaterial allows developers to render" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-meshmaterial-vs-sprite-key-differences">PixiJS
+MeshMaterial vs Sprite: Key Differences</h1>
+<p>In Pixi.js, visual assets are commonly displayed using either
+standard Sprites or Meshes paired with MeshMaterials. While Sprites are
+designed for standard, rectangular 2D images with optimized automatic
+batching, MeshMaterial allows developers to render arbitrary geometry
+with custom shader pipelines and vertex manipulation. This article
+outlines the fundamental architectural differences, performance
+profiles, and appropriate use cases for both rendering approaches.</p>
+<h3 id="structural-differences-and-geometry">Structural Differences and
+Geometry</h3>
+<p>A standard <code>Sprite</code> in Pixi.js is fundamentally a flat
+rectangular quad comprised of four vertices and two triangles. It is
+optimized to map a rectangular section of a texture to a screen space
+defined by position, scale, rotation, and anchor points. You cannot
+modify the underlying geometry of a Sprite without altering its
+fundamental behavior.</p>
+<p>In contrast, a <code>Mesh</code> paired with a
+<code>MeshMaterial</code> is backed by a custom <code>Geometry</code>
+object. This geometry can consist of an arbitrary array of vertices,
+indices, UV coordinates, and custom vertex buffers. Instead of being
+locked to a four-point plane, a Mesh can define ropes, ribbons,
+perspective planes, complex polygons, or soft-body deformable
+surfaces.</p>
+<h3 id="material-and-shader-customization">Material and Shader
+Customization</h3>
+<p>Standard Sprites use Pixi.js's internal sprite shader by default.
+While you can apply color tints, blend modes, and screen-space filters
+to a Sprite, the vertex pipeline remains rigid. Adding complex visual
+logic usually requires applying a <code>Filter</code>, which incurs
+extra render target switches and can degrade performance if
+overused.</p>
+<p><code>MeshMaterial</code> acts as the bridge between custom geometry
+and custom shaders. It extends the core Pixi.js <code>Material</code>
+class and gives direct access to write custom vertex and fragment
+shaders. This allows for:</p>
+<ul>
+<li>Direct mathematical deformation of vertices directly on the GPU
+(e.g., wave or wind animations).</li>
+<li>Custom uniform bindings tailored for real-time effects like
+lighting, dissolve patterns, or UV distortion.</li>
+<li>Elimination of intermediate framebuffer passes that standard filters
+require.</li>
+</ul>
+<h3 id="performance-and-batching">Performance and Batching</h3>
+<p>Pixi.js achieves high performance primarily through its automatic
+batch renderer. Standard Sprites using the same base texture and default
+shader are automatically batched together into a single WebGL draw call.
+This allows thousands of Sprites to be rendered with minimal CPU-to-GPU
+communication.</p>
+<p>Meshes that use <code>MeshMaterial</code> can also be batched, but
+under stricter conditions. If a custom <code>MeshMaterial</code>
+introduces unique shader programs or dynamic uniform values that differ
+per mesh, the batch will break, causing separate WebGL draw calls.
+Additionally, managing dense vertex buffers increases memory bandwidth
+and CPU overhead compared to standard quad operations.</p>
+<h3 id="summary-of-use-cases">Summary of Use Cases</h3>
+<p><strong>Choose standard Sprites when:</strong></p>
+<ul>
+<li>Rendering traditional 2D game objects, UI components, background
+layers, or tilemaps.</li>
+<li>Maximizing draw call batching across thousands of distinct
+items.</li>
+<li>Only simple affine transformations (translate, rotate, scale, skew)
+are needed.</li>
+</ul>
+<p><strong>Choose Mesh and MeshMaterial when:</strong></p>
+<ul>
+<li>Deforming a texture across non-rectangular or dynamic geometry
+(e.g., water surfaces, flags, ropes, or skeletal 2D animations).</li>
+<li>Implementing vertex-level effects directly via WebGL shaders.</li>
+<li>Mapping textures to complex 2D shapes, grids, or custom polygon
+colliders.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

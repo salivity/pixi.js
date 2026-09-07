@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimizing Sprite Ordering for Batching in Pixi.js - pixi.js</title>
+    <meta name="description" content="Pixi.js achieves its high rendering performance primarily through sprite batching, a technique that aggregates multiple display objects into a single WebGL draw call. However, when sprites within a Container alternate between different base textures, ble">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/optimizing-sprite-ordering-for-batching-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Optimizing Sprite Ordering for Batching in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/optimizing-sprite-ordering-for-batching-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Pixi.js achieves its high rendering performance primarily through sprite batching, a technique that aggregates multiple display objects into a single WebGL draw call. However, when sprites within a Container alternate between different base textures, ble" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="optimizing-sprite-ordering-for-batching-in-pixijs">Optimizing
+Sprite Ordering for Batching in Pixi.js</h1>
+<p>Pixi.js achieves its high rendering performance primarily through
+sprite batching, a technique that aggregates multiple display objects
+into a single WebGL draw call. However, when sprites within a
+<code>Container</code> alternate between different base textures, blend
+modes, or custom shaders, the rendering pipeline is forced to flush the
+batch prematurely, resulting in excessive draw calls and decreased frame
+rates. By strategically organizing sprite order, utilizing texture
+atlases, and isolating rendering state changes, you can maximize batch
+size and ensure smooth 60+ FPS rendering in your applications.</p>
+<h2 id="how-pixijs-batching-works">How Pixi.js Batching Works</h2>
+<p>Pixi.js accumulates sprite geometry and textures into an internal
+batch renderer. A batch continues to grow as long as the incoming
+sprites share compatible rendering states. A batch break occurs
+immediately when the renderer encounters:</p>
+<ul>
+<li>A texture that cannot fit into the current batch's available texture
+units.</li>
+<li>A change in <code>blendMode</code>.</li>
+<li>Custom shaders or filters applied directly to a sprite.</li>
+<li>Different display object types (e.g., alternating between
+<code>Sprite</code> and <code>Graphics</code> or
+<code>Mesh</code>).</li>
+</ul>
+<p>When a batch breaks, WebGL issues a draw call to clear the queue
+before processing subsequent items.</p>
+<h2 id="grouping-by-base-texture">Grouping by Base Texture</h2>
+<p>The most direct way to maximize batching is to ensure sprites sharing
+the same <code>BaseTexture</code> are rendered sequentially.</p>
+<p>If sprites are loaded as individual image files, each file represents
+a unique base texture. Rendering sprite A (Texture 1), then sprite B
+(Texture 2), and then sprite C (Texture 1) can force additional draw
+calls depending on your GPU's texture unit capacity.</p>
+<p>You can sort the container's children programmatically based on the
+texture's internal unique identifier:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>container<span class="op">.</span><span class="at">children</span><span class="op">.</span><span class="fu">sort</span>((a<span class="op">,</span> b) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> uidA <span class="op">=</span> a<span class="op">.</span><span class="at">texture</span><span class="op">?.</span><span class="at">baseTexture</span><span class="op">?.</span><span class="at">uid</span> <span class="op">||</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> uidB <span class="op">=</span> b<span class="op">.</span><span class="at">texture</span><span class="op">?.</span><span class="at">baseTexture</span><span class="op">?.</span><span class="at">uid</span> <span class="op">||</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> uidA <span class="op">-</span> uidB<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h2 id="leveraging-texture-atlases">Leveraging Texture Atlases</h2>
+<p>The most effective architectural approach to avoid batch breaks is
+using a texture atlas (spritesheet). An atlas combines hundreds of
+individual sprites into a single large image file.</p>
+<p>Because every sprite created from the same atlas references the exact
+same <code>BaseTexture</code>, Pixi.js can render all of them within a
+single draw call, completely eliminating texture-swap batch breaks
+regardless of visual depth or rendering order.</p>
+<h2 id="managing-z-index-without-breaking-batches">Managing Z-Index
+Without Breaking Batches</h2>
+<p>Visual depth often conflicts with optimal texture grouping. For
+example, a game may require rendering units, shadows, and markers at
+different visual depths.</p>
+<p>If you enable <code>container.sortableChildren = true</code> and
+assign <code>zIndex</code> values, sprites are sorted purely by their
+depth. If different depths use different textures, batch thrashing will
+occur.</p>
+<p>To solve this:</p>
+<ol type="1">
+<li><strong>Use Dedicated Layer Containers:</strong> Instead of placing
+all sprites in one container with varying <code>zIndex</code> values,
+create dedicated sub-containers for each logical layer (e.g.,
+<code>backgroundContainer</code>, <code>unitsContainer</code>,
+<code>effectsContainer</code>).</li>
+<li><strong>Sort Within Layers:</strong> Apply texture sorting or
+spritesheet usage within each layer independently. This limits state
+changes to the transitions between entire layers rather than between
+individual sprites.</li>
+</ol>
+<h2 id="eliminating-state-disruptors">Eliminating State Disruptors</h2>
+<p>Even if sprites share a texture, changes to other WebGL properties
+will reset the batcher:</p>
+<ul>
+<li><strong>Blend Modes:</strong> Keep blend modes uniform. If an
+explosion requires <code>BLEND_MODES.ADD</code>, isolate it into a
+dedicated particle layer rather than interspersing it among normal
+sprites.</li>
+<li><strong>Filters:</strong> Applying a <code>Filter</code> to an
+individual sprite forces Pixi.js to switch rendering targets to an
+offscreen framebuffer, immediately breaking the batch. Instead, apply
+the filter to an entire parent <code>Container</code> containing all
+sprites that require the effect.</li>
+<li><strong>Tints and Alpha:</strong> Unlike blend modes and filters,
+modifying <code>tint</code> and <code>alpha</code> on standard
+<code>Sprite</code> objects does not break the batch in modern versions
+of Pixi.js, as vertex colors are updated directly inside the vertex
+buffer.</li>
+</ul>
+<h2 id="verifying-batch-efficiency">Verifying Batch Efficiency</h2>
+<p>To verify that your ordering optimizations are working, monitor draw
+calls using Pixi's interaction with WebGL extensions or external tools
+like the Spector.js browser extension. Minimizing draw calls toward the
+theoretical minimum—the number of distinct layers and base textures in
+your scene—confirms your sprites are ordered for peak rendering
+efficiency.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

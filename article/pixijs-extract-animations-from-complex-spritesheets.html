@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS: Extract Animations from Complex Spritesheets - pixi.js</title>
+    <meta name="description" content="Extracting individual animated sequences from a complex spritesheet in Pixi.js involves slicing a master texture into specific frame coordinates and assigning those frames to an AnimatedSprite. This guide covers how to achieve this using both JSON-based">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixijs-extract-animations-from-complex-spritesheets">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PixiJS: Extract Animations from Complex Spritesheets - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixijs-extract-animations-from-complex-spritesheets" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Extracting individual animated sequences from a complex spritesheet in Pixi.js involves slicing a master texture into specific frame coordinates and assigning those frames to an AnimatedSprite. This guide covers how to achieve this using both JSON-based" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-extract-animations-from-complex-spritesheets">PixiJS:
+Extract Animations from Complex Spritesheets</h1>
+<p>Extracting individual animated sequences from a complex spritesheet
+in Pixi.js involves slicing a master texture into specific frame
+coordinates and assigning those frames to an
+<code>AnimatedSprite</code>. This guide covers how to achieve this using
+both JSON-based texture atlases—the standard, efficient approach—and
+programmatic frame extraction using manual cropping rectangles for raw
+image files.</p>
+<h2 id="method-1-using-a-json-texture-atlas-recommended">Method 1: Using
+a JSON Texture Atlas (Recommended)</h2>
+<p>When working with complex spritesheets, the cleanest workflow is
+exporting a single image alongside a JSON atlas using tools like
+TexturePacker. The JSON file maps out frame positions, dimensions, and
+named animation sequences.</p>
+<h3 id="1-load-the-spritesheet">1. Load the Spritesheet</h3>
+<p>Use Pixi.js's modern <code>Assets</code> API to load the JSON file.
+Pixi automatically parses the JSON and loads the corresponding
+image.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> <span class="op">*</span> <span class="im">as</span> PIXI <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Load the JSON atlas (which references the spritesheet image)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> sheet <span class="op">=</span> <span class="cf">await</span> PIXI<span class="op">.</span><span class="at">Assets</span><span class="op">.</span><span class="fu">load</span>(<span class="st">&#39;assets/character.json&#39;</span>)<span class="op">;</span></span></code></pre></div>
+<h3 id="2-access-and-play-named-sequences">2. Access and Play Named
+Sequences</h3>
+<p>If your JSON atlas defines animations, Pixi.js groups them
+automatically inside the <code>sheet.animations</code> object.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Access the pre-defined &#39;walk&#39; animation sequence</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> walkFrames <span class="op">=</span> sheet<span class="op">.</span><span class="at">animations</span>[<span class="st">&#39;walk&#39;</span>]<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Create the AnimatedSprite</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> character <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">AnimatedSprite</span>(walkFrames)<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">// Configure animation settings</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>character<span class="op">.</span><span class="at">animationSpeed</span> <span class="op">=</span> <span class="fl">0.16</span><span class="op">;</span> <span class="co">// Speed multiplier (default is 1)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>character<span class="op">.</span><span class="at">loop</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>character<span class="op">.</span><span class="fu">play</span>()<span class="op">;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">// Add to stage</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(character)<span class="op">;</span></span></code></pre></div>
+<hr />
+<h2 id="method-2-manual-frame-extraction-from-a-raw-spritesheet">Method
+2: Manual Frame Extraction from a Raw Spritesheet</h2>
+<p>If you only have an image file without a JSON descriptor, you can
+manually define coordinates using <code>PIXI.Rectangle</code> and slice
+the base texture.</p>
+<h3 id="1-load-the-base-texture">1. Load the Base Texture</h3>
+<p>Load your image using the <code>Assets</code> manager:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> texture <span class="op">=</span> <span class="cf">await</span> PIXI<span class="op">.</span><span class="at">Assets</span><span class="op">.</span><span class="fu">load</span>(<span class="st">&#39;assets/spritesheet.png&#39;</span>)<span class="op">;</span></span></code></pre></div>
+<h3 id="2-crop-frames-programmatically">2. Crop Frames
+Programmatically</h3>
+<p>Extract each frame by instantiating new <code>PIXI.Texture</code>
+objects bound to specific sub-regions of the base texture.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">extractAnimationSequence</span>(baseTexture<span class="op">,</span> frameCoords) {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> frameCoords<span class="op">.</span><span class="fu">map</span>(coord <span class="kw">=&gt;</span> {</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> rect <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Rectangle</span>(coord<span class="op">.</span><span class="at">x</span><span class="op">,</span> coord<span class="op">.</span><span class="at">y</span><span class="op">,</span> coord<span class="op">.</span><span class="at">w</span><span class="op">,</span> coord<span class="op">.</span><span class="at">h</span>)<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Texture</span>({</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>            <span class="dt">source</span><span class="op">:</span> baseTexture<span class="op">.</span><span class="at">source</span><span class="op">,</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>            <span class="dt">frame</span><span class="op">:</span> rect</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co">// Define the exact coordinates of the frames for an animation sequence (e.g., &#39;attack&#39;)</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> attackFrameData <span class="op">=</span> [</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    { <span class="dt">x</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span>   <span class="dt">y</span><span class="op">:</span> <span class="dv">128</span><span class="op">,</span> <span class="dt">w</span><span class="op">:</span> <span class="dv">64</span><span class="op">,</span> <span class="dt">h</span><span class="op">:</span> <span class="dv">64</span> }<span class="op">,</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    { <span class="dt">x</span><span class="op">:</span> <span class="dv">64</span><span class="op">,</span>  <span class="dt">y</span><span class="op">:</span> <span class="dv">128</span><span class="op">,</span> <span class="dt">w</span><span class="op">:</span> <span class="dv">64</span><span class="op">,</span> <span class="dt">h</span><span class="op">:</span> <span class="dv">64</span> }<span class="op">,</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    { <span class="dt">x</span><span class="op">:</span> <span class="dv">128</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="dv">128</span><span class="op">,</span> <span class="dt">w</span><span class="op">:</span> <span class="dv">64</span><span class="op">,</span> <span class="dt">h</span><span class="op">:</span> <span class="dv">64</span> }<span class="op">,</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    { <span class="dt">x</span><span class="op">:</span> <span class="dv">192</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="dv">128</span><span class="op">,</span> <span class="dt">w</span><span class="op">:</span> <span class="dv">64</span><span class="op">,</span> <span class="dt">h</span><span class="op">:</span> <span class="dv">64</span> }</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>]<span class="op">;</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> attackTextures <span class="op">=</span> <span class="fu">extractAnimationSequence</span>(texture<span class="op">,</span> attackFrameData)<span class="op">;</span></span></code></pre></div>
+<h3 id="3-loop-based-grid-extraction">3. Loop-Based Grid Extraction</h3>
+<p>If your complex spritesheet uses a consistent grid layout for an
+animation row:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">extractGridRow</span>(baseTexture<span class="op">,</span> row<span class="op">,</span> frameWidth<span class="op">,</span> frameHeight<span class="op">,</span> totalFrames) {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> frames <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> totalFrames<span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> rect <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Rectangle</span>(i <span class="op">*</span> frameWidth<span class="op">,</span> row <span class="op">*</span> frameHeight<span class="op">,</span> frameWidth<span class="op">,</span> frameHeight)<span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        frames<span class="op">.</span><span class="fu">push</span>(<span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Texture</span>({</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>            <span class="dt">source</span><span class="op">:</span> baseTexture<span class="op">.</span><span class="at">source</span><span class="op">,</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>            <span class="dt">frame</span><span class="op">:</span> rect</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        }))<span class="op">;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> frames<span class="op">;</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">// Extract 6 frames from row index 2, where each frame is 32x32 pixels</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> runFrames <span class="op">=</span> <span class="fu">extractGridRow</span>(texture<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">32</span><span class="op">,</span> <span class="dv">32</span><span class="op">,</span> <span class="dv">6</span>)<span class="op">;</span></span></code></pre></div>
+<h3 id="4-create-and-control-the-animatedsprite">4. Create and Control
+the AnimatedSprite</h3>
+<p>Pass the extracted texture array directly into an
+<code>AnimatedSprite</code>.</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> animatedCharacter <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">AnimatedSprite</span>(attackTextures)<span class="op">;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>animatedCharacter<span class="op">.</span><span class="at">x</span> <span class="op">=</span> <span class="dv">100</span><span class="op">;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>animatedCharacter<span class="op">.</span><span class="at">y</span> <span class="op">=</span> <span class="dv">100</span><span class="op">;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>animatedCharacter<span class="op">.</span><span class="at">animationSpeed</span> <span class="op">=</span> <span class="fl">0.2</span><span class="op">;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>animatedCharacter<span class="op">.</span><span class="at">loop</span> <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">// Handle animation completion</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>animatedCharacter<span class="op">.</span><span class="at">onComplete</span> <span class="op">=</span> () <span class="kw">=&gt;</span> {</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&#39;Attack animation finished&#39;</span>)<span class="op">;</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>animatedCharacter<span class="op">.</span><span class="fu">play</span>()<span class="op">;</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(animatedCharacter)<span class="op">;</span></span></code></pre></div>
+<h2 id="switching-sequences-on-the-same-sprite">Switching Sequences on
+the Same Sprite</h2>
+<p>To alternate between animations (such as switching from "idle" to
+"run"), update the sprite's <code>textures</code> property directly:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">switchAnimation</span>(sprite<span class="op">,</span> newTextures<span class="op">,</span> speed <span class="op">=</span> <span class="fl">0.15</span>) {</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    sprite<span class="op">.</span><span class="fu">stop</span>()<span class="op">;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    sprite<span class="op">.</span><span class="at">textures</span> <span class="op">=</span> newTextures<span class="op">;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    sprite<span class="op">.</span><span class="at">animationSpeed</span> <span class="op">=</span> speed<span class="op">;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    sprite<span class="op">.</span><span class="fu">gotoAndPlay</span>(<span class="dv">0</span>)<span class="op">;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co">// Usage</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="fu">switchAnimation</span>(character<span class="op">,</span> sheet<span class="op">.</span><span class="at">animations</span>[<span class="st">&#39;run&#39;</span>]<span class="op">,</span> <span class="fl">0.2</span>)<span class="op">;</span></span></code></pre></div></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

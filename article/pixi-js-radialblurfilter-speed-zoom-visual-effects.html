@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js RadialBlurFilter Speed Zoom Visual Effects - pixi.js</title>
+    <meta name="description" content="The RadialBlurFilter in Pixi.js generates dynamic speed zoom effects by blurring an object's pixels along rays projecting outward from a defined center point. This article explains the underlying shader mechanics of radial blurring, breaks down the core">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-radialblurfilter-speed-zoom-visual-effects">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js RadialBlurFilter Speed Zoom Visual Effects - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-radialblurfilter-speed-zoom-visual-effects" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The RadialBlurFilter in Pixi.js generates dynamic speed zoom effects by blurring an object's pixels along rays projecting outward from a defined center point. This article explains the underlying shader mechanics of radial blurring, breaks down the core" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-radialblurfilter-speed-zoom-visual-effects">Pixi.js
+RadialBlurFilter Speed Zoom Visual Effects</h1>
+<p>The <code>RadialBlurFilter</code> in Pixi.js generates dynamic speed
+zoom effects by blurring an object's pixels along rays projecting
+outward from a defined center point. This article explains the
+underlying shader mechanics of radial blurring, breaks down the core
+parameters that govern the intensity and direction of the zoom, and
+details how the GPU samples textures to produce the illusion of
+high-velocity camera motion.</p>
+<h3 id="the-underlying-mechanics-directional-ray-sampling">The
+Underlying Mechanics: Directional Ray Sampling</h3>
+<p>Unlike a standard Gaussian blur that distributes samples evenly in a
+2D radius around a pixel, a radial blur relies on vector math directed
+relative to a single focal origin.</p>
+<p>In WebGL, the <code>RadialBlurFilter</code> runs a custom fragment
+shader over every pixel of the target display object:</p>
+<ol type="1">
+<li><strong>Vector Calculation:</strong> The shader computes a
+directional vector for each fragment by subtracting the effect's focal
+center coordinates from the current fragment's texture coordinates
+(<code>uv - center</code>).</li>
+<li><strong>Radial Stepping:</strong> The fragment shader iterates
+through a predefined loop of texture samples. In each step of the loop,
+it shifts the sampling coordinates along the directional vector toward
+or away from the center point.</li>
+<li><strong>Accumulation and Averaging:</strong> The color values from
+each sample along this ray are accumulated and divided by the total
+number of iterations.</li>
+</ol>
+<p>Because the directional vector grows longer as pixels move farther
+from the focal center, peripheral pixels experience a much larger
+sampling offset than pixels near the center. This differential
+displacement creates the optical streaking that human perception
+associates with rapid forward or backward acceleration.</p>
+<h3 id="key-parameters-controlling-the-effect">Key Parameters
+Controlling the Effect</h3>
+<p>Achieving a convincing speed zoom requires fine-tuning specific
+properties exposed by the filter:</p>
+<ul>
+<li><strong><code>center</code> (<code>[x, y]</code>):</strong> Defines
+the epicenter of the zoom in pixel coordinates. For a classic
+forward-acceleration effect, this is typically set to the center of the
+viewport or aligned to an active sprite, such as the nose of a moving
+vehicle or a player character.</li>
+<li><strong><code>radius</code>:</strong> Determines the distance from
+the center where the blur begins. Setting a non-zero radius leaves a
+clear, unblurred "eye" around the focal point, ensuring critical visual
+information remains sharp while the surrounding scene streaks
+outward.</li>
+<li><strong><code>angle</code> / <code>strength</code>:</strong>
+Controls the magnitude of the displacement along the rays. Higher values
+increase the distance between sample points, resulting in longer visual
+streaks that convey greater speed.</li>
+<li><strong><code>kernelSize</code>:</strong> The number of texture
+lookups performed per fragment. Higher values yield smooth, cinematic
+streaks without noticeable banding, but increase GPU overhead.</li>
+</ul>
+<h3 id="simulating-dynamic-acceleration">Simulating Dynamic
+Acceleration</h3>
+<p>A static radial blur merely looks like a blurred still image. To
+simulate dynamic speed zoom, developers animate the filter's properties
+across frames:</p>
+<ul>
+<li><strong>Ramping Strength:</strong> Rapidly interpolating the blur
+strength from <code>0</code> to a peak value creates the visual impact
+of an instantaneous speed burst, such as activating a warp drive or
+executing a dash move.</li>
+<li><strong>Tracking Objects:</strong> Continuously updating the
+<code>center</code> property to match a moving sprite's global position
+keeps the focal point anchored to the moving entity, simulating a camera
+locked onto a high-speed target.</li>
+<li><strong>Focal Pumping:</strong> Oscillating the blur intensity
+alongside a slight scale increase of the target container enhances the
+physical sensation of rapid forward momentum.</li>
+</ul>
+<h3 id="performance-considerations">Performance Considerations</h3>
+<p>Because the <code>RadialBlurFilter</code> relies on multiple
+dependent texture reads within a loop for every rendered pixel, it is
+fill-rate intensive. On mobile devices or integrated GPUs, excessive
+<code>kernelSize</code> values can lead to frame drops. To maintain high
+performance, developers typically use lower sample counts combined with
+slight overall scene motion blur, or apply the filter to a downscaled
+render texture before compositing it onto the main stage.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

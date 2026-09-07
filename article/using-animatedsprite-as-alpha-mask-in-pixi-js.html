@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Using AnimatedSprite as Alpha Mask in Pixi.js - pixi.js</title>
+    <meta name="description" content="Pixi.js allows you to use an AnimatedSprite as a dynamic, moving alpha mask. By assigning an active AnimatedSprite to the mask property of any display object or container, Pixi.js continuously samples the alpha channel of the current animation frame duri">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/using-animatedsprite-as-alpha-mask-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Using AnimatedSprite as Alpha Mask in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/using-animatedsprite-as-alpha-mask-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Pixi.js allows you to use an AnimatedSprite as a dynamic, moving alpha mask. By assigning an active AnimatedSprite to the mask property of any display object or container, Pixi.js continuously samples the alpha channel of the current animation frame duri" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="using-animatedsprite-as-alpha-mask-in-pixijs">Using
+AnimatedSprite as Alpha Mask in Pixi.js</h1>
+<p>Pixi.js allows you to use an <code>AnimatedSprite</code> as a
+dynamic, moving alpha mask. By assigning an active
+<code>AnimatedSprite</code> to the <code>mask</code> property of any
+display object or container, Pixi.js continuously samples the alpha
+channel of the current animation frame during the render pass. This
+enables complex, dynamic reveals, looping transitions, and moving matte
+effects directly on the GPU without manual per-frame mask
+reassignments.</p>
+<h3 id="how-pixijs-handles-sprite-masks">How Pixi.js Handles Sprite
+Masks</h3>
+<p>In Pixi.js, when you assign a sprite-based object to a target's
+<code>mask</code> property, the WebGL renderer applies a dedicated mask
+shader (internally managed via <code>SpriteMaskFilter</code>). Unlike
+graphic/vector stencil masks, sprite masks utilize the texture's alpha
+channel. Because an <code>AnimatedSprite</code> inherits directly from
+<code>PIXI.Sprite</code>, it fulfills all criteria required by the
+masking pipeline while updating its active texture on every tick.</p>
+<h3 id="step-by-step-implementation">Step-by-Step Implementation</h3>
+<p>To set up an animated alpha mask, follow these steps:</p>
+<ol type="1">
+<li><strong>Prepare Textures:</strong> Load an array of textures or a
+spritesheet where the transparent/opaque regions define the mask
+shape.</li>
+<li><strong>Instantiate the AnimatedSprite:</strong> Create the
+<code>PIXI.AnimatedSprite</code> instance using the texture array.</li>
+<li><strong>Add the Mask to the Stage:</strong> The masking sprite must
+exist within the display tree (or be manually updated) so its transform
+and animation ticker are evaluated.</li>
+<li><strong>Assign the Mask:</strong> Set
+<code>targetObject.mask = animatedMaskSprite</code>.</li>
+<li><strong>Play the Animation:</strong> Call <code>.play()</code> on
+the <code>AnimatedSprite</code>.</li>
+</ol>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> <span class="op">*</span> <span class="im">as</span> PIXI <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">// 1. Create textures for the mask</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> maskTextures <span class="op">=</span> [</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    PIXI<span class="op">.</span><span class="at">Texture</span><span class="op">.</span><span class="fu">from</span>(<span class="st">&#39;mask_frame_1.png&#39;</span>)<span class="op">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    PIXI<span class="op">.</span><span class="at">Texture</span><span class="op">.</span><span class="fu">from</span>(<span class="st">&#39;mask_frame_2.png&#39;</span>)<span class="op">,</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    PIXI<span class="op">.</span><span class="at">Texture</span><span class="op">.</span><span class="fu">from</span>(<span class="st">&#39;mask_frame_3.png&#39;</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>]<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">// 2. Create the AnimatedSprite</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> animatedMask <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">AnimatedSprite</span>(maskTextures)<span class="op">;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>animatedMask<span class="op">.</span><span class="at">animationSpeed</span> <span class="op">=</span> <span class="fl">0.2</span><span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>animatedMask<span class="op">.</span><span class="at">loop</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>animatedMask<span class="op">.</span><span class="fu">play</span>()<span class="op">;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">// 3. Position the mask and add it to the scene</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>animatedMask<span class="op">.</span><span class="at">position</span><span class="op">.</span><span class="fu">set</span>(<span class="dv">100</span><span class="op">,</span> <span class="dv">100</span>)<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(animatedMask)<span class="op">;</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co">// 4. Create the target object</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> content <span class="op">=</span> PIXI<span class="op">.</span><span class="at">Sprite</span><span class="op">.</span><span class="fu">from</span>(<span class="st">&#39;background.jpg&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">stage</span><span class="op">.</span><span class="fu">addChild</span>(content)<span class="op">;</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">// 5. Apply the animated sprite as the alpha mask</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>content<span class="op">.</span><span class="at">mask</span> <span class="op">=</span> animatedMask<span class="op">;</span></span></code></pre></div>
+<h3 id="important-considerations">Important Considerations</h3>
+<ul>
+<li><strong>Coordinate Space:</strong> The position, scale, and rotation
+of the <code>AnimatedSprite</code> directly affect the masked region.
+Ensure that positioning accounts for the parent container's local
+transform.</li>
+<li><strong>Display Tree Requirement:</strong> Always add the
+<code>AnimatedSprite</code> to the stage. If it is omitted from the
+display hierarchy, Pixi.js may not update its world transform correctly,
+leading to misplaced or frozen masks.</li>
+<li><strong>Performance:</strong> Sprite masking requires rendering to
+intermediate framebuffers and executing custom mask shaders. While
+performant for typical use cases, avoid nesting multiple dynamic sprite
+masks within each other to prevent unnecessary GPU draw-call
+overhead.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

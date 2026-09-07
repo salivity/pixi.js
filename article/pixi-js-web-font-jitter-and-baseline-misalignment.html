@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js Web Font Jitter and Baseline Misalignment - pixi.js</title>
+    <meta name="description" content="Font metrics jitter and baseline misalignment in Pixi.js occur when custom web fonts are rendered with inconsistent baseline measurements, unresolved font-loading states, or subpixel rounding discrepancies. Because Pixi.js relies on an offscreen HTML5 2D">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-web-font-jitter-and-baseline-misalignment">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js Web Font Jitter and Baseline Misalignment - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-web-font-jitter-and-baseline-misalignment" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Font metrics jitter and baseline misalignment in Pixi.js occur when custom web fonts are rendered with inconsistent baseline measurements, unresolved font-loading states, or subpixel rounding discrepancies. Because Pixi.js relies on an offscreen HTML5 2D" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-web-font-jitter-and-baseline-misalignment">Pixi.js Web
+Font Jitter and Baseline Misalignment</h1>
+<p>Font metrics jitter and baseline misalignment in Pixi.js occur when
+custom web fonts are rendered with inconsistent baseline measurements,
+unresolved font-loading states, or subpixel rounding discrepancies.
+Because Pixi.js relies on an offscreen HTML5 2D canvas context to
+measure, rasterize, and cache text as textures, slight deviations in how
+a custom typeface defines its bounding box can break layout consistency.
+This article breaks down the primary technical causes behind these
+visual glitches and explains how to maintain sharp, stable typography in
+Pixi.js applications.</p>
+<h2 id="asynchronous-font-loading-fout">Asynchronous Font Loading
+(FOUT)</h2>
+<p>The most frequent cause of font shifting is rendering text before the
+custom font asset is completely downloaded and parsed by the
+browser.</p>
+<p>When you instantiate a <code>PIXI.Text</code> object using a custom
+family name that has not fully registered in the browser's
+<code>FontFaceSet</code>, the 2D canvas context temporarily falls back
+to a default system font (such as Arial or sans-serif). Pixi.js measures
+the bounding box and baseline according to this fallback. Once the
+actual font loads, subsequent updates, text mutations, or texture
+re-renders calculate entirely different metrics, causing the text to
+visually jump, jitter, or skew out of its designated alignment.</p>
+<p>To resolve this, ensure font assets are loaded and ready before
+creating text nodes using the native Font Loading API:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> <span class="bu">document</span><span class="op">.</span><span class="at">fonts</span><span class="op">.</span><span class="fu">load</span>(<span class="st">&#39;16px &quot;MyCustomFont&quot;&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> <span class="bu">document</span><span class="op">.</span><span class="at">fonts</span><span class="op">.</span><span class="at">ready</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Initialize Pixi.js text objects here</span></span></code></pre></div>
+<h2 id="html5-canvas-metrics-and-font-ascent-approximations">HTML5
+Canvas Metrics and Font Ascent Approximations</h2>
+<p>Pixi.js generates textures for <code>PIXI.Text</code> using the
+native Canvas 2D API's <code>measureText()</code> method. By default,
+historical implementations of <code>measureText()</code> only returned
+the width of the text, leaving vertical metrics—such as ascent, descent,
+and baseline offsets—to be estimated.</p>
+<p>While modern browsers support extended <code>TextMetrics</code> (such
+as <code>actualBoundingBoxAscent</code> and
+<code>actualBoundingBoxDescent</code>), inconsistencies still exist:</p>
+<ul>
+<li>Custom typefaces often possess unusual internal metadata regarding
+cap-height, ascender, and descender lines.</li>
+<li>Pixi.js applies internal heuristic measurements to establish canvas
+dimensions and baseline placement. When a font has abnormal metric
+tables, Pixi’s baseline calculations can cause characters to render
+slightly above or below their intended vertical line.</li>
+<li>Changing characters within a dynamic text string can shift the
+baseline if the new string changes the ascent or descent
+boundaries.</li>
+</ul>
+<h2 id="subpixel-positioning-and-texture-interpolation">Subpixel
+Positioning and Texture Interpolation</h2>
+<p>Jitter during animation, camera movement, or static layout often
+stems from floating-point rendering coordinates:</p>
+<ol type="1">
+<li><strong>Fractional Coordinates:</strong> If a text object sits on
+fractional coordinates (e.g., <code>x: 100.45, y: 50.32</code>), GPU
+texture sampling interpolates pixels across texel boundaries. This
+introduces blurring or a one-pixel "shimmy" as coordinates update.</li>
+<li><strong>Resolution Scaling:</strong> Setting a custom
+<code>resolution</code> on <code>PIXI.TextStyle</code> or the main
+renderer can create rounding artifacts between the internal canvas size
+and the target screen pixels, causing the baseline to oscillate between
+adjacent pixel rows.</li>
+</ol>
+<p>Setting <code>roundPixels = true</code> on the Pixi.js application or
+setting it directly on text parent containers forces integer-based
+coordinate rendering, eliminating fractional baseline wobble.</p>
+<h2 id="inadequate-canvas-padding">Inadequate Canvas Padding</h2>
+<p>Custom typefaces with sweeping serifs, high ascenders, or deep
+descenders frequently exceed standard bounding box bounds. When Pixi.js
+generates the canvas texture, glyph boundaries that fall outside the
+measured box are clipped or forced to shift:</p>
+<ul>
+<li>If glyph boundaries clip, anti-aliasing along the edges distorts,
+creating the illusion of misalignment.</li>
+<li>Setting the <code>padding</code> property in
+<code>PIXI.TextStyle</code> provides extra breathing room around the
+rendered characters, ensuring that extended ascenders and descenders do
+not distort the texture's perceived baseline.</li>
+</ul>
+<h2 id="bitmap-fonts-as-an-alternative-solution">Bitmap Fonts as an
+Alternative Solution</h2>
+<p>For high-performance interfaces or dynamic strings that frequently
+change, standard <code>PIXI.Text</code> may remain prone to subtle
+browser-level measurement variances. Utilizing
+<code>PIXI.BitmapText</code> bypasses HTML5 canvas text measurement
+entirely.</p>
+<p>Bitmap fonts rely on a pre-baked texture atlas and an explicit XML or
+JSON metrics file. Because every character's baseline, width, height,
+and kerning offset are explicitly defined ahead of time, bitmap fonts
+eliminate browser measurement discrepancies, completely preventing
+baseline misalignment and jitter.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

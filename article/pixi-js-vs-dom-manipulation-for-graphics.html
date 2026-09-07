@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.js vs DOM Manipulation for Graphics - pixi.js</title>
+    <meta name="description" content="This article explores the fundamental differences between rendering graphics using Pixi.js and traditional HTML DOM manipulation. By comparing their underlying technologies, performance capabilities, and ideal use cases, you will understand why and when">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/pixi-js-vs-dom-manipulation-for-graphics">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pixi.js vs DOM Manipulation for Graphics - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/pixi-js-vs-dom-manipulation-for-graphics" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explores the fundamental differences between rendering graphics using Pixi.js and traditional HTML DOM manipulation. By comparing their underlying technologies, performance capabilities, and ideal use cases, you will understand why and when" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="pixijs-vs-dom-manipulation-for-graphics">Pixi.js vs DOM
+Manipulation for Graphics</h1>
+<p>This article explores the fundamental differences between rendering
+graphics using Pixi.js and traditional HTML DOM manipulation. By
+comparing their underlying technologies, performance capabilities, and
+ideal use cases, you will understand why and when to choose a
+specialized 2D web graphics library over standard web documents.</p>
+<h2 id="the-core-technological-difference">The Core Technological
+Difference</h2>
+<p>Traditional DOM (Document Object Model) manipulation relies on the
+browser's HTML and CSS rendering engine. When you create, move, or style
+elements like <code>&lt;div&gt;</code> or <code>&lt;img&gt;</code> tags,
+the browser must calculate layouts, resolve CSS rules, and paint the
+pixels on the screen.</p>
+<p>In contrast, Pixi.js bypasses the HTML document structure entirely.
+It renders graphics inside a single HTML <code>&lt;canvas&gt;</code>
+element using WebGL (Web Graphics Library). WebGL allows Pixi.js to
+communicate directly with the computer's Graphics Processing Unit (GPU),
+enabling hardware-accelerated rendering. If WebGL is unavailable,
+Pixi.js seamlessly falls back to the standard HTML5 Canvas 2D
+context.</p>
+<h2 id="performance-and-rendering-speed">Performance and rendering
+speed</h2>
+<p>The biggest advantage of Pixi.js over the DOM is rendering speed,
+especially when handling thousands of moving objects simultaneously.</p>
+<ul>
+<li><strong>DOM Limitation:</strong> Modifying hundreds of DOM elements
+causes "reflow" and "repaint" cycles. The browser must recalculate the
+geometry and position of elements relative to one another, which is a
+highly CPU-intensive process that quickly leads to frame rate
+drops.</li>
+<li><strong>Pixi.js Advantage:</strong> Because Pixi.js draws directly
+to a canvas via the GPU, it does not suffer from document reflow. It can
+easily render tens of thousands of individual sprites, shapes, and
+animations at a smooth 60 frames per second (FPS). The GPU processes
+these visual elements in parallel, making it vastly superior for
+real-time graphics.</li>
+</ul>
+<h2 id="scene-graph-vs-document-tree">Scene Graph vs. Document Tree</h2>
+<p>The way these two methods organize visual elements also differs:</p>
+<ul>
+<li><strong>HTML DOM Tree:</strong> The DOM is a hierarchical tree of
+nodes representing document structure. It is designed primarily for
+document layout, accessibility, and text reflow.</li>
+<li><strong>Pixi.js Scene Graph:</strong> Pixi.js uses a hierarchical
+scene graph composed of "Containers" and "Sprites." While conceptually
+similar to the DOM tree, this graph is optimized specifically for
+mathematical coordinate transformations, scaling, rotation, and alpha
+blending, rather than text flow and document structure.</li>
+</ul>
+<h2 id="interaction-and-event-handling">Interaction and Event
+Handling</h2>
+<p>Interactive elements are handled differently under the hood:</p>
+<ul>
+<li><strong>DOM Events:</strong> The browser natively tracks mouse and
+touch events for every HTML element in the DOM tree, allowing you to
+easily attach listeners to individual nodes.</li>
+<li><strong>Pixi.js Events:</strong> Because a canvas is just a single
+HTML element containing flat pixels, the browser cannot natively tell if
+you clicked an individual Pixi.js sprite. Pixi.js solves this by
+implementing its own internal interaction manager. It mathematically
+calculates the cursor's coordinates relative to the positions of the
+objects in its scene graph to trigger custom click, tap, and drag
+events.</li>
+</ul>
+<h2 id="when-to-use-which">When to Use Which</h2>
+<p>Choosing between Pixi.js and DOM manipulation depends entirely on the
+requirements of your project.</p>
+<p><strong>Use DOM Manipulation when:</strong></p>
+<ul>
+<li>Building standard websites, blogs, or e-commerce stores.</li>
+<li>Working primarily with text, forms, and standard user interface
+components.</li>
+<li>SEO (Search Engine Optimization) and native web accessibility
+(screen readers) are high priorities.</li>
+</ul>
+<p><strong>Use Pixi.js when:</strong></p>
+<ul>
+<li>Developing 2D web games or highly interactive digital
+experiences.</li>
+<li>Creating complex data visualizations or generative art.</li>
+<li>Rendering massive numbers of moving particles, sprites, or custom
+visual shaders that would crash a standard browser page.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

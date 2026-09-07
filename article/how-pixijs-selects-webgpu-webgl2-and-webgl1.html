@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How PixiJS Selects WebGPU, WebGL2, and WebGL1 - pixi.js</title>
+    <meta name="description" content="PixiJS handles modern cross-platform graphics by dynamically determining the best available rendering API on the host system. Through an asynchronous initialization pipeline, PixiJS checks hardware and browser capabilities sequentially—prioritizing Web">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/how-pixijs-selects-webgpu-webgl2-and-webgl1">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How PixiJS Selects WebGPU, WebGL2, and WebGL1 - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/how-pixijs-selects-webgpu-webgl2-and-webgl1" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="PixiJS handles modern cross-platform graphics by dynamically determining the best available rendering API on the host system. Through an asynchronous initialization pipeline, PixiJS checks hardware and browser capabilities sequentially—prioritizing Web" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-pixijs-selects-webgpu-webgl2-and-webgl1">How PixiJS Selects
+WebGPU, WebGL2, and WebGL1</h1>
+<p>PixiJS handles modern cross-platform graphics by dynamically
+determining the best available rendering API on the host system. Through
+an asynchronous initialization pipeline, PixiJS checks hardware and
+browser capabilities sequentially—prioritizing WebGPU, then attempting
+WebGL2, and finally falling back to WebGL1 or a CPU fallback if
+configured. This ensures high rendering performance on devices with
+modern GPU access while maintaining full compatibility on older devices
+without breaking the user experience.</p>
+<h3 id="asynchronous-initialization-pipeline">Asynchronous
+Initialization Pipeline</h3>
+<p>Traditional WebGL initialization in earlier versions of PixiJS was
+synchronous because obtaining a <code>WebGLRenderingContext</code> from
+a canvas happens immediately. However, WebGPU requires an asynchronous
+lifecycle to discover GPU adapters and request logical devices.</p>
+<p>To bridge this gap, modern PixiJS (v8 and newer) uses asynchronous
+initialization through methods such as <code>app.init()</code> or
+<code>autoDetectRenderer()</code>. When initialization is triggered,
+PixiJS queries an internal list of registered renderers to test which
+backend can be instantiated successfully.</p>
+<h3 id="testing-for-webgpu-support">Testing for WebGPU Support</h3>
+<p>WebGPU feature detection starts with an API check on the browser's
+global scope. PixiJS inspects whether <code>navigator.gpu</code> is
+defined. If the object exists, PixiJS attempts to acquire a physical GPU
+adapter:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="bu">navigator</span><span class="op">.</span><span class="at">gpu</span>) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> adapter <span class="op">=</span> <span class="cf">await</span> <span class="bu">navigator</span><span class="op">.</span><span class="at">gpu</span><span class="op">.</span><span class="fu">requestAdapter</span>(options)<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (adapter) {</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> device <span class="op">=</span> <span class="cf">await</span> adapter<span class="op">.</span><span class="fu">requestDevice</span>()<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        <span class="co">// WebGPU is supported and operational</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>If <code>navigator.gpu</code> is undefined, if
+<code>requestAdapter()</code> returns <code>null</code> (often due to
+blocked drivers, software rendering restrictions, or lack of hardware
+support), or if <code>requestDevice()</code> rejects due to capability
+constraints, PixiJS catches the failure and immediately advances to the
+next available renderer in its priority queue.</p>
+<h3 id="testing-for-webgl2-and-webgl1">Testing for WebGL2 and
+WebGL1</h3>
+<p>When WebGPU fails or is not preferred, PixiJS shifts to WebGL context
+probing. It creates a temporary off-screen <code>&lt;canvas&gt;</code>
+element and queries the available contexts using standard browser
+APIs:</p>
+<ol type="1">
+<li><strong>WebGL2 Check</strong>: The engine first calls
+<code>canvas.getContext('webgl2', contextOptions)</code>. If a context
+is returned without throwing errors or triggering a context-lost event,
+PixiJS initialises its WebGL renderer configured for the WebGL2
+specification, gaining access to uniform buffer objects, 3D textures,
+and multisampled renderbuffers.</li>
+<li><strong>WebGL1 Fallback</strong>: If WebGL2 context acquisition
+fails or is unsupported, PixiJS falls back to testing
+<code>canvas.getContext('webgl', contextOptions)</code> or legacy vendor
+variants such as <code>experimental-webgl</code>. If valid, PixiJS
+restricts internal pipeline operations to the features defined by the
+WebGL1 standard and available extensions.</li>
+</ol>
+<h3 id="the-modular-extension-architecture">The Modular Extension
+Architecture</h3>
+<p>PixiJS decouples the rendering implementations from core detection
+logic using its internal modular extension system. Renderers (such as
+<code>WebGPURenderer</code> and <code>WebGLRenderer</code>) register
+themselves with a numeric priority level and an asynchronous
+<code>test</code> method.</p>
+<p>During initialization, PixiJS sorts registered renderers by
+priority:</p>
+<ul>
+<li><strong>WebGPU Renderer</strong>: Assigned the highest priority by
+default.</li>
+<li><strong>WebGL Renderer</strong>: Assigned secondary priority,
+internally resolving whether to run in WebGL2 or WebGL1 mode based on
+context availability.</li>
+</ul>
+<p>PixiJS iterates over the sorted array and invokes each renderer's
+<code>.test()</code> function. The first renderer whose test function
+resolves to <code>true</code> is instantiated. If an unexpected error
+occurs during actual device or context creation, PixiJS intercepts the
+error, discards the failing backend, and proceeds to evaluate the next
+renderer in line.</p>
+<h3 id="developer-overrides-and-preferences">Developer Overrides and
+Preferences</h3>
+<p>While the detection sequence runs automatically, PixiJS allows
+developers to configure the order through initialization options.
+Setting the <code>preference</code> property to <code>'webgpu'</code> or
+<code>'webgl'</code> forces PixiJS to alter its test order or bypass
+modern backends entirely for consistency across target deployments.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

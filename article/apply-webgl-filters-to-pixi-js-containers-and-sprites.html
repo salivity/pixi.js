@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply WebGL Filters to Pixi.js Containers and Sprites - pixi.js</title>
+    <meta name="description" content="WebGL filters in Pixi.js are powerful tools that allow developers to apply real-time visual effects, such as blurs, color adjustments, and displacement maps, directly to display objects. This article explains what WebGL filters are and provides a direct,">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/apply-webgl-filters-to-pixi-js-containers-and-sprites">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Apply WebGL Filters to Pixi.js Containers and Sprites - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/apply-webgl-filters-to-pixi-js-containers-and-sprites" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebGL filters in Pixi.js are powerful tools that allow developers to apply real-time visual effects, such as blurs, color adjustments, and displacement maps, directly to display objects. This article explains what WebGL filters are and provides a direct," />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="apply-webgl-filters-to-pixijs-containers-and-sprites">Apply
+WebGL Filters to Pixi.js Containers and Sprites</h1>
+<p>WebGL filters in Pixi.js are powerful tools that allow developers to
+apply real-time visual effects, such as blurs, color adjustments, and
+displacement maps, directly to display objects. This article explains
+what WebGL filters are and provides a direct, step-by-step guide on how
+to apply them to both <code>Container</code> and <code>Sprite</code>
+instances in your Pixi.js projects.</p>
+<h2 id="what-are-webgl-filters">What Are WebGL Filters?</h2>
+<p>In Pixi.js, filters are special shader programs (specifically
+fragment shaders) that run directly on the GPU. Instead of rendering a
+display object directly to the screen, Pixi.js renders the object to a
+temporary texture, applies the filter's shader effects to that texture,
+and then renders the final, modified image to the screen.</p>
+<p>Pixi.js comes with several built-in filters, including:</p>
+<ul>
+<li><strong>BlurFilter</strong>: Creates a gaussian blur effect.</li>
+<li><strong>ColorMatrixFilter</strong>: Adjusts colors, brightness,
+contrast, and saturation.</li>
+<li><strong>AlphaFilter</strong>: Modifies the transparency of an
+object.</li>
+<li><strong>DisplacementFilter</strong>: Uses a texture to distort the
+pixels of another object.</li>
+</ul>
+<p>You can also write custom GLSL fragment shaders to create unique
+visual effects.</p>
+<h2 id="how-to-apply-filters">How to Apply Filters</h2>
+<p>Applying a filter is the same for both <code>Sprite</code> and
+<code>Container</code> objects because both classes inherit from
+<code>DisplayObject</code>, which contains the <code>filters</code>
+property. The <code>filters</code> property accepts an array of filter
+instances, meaning you can apply multiple filters to a single object
+simultaneously.</p>
+<h3 id="step-1-instantiate-the-filter">Step 1: Instantiate the
+Filter</h3>
+<p>First, create an instance of the filter you want to use and configure
+its properties.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Create a blur filter instance</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> blurFilter <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">BlurFilter</span>()<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Configure the filter properties (e.g., strength of the blur)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>blurFilter<span class="op">.</span><span class="at">blur</span> <span class="op">=</span> <span class="dv">8</span><span class="op">;</span></span></code></pre></div>
+<h3 id="step-2-assign-the-filter-to-a-sprite-or-container">Step 2:
+Assign the Filter to a Sprite or Container</h3>
+<p>Assign the filter instance inside an array to the
+<code>.filters</code> property of your target object.</p>
+<h4 id="applying-to-a-sprite">Applying to a Sprite:</h4>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Create a Sprite</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> sprite <span class="op">=</span> PIXI<span class="op">.</span><span class="at">Sprite</span><span class="op">.</span><span class="fu">from</span>(<span class="st">&#39;player.png&#39;</span>)<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Apply the filter to the Sprite</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>sprite<span class="op">.</span><span class="at">filters</span> <span class="op">=</span> [blurFilter]<span class="op">;</span></span></code></pre></div>
+<h4 id="applying-to-a-container">Applying to a Container:</h4>
+<p>Applying a filter to a <code>Container</code> will apply the effect
+to the container itself and all of its children as a single flat
+image.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Create a Container and add children</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> gameUI <span class="op">=</span> <span class="kw">new</span> PIXI<span class="op">.</span><span class="fu">Container</span>()<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>gameUI<span class="op">.</span><span class="fu">addChild</span>(buttonSprite)<span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>gameUI<span class="op">.</span><span class="fu">addChild</span>(textObject)<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Apply the filter to the entire Container</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>gameUI<span class="op">.</span><span class="at">filters</span> <span class="op">=</span> [blurFilter]<span class="op">;</span></span></code></pre></div>
+<h3 id="step-3-modifying-or-removing-filters">Step 3: Modifying or
+Removing Filters</h3>
+<p>You can update filter properties dynamically in your game loop to
+create animations, or remove them entirely when they are no longer
+needed.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// To update a filter in an animation loop:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="at">ticker</span><span class="op">.</span><span class="fu">add</span>(() <span class="kw">=&gt;</span> {</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    blurFilter<span class="op">.</span><span class="at">blur</span> <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sin</span>(<span class="bu">Date</span><span class="op">.</span><span class="fu">now</span>() <span class="op">*</span> <span class="fl">0.002</span>) <span class="op">*</span> <span class="dv">10</span><span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">// To remove all filters from an object:</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>sprite<span class="op">.</span><span class="at">filters</span> <span class="op">=</span> <span class="kw">null</span><span class="op">;</span></span></code></pre></div>
+<h2 id="performance-considerations">Performance Considerations</h2>
+<p>While WebGL filters are highly optimized, they do require additional
+GPU memory and processing power. Each filtered object requires at least
+one extra render pass. To maintain a high framerate:</p>
+<ul>
+<li><strong>Combine objects:</strong> Apply a single filter to a parent
+<code>Container</code> rather than applying individual filters to many
+child <code>Sprite</code> objects.</li>
+<li><strong>Adjust padding:</strong> If a filter (like a blur) cuts off
+at the edges of your sprite, increase the <code>filter.padding</code>
+property (e.g., <code>blurFilter.padding = 10</code>) to expand the
+render area.</li>
+<li><strong>Clean up:</strong> Set <code>.filters = null</code> when an
+effect is finished to free up GPU resources.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

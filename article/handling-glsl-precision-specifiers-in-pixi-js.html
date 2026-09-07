@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R4Y4YXFHZS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-R4Y4YXFHZS');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handling GLSL Precision Specifiers in Pixi.js - pixi.js</title>
+    <meta name="description" content="Precision specifiers in WebGL—namely highp, mediump, and lowp—dictate the bit-depth and accuracy of floating-point calculations within your graphics pipeline. In Pixi.js, managing these specifiers properly is vital for balancing visual accuracy again">
+    <link rel="canonical" href="https://salivity.github.io/pixi.js/article/handling-glsl-precision-specifiers-in-pixi-js">
+    <link rel="icon" href="/pixi.js/favicon.ico">
+    <link rel="stylesheet" href="/pixi.js/css/style.css">
+    <link media="print" rel="stylesheet" href="/pixi.js/css/print.css">
+    <script src="/pixi.js/js/fuse.min.js"></script>
+    <script src="/pixi.js/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Handling GLSL Precision Specifiers in Pixi.js - pixi.js" />
+    <meta property="og:url" content="https://salivity.github.io/pixi.js/article/handling-glsl-precision-specifiers-in-pixi-js" />
+    <meta property="og:image:url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/pixi.js/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Precision specifiers in WebGL—namely highp, mediump, and lowp—dictate the bit-depth and accuracy of floating-point calculations within your graphics pipeline. In Pixi.js, managing these specifiers properly is vital for balancing visual accuracy again" />
+    <link rel="manifest" href="/pixi.js/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/pixi.js/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>pixi.js</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/pixi.js/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="handling-glsl-precision-specifiers-in-pixijs">Handling GLSL
+Precision Specifiers in Pixi.js</h1>
+<p>Precision specifiers in WebGL—namely <code>highp</code>,
+<code>mediump</code>, and <code>lowp</code>—dictate the bit-depth and
+accuracy of floating-point calculations within your graphics pipeline.
+In Pixi.js, managing these specifiers properly is vital for balancing
+visual accuracy against rendering performance, especially on mobile GPUs
+where floating-point math can be a major bottleneck. This guide explains
+how Pixi.js resolves precision defaults, how you can manually override
+them in your custom filters and shaders, and how to avoid common
+artifacts like texture banding and vertex jitter.</p>
+<h2 id="understanding-the-precision-levels">Understanding the Precision
+Levels</h2>
+<ul>
+<li><strong><code>highp</code> (32-bit float):</strong> Provides the
+highest numeric range and precision. It is required for accurate
+position calculations, deep matrix transformations, and large world
+coordinates to prevent vertex snapping or jitter.</li>
+<li><strong><code>mediump</code> (16-bit float):</strong> Typically
+suitable for texture coordinates (UVs), normals, and light computations.
+It offers a significant performance and memory bandwidth improvement on
+mobile hardware.</li>
+<li><strong><code>lowp</code> (8- to 10-bit fixed-point
+equivalent):</strong> Historically used for simple color vectors (RGBA
+ranges from <code>0.0</code> to <code>1.0</code>). In modern WebGL
+development, it is rarely used directly because <code>mediump</code>
+offers vastly better accuracy with negligible performance cost on modern
+mobile chips.</li>
+</ul>
+<h2 id="how-pixijs-injects-precision">How Pixi.js Injects Precision</h2>
+<p>By default, WebGL vertex shaders require precision declarations,
+while fragment shaders do not have an implicit default float precision.
+To simplify development, Pixi.js automatically injects precision
+statements at the top of your custom GLSL code if you do not specify
+them manually.</p>
+<p>Pixi.js typically defaults to:</p>
+<ul>
+<li><code>precision highp float;</code> in vertex shaders.</li>
+<li><code>precision mediump float;</code> in fragment shaders (or
+<code>highp</code> depending on your global configuration and device
+support).</li>
+</ul>
+<h2 id="configuring-global-precision-settings">Configuring Global
+Precision Settings</h2>
+<p>You can alter the global precision defaults across all newly created
+shaders and filters by configuring Pixi’s settings prior to initializing
+your application or custom shaders.</p>
+<p>In Pixi.js v7 and earlier:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> <span class="op">*</span> <span class="im">as</span> PIXI <span class="im">from</span> <span class="st">&#39;pixi.js&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Set fragment shader default precision to highp</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>PIXI<span class="op">.</span><span class="at">settings</span><span class="op">.</span><span class="at">PRECISION_FRAGMENT</span> <span class="op">=</span> PIXI<span class="op">.</span><span class="at">PRECISION</span><span class="op">.</span><span class="at">HIGH</span><span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Alternatively, set to medium precision for mobile performance</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>PIXI<span class="op">.</span><span class="at">settings</span><span class="op">.</span><span class="at">PRECISION_FRAGMENT</span> <span class="op">=</span> PIXI<span class="op">.</span><span class="at">PRECISION</span><span class="op">.</span><span class="at">MEDIUM</span><span class="op">;</span></span></code></pre></div>
+<p>In Pixi.js v8, precision can be controlled through pipe
+configurations or by defining it explicitly in your
+<code>GlProgram</code> or <code>Shader</code> templates to ensure
+consistent behavior across both WebGL and WebGPU pipelines.</p>
+<h2 id="explicitly-declaring-precision-in-custom-shaders">Explicitly
+Declaring Precision in Custom Shaders</h2>
+<p>To eliminate ambiguity across different platforms, the best practice
+is to declare global precision directly at the top of your fragment and
+vertex shaders. Pixi.js will detect your explicit declaration and bypass
+its automatic injection.</p>
+<h3 id="example-fragment-shader">Example Fragment Shader</h3>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">precision</span> <span class="dt">highp</span> <span class="dt">float</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="dt">varying</span> <span class="dt">vec2</span> vTextureCoord<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">sampler2D</span> uSampler<span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">main</span><span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> color <span class="op">=</span> <span class="dt">texture2D</span><span class="op">(</span>uSampler<span class="op">,</span> vTextureCoord<span class="op">);</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">gl_FragColor</span> <span class="op">=</span> color<span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 id="variable-level-precision-overrides">Variable-Level Precision
+Overrides</h2>
+<p>You are not restricted to a single precision setting for an entire
+shader. You can declare a general precision rule and override it for
+specific variables that demand extra accuracy or lower resource
+usage.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Default all floats to medium precision for performance</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="dt">precision</span> <span class="dt">mediump</span> <span class="dt">float</span><span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Explicitly use highp for UV coordinates to prevent texture distortion</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="dt">varying</span> <span class="dt">highp</span> <span class="dt">vec2</span> vTextureCoord<span class="op">;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">// Explicitly use mediump for color blending calculations</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">mediump</span> <span class="dt">vec4</span> uTintColor<span class="op">;</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">sampler2D</span> uSampler<span class="op">;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">main</span><span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// High-precision coordinate lookup</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> baseColor <span class="op">=</span> <span class="dt">texture2D</span><span class="op">(</span>uSampler<span class="op">,</span> vTextureCoord<span class="op">);</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Medium-precision blend</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="va">gl_FragColor</span> <span class="op">=</span> baseColor <span class="op">*</span> uTintColor<span class="op">;</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 id="best-practices-and-common-pitfalls">Best Practices and Common
+Pitfalls</h2>
+<ul>
+<li><strong>Avoid <code>mediump</code> for Texture Coordinates in Large
+Canvases:</strong> If your sprite sheets, tilemaps, or render targets
+are large, <code>mediump</code> UVs can cause visible stepping or
+texture shimmering on mobile devices. Always set
+<code>varying highp vec2 vTextureCoord;</code> when visual precision is
+critical.</li>
+<li><strong>Mobile Fragment <code>highp</code> Support:</strong> While
+nearly all modern mobile devices support <code>highp</code> in fragment
+shaders via WebGL2 or the <code>OES_fragment_precision_high</code>
+extension, older or low-tier hardware may fall back to
+<code>mediump</code>. Use feature detection if supporting legacy
+devices.</li>
+<li><strong>Prevent Banding:</strong> Gradients generated procedurally
+in fragment shaders often exhibit severe color banding when rendered
+under <code>mediump</code>. Force <code>highp</code> specifically on the
+float variables managing the gradient interpolation.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/pixi.js'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/pixi.js/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/pixi.js/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>
